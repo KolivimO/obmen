@@ -1,0 +1,2630 @@
+int ExportDraft(EPM_action_message_t action)
+
+{
+
+int numTargets;
+
+tag_t *arrTargets = NULL;
+
+tag_t miType = NULLTAG;
+
+char *miName = NULL;
+
+tag_t rootTask = NULLTAG;
+
+int found = 0;
+
+tag_t *refDataset = NULL;
+
+int y = 0;
+
+char *outPath = "C:\\Temp\\test";
+
+char *outputFilePath = NULL;
+
+bool itemRevision, plano, pdf = false;
+
+tag_t itemRevisionTag = NULLTAG;
+
+std::string pdfFileName, pdfFilePath, dftFileName, dftFilePath;
+
+tag_t pdfTag, dftTag;
+
+logical deletePrivilege;
+
+ 
+
+int num_dataset_found = 0;
+
+tag_t *total_dataset_results = NULL;
+
+tag_t relation_type_tag = NULLTAG;
+
+char *dataset_name = NULL;
+
+tag_t datasettype = NULLTAG;
+
+ 
+
+try
+
+{
+
+EPM_ask_root_task(action.task, &rootTask);
+
+EPM_ask_attachments(rootTask, EPM_target_attachment, &numTargets, &arrTargets);
+
+ 
+
+//run all target
+
+for (int i = 0; i < numTargets; i++)
+
+{
+
+ 
+
+TCTYPE_ask_object_type(arrTargets[i],&miType);
+
+TCTYPE_ask_name2(miType, &miName);
+
+//if the target is a SE Draft
+
+if (strcmp(miName,"SE Draft")==0)
+
+{
+
+//Exportar file
+
+AE_ask_dataset_named_refs(arrTargets[i],&found,&refDataset);
+
+dftTag = arrTargets[i];
+
+for (y = 0; y < found; y++)
+
+{
+
+char *orgFileName;
+
+IMF_ask_original_file_name2(refDataset[y],&orgFileName);
+
+ 
+
+std::string fn = std::string("") + orgFileName;
+
+//Export only dft no the qaf file
+
+if(fn.substr(fn.find_last_of(".") + 1) == "dft") 
+
+{
+
+dftFileName = std::string("") + orgFileName;
+
+pdfFileName=dftFileName.substr(0,dftFileName.find_last_of('.'))+".pdf";
+
+ 
+
+outputFilePath = (char*) MEM_alloc(strlen(outPath) + strlen(orgFileName) + 4);
+
+*outputFilePath ='\0';
+
+ 
+
+strcat(outputFilePath, outPath);
+
+strcat(outputFilePath, "\\");
+
+strcat(outputFilePath, orgFileName);
+
+ 
+
+IMF_export_file(refDataset[y],outputFilePath);
+
+ 
+
+//Mi external app that fill custom properties
+
+ActualilizarPropiedad(outputFilePath, "px4_mat","1234");
+
+ActualilizarPropiedad(outputFilePath, "px4_mat2","12345");
+
+ActualilizarPropiedad(outputFilePath, "px4_mat3","12346");
+
+ 
+
+//update file - this part doesn't work
+
+IMF_file_data_p_t file_data; 
+
+IMF_get_file_access(refDataset[y], 0, &file_data);
+
+ 
+
+tag_t new_file_tag = NULLTAG; 
+
+AOM_lock(refDataset[y]);
+
+IMF_replace_file_and_get_new_tag(refDataset[y], outputFilePath, FALSE,
+
+&new_file_tag);
+
+ 
+
+AOM_lock(arrTargets[i]);
+
+AE_replace_dataset_named_ref2(arrTargets[i], refDataset[y], "SE Draft", AE_PART_OF, 
+
+new_file_tag);
+
+ 
+
+AE_save_myself(arrTargets[i]);
+
+AOM_unload(arrTargets[i]);
+
+IMF_release_file_access (&file_data);
+
+ 
+
+AOM_lock_for_delete(refDataset[y]);
+
+AOM_delete(refDataset[y]);
+
+ 
+
+} 
+
+ 
+
+MEM_free(orgFileName);
+
+}
+
+}
+
+else if (strcmp(miName,"PX4_ComercialRevision")==0)
+
+{
+
+//do nothing
+
+}
+
+else if (strcmp(miName,"PDF")==0)
+
+{
+
+//do nothing
+
+}
+
+else
+
+{
+
+//do nothing
+
+}
+
+ 
+
+MEM_free(miName);
+
+}
+
+} catch (const std::exception& message)
+
+{
+
+std::cout << "Error: " << message.what() << std::endl;
+
+TC_write_syslog("PX4 ERROR: %s\n", message.what());
+
+}
+
+return 0;
+
+}
+
+ 
+
+
+////////////////////////////////////////////////////////////////////
+
+"MATERIAL_SIGNOFF_USER" : ItemRevision.Job.SIGNOFF(Requirement Review,Designer).group_member.user.user_id  /master=iman /description="Materials signoff user"
+"CHECKER" : ItemRevision.Job.SIGNOFF(Checker Review,Checker).group_member.user.user_id /master=iman /description="Checked By"
+
+///////////////////////////////////////////////////////////////////
+
+===========================
+
+ IFERR_REPORT(SA_find_user("test", &user_tag));
+
+   if(user_tag == NULLTAG)
+
+   {
+
+  fprintf(fp, "\n user_tag is NULL "); fflush(fp);
+
+  fprintf(fp, "\n Closing file pointer and returning. "); fflush(fp);
+
+  fclose(fp);
+
+  return ITK_ok;
+
+ }
+
+   else
+
+   { fprintf(fp, "\nuser_tag is NOT null "); fflush(fp); }
+
+ 
+
+   IFERR_REPORT(EPM_create_adhoc_signoff(message.task, user_tag, &signoffCount, &signoffs));
+
+   IFERR_REPORT(EPM_set_adhoc_signoff_selection_done(message.task, true));
+
+ 
+
+   IFERR_REPORT(AOM_lock(message.task));
+
+ IFERR_REPORT(AOM_set_value_int(message.task, "signoff_quorum", signoffCount));
+
+ IFERR_REPORT(AOM_save(message.task));
+
+   IFERR_REPORT(AOM_unlock(message.task));
+
+============================================
+
+ 
+
+Note: My original EPM_create_adhoc_signoff call, and relative code, was fine.  
+
+However, I previously defined a 'select-signoff-team' profile that was, for whatever reason, blocking the EPM_create_adhoc_signoff function.
+
+After deleting all the 'Signoff Profiles', under the 'select-signoff-team' process, EPM_create_adhoc_signoff worked.
+
+/////////////////////////////////
+
+#include <tccore/aom.h>
+#include <tccore/aom_prop.h>
+#include <epm/epm.h>
+#include <base_utils/ResultCheck.hxx>
+
+/* disable unreferenced formal parameter errors */
+#pragma warning(disable: 4100)
+
+int set_signoff_custom_property(EPM_action_message_t message)
+{
+    int ifail = ITK_ok;
+    ResultCheck stat;
+    int numSignoffs = 0;
+    tag_t *signoffTags = NULL;
+    stat = EPM_ask_attachments(message.task, EPM_signoff_attachment,&numSignoffs, &signoffTags);
+    if (ifail == ITK_ok && numSignoffs > 0)
+    {
+        for( int ii = 0; ii < numSignoffs; ii++)
+        {
+            ifail = AOM_refresh(signoffTags[0], TRUE);
+            if(ifail != ITK_ok) return ifail;
+
+            ifail = AOM_set_value_string(signoffTags[0],
+                "a2_custom_property", "some value");
+            if(ifail != ITK_ok) return ifail;
+
+            ifail = AOM_save(signoffTags[0]);
+            if(ifail != ITK_ok) return ifail;
+
+            ifail = AOM_unlock(signoffTags[0]);
+            if(ifail != ITK_ok) return ifail;
+
+            ifail = AOM_unload(signoffTags[0]);
+            if(ifail != ITK_ok) return ifail;
+            MEM_free(signoffTags);
+        }
+    }
+    return ITK_ok;
+}
+
+int AP5_WorkflowHandlers( METHOD_message_t *msg, va_list args )
+{
+    int ifail = ITK_ok;
+    ResultCheck stat;
+    stat = EPM_register_action_handler("EPM-Set-Signoff-Custom-Property", "Placement: Complete on select-signoff-team", set_signoff_custom_property);
+    return ifail;
+}
+
+///////////////
+
+You didn't specify what you want to do with the objects. Here's a simple example of how to update a property of an object:
+
+tag_t tagvar = ... // Get a tag somehow
+
+AOM_lock(tagvar);
+
+AOM_set_value_string(tagvar, "prop_name", "new value"); // This is for single valued string property, use other functions in other cases.
+
+AOM_save(tagvar);
+
+AOM_unlock(tagvar);
+
+ 
+
+Each of these functions returns an int, remember to check the return value and not ignore it (non zero = error)
+
+/////////////////
+
+
+/*HEAD REGISTER_RULE_HANDLERS_USING_CUSTOM_EXITS CCC ITK */
+/*
+    Instructions:
+        Save this file as GTAC_register_callbacks.c
+        The naming format is very important.
+            GTAC_register_callbacks.c
+            GTAC_register_callbacks() - function name
+            GTAC - the name of the executable
+
+        Compile
+            %TC_ROOT%\sample\compile -DIPLIB=libuser_exits
+                 GTAC_register_callbacks.c
+        Link
+            %TC_ROOT%\sample\link_custom_exits GTAC
+        Move File
+            copy GTAC.dll %TC_BIN%
+
+
+        Set the following site environment variable in the .iman_env in TCEng V9
+        or using Preference Manager in later versions.
+        TC_customization_libraries=
+        GTAC
+*/
+
+#include <ict/ict_userservice.h>
+#include <tccore/custom.h>
+#include <itk/mem.h>
+#include <tc/tc.h>
+#include <user_exits/user_exits.h>
+#include <tc/emh.h>
+#include <epm/epm.h>
+#include <sa/sa.h>
+#include <stdarg.h>
+#include <stdarg.h>
+#include <ug_va_copy.h>
+#include <itk/mem.h>
+#include <tc/tc_startup.h>
+#include <tc/wsouif_errors.h>
+#include <tc/emh.h>
+#include <user_exits/user_exits.h>
+#include <property/prop.h>
+#include <property/prop_msg.h>
+#include <property/prop_errors.h>
+#include <tccore/grm.h>
+#include <tccore/grmtype.h>
+#include <tccore/tctype.h>
+#include <tccore/item.h>
+#include <tccore/aom.h>
+#include <tccore/aom_prop.h>
+#include <tccore/method.h>
+#include <tccore/workspaceobject.h>
+#include <lov/lov.h>
+#include <sa/sa.h>
+#include <res/reservation.h>
+#include <form/form.h>
+
+static void ECHO(char *format, ...)
+{
+    char msg[1000];
+    va_list args;
+    va_start(args, format);
+    vsprintf(msg, format, args);
+    va_end(args);
+    printf(msg);
+    TC_write_syslog(msg);
+}
+
+
+#define IFERR_REPORT(X) (report_error( __FILE__, __LINE__, #X, X, FALSE))
+#define ERROR_CHECK(X) if (IFERR_REPORT(X)) return (X)
+
+
+static int report_error(char *file, int line, char *call, int status,
+    logical exit_on_error)
+{
+    if (status != ITK_ok)
+    {
+        int
+            n_errors = 0,
+            *severities = NULL,
+            *statuses = NULL;
+        char
+            **messages;
+
+
+        EMH_ask_errors(&n_errors, &severities, &statuses, &messages);
+        if (n_errors > 0)
+        {
+            ECHO("\n%s\n", messages[n_errors-1]);
+            EMH_clear_errors();
+        }
+        else
+        {
+            char *error_message_string;
+            EMH_get_error_string (NULLTAG, status, &error_message_string);
+            ECHO("\n%s\n", error_message_string);
+        }
+
+
+        ECHO("error %d at line %d in %s\n", status, line, file);
+        ECHO("%s\n", call);
+
+
+        if (exit_on_error)
+        {
+            ECHO("Exiting program!\n");
+            exit (status);
+        }
+    }
+
+    return status;
+}
+// extern DLLAPI int GTAC_action_handler(EPM_action_message_t message)
+/*
+
+*/
+extern DLLAPI int RSHtoggleAttribute_handler(EPM_action_message_t message)
+{
+	tag_t *attachments = NULL;
+	tag_t job_tag = NULLTAG;
+	tag_t root_tag = NULLTAG;
+	tag_t rsh_attr_id = NULLTAG;
+
+	logical is_it_null;
+    logical is_it_empty;
+    logical is_checked_out = FALSE;
+    logical internal_checkout = FALSE;
+
+	char *object_string = NULL;
+	char *rsh_attr_value = NULL;
+	char *c9ColorName = NULL;
+	char *c9Rvalue = NULL;
+	char *c9Gvalue = NULL;
+	char *c9Bvalue = NULL;
+	char *c9MakeBuy = NULL;
+
+	int n_attachments = 0;
+	int ifail = 0;
+	int n_table_rows = 0;
+    tag_t *table_rows = NULLTAG;
+
+	FILE *fp;
+
+	fp = fopen("RSHtoggleAttribute_handler.log", "w");
+
+    fprintf(fp, "\n Inside RSHtoggleAttribute_handler \n");
+
+EPM_ask_job(message.task,&job_tag);
+EPM_ask_root_task(job_tag,&root_tag);
+EPM_ask_attachments(root_tag, EPM_target_attachment, &n_attachments, &attachments);
+
+IFERR_REPORT(RES_is_checked_out(attachments[0], &is_checked_out));
+
+if(is_checked_out == FALSE)
+ {
+   internal_checkout = TRUE;
+   IFERR_REPORT(RES_checkout(attachments[0], "auto checkout", "001", "C:\\temp", RES_EXCLUSIVE_RESERVE));
+   fprintf(fp, "\n Checked out Item \n"); fflush(fp);
+}
+
+/*
+IFERR_REPORT(AOM_ask_table_rows(attachments[0], "c9testTable", &n_table_rows, &table_rows));
+fprintf(fp, "\n number of c9testTable rows -> [%i]  \n", n_table_rows); fflush(fp);
+
+for(int row=0; row < n_table_rows; row++)
+ {
+IFERR_REPORT(AOM_ask_value_string(table_rows[row], "c9ColorName", &c9ColorName));
+fprintf(fp, "\n c9testTable.c9testTableObj.c9ColorName -> [%s]  \n", c9ColorName); fflush(fp);
+IFERR_REPORT(AOM_ask_value_string(table_rows[row], "c9Rvalue", &c9Rvalue));
+IFERR_REPORT(AOM_refresh(table_rows[row], TRUE));
+if(strcmp(c9Rvalue, "20")==0)
+  {
+	fprintf(fp, "\n Passed [strcmp-c9Rvalue, 20]=0  \n"); fflush(fp);
+    IFERR_REPORT(AOM_set_value_string(table_rows[row], "c9Rvalue", "25"));
+  }
+else
+   {
+	 if(strcmp(c9Rvalue, "25")==0)
+	  {
+		 fprintf(fp, "\n Passed [strcmp-c9Rvalue, 25]=0  \n"); fflush(fp);
+	     IFERR_REPORT(AOM_set_value_string(table_rows[row], "c9Rvalue", "20"));
+      }
+   }
+
+fprintf(fp, "\n c9testTable.c9testTableObj.c9Rvalue -> [%s]  \n", c9Rvalue); fflush(fp);
+IFERR_REPORT(AOM_ask_value_string(table_rows[row], "c9Gvalue", &c9Gvalue));
+fprintf(fp, "\n c9testTable.c9testTableObj.c9Gvalue -> [%s]  \n", c9Gvalue); fflush(fp);
+IFERR_REPORT(AOM_ask_value_string(table_rows[row], "c9Bvalue", &c9Bvalue));
+fprintf(fp, "\n c9testTable.c9testTableObj.c9Bvalue -> [%s]  \n", c9Bvalue); fflush(fp);
+IFERR_REPORT(AOM_ask_value_string(table_rows[row], "c9MakeBuy", &c9MakeBuy));
+fprintf(fp, "\n c9testTable.c9testTableObj.c9MakeBuy -> [%s]  \n", c9MakeBuy); fflush(fp);
+
+
+IFERR_REPORT(AOM_save(table_rows[row]));
+IFERR_REPORT(AOM_refresh(table_rows[row], FALSE));
+ }
+
+ */
+
+
+WSOM_ask_object_id_string(attachments[0], &object_string);
+
+POM_attr_id_of_attr("object_desc", "Item", &rsh_attr_id);
+POM_ask_attr_string(attachments[0], rsh_attr_id, &rsh_attr_value, &is_it_null, &is_it_empty);
+
+	IFERR_REPORT(AOM_load(attachments[0]));
+	IFERR_REPORT(AOM_refresh(attachments[0], TRUE));
+
+if(tc_strcmp(rsh_attr_value, "RED")==0 || tc_strcmp(rsh_attr_value, "EMPTY")==0)
+    IFERR_REPORT(AOM_set_value_string(attachments[0], "object_desc", "BLUE"));
+else
+  {
+     if(tc_strcmp(rsh_attr_value, "BLUE")==0)
+       IFERR_REPORT(AOM_set_value_string(attachments[0], "object_desc", "RED"));
+     else
+       IFERR_REPORT(AOM_set_value_string(attachments[0], "object_desc", "EMPTY"));
+  }
+
+	IFERR_REPORT(AOM_save(attachments[0]));
+	IFERR_REPORT(AOM_unload(attachments[0]));
+
+	if(internal_checkout == TRUE)
+	 {
+	   IFERR_REPORT(RES_checkin(attachments[0]));
+	   internal_checkout = FALSE;
+	   fprintf(fp, "\n Checked in Item \n"); fflush(fp);
+	 }
+
+    fclose(fp);
+	return ITK_ok;
+}
+
+
+
+
+extern DLLAPI int Register_RSHtoggleAttribute_handler(int *decision, va_list args)
+{
+     int ec = ITK_ok;
+    *decision = ALL_CUSTOMIZATIONS;
+
+    ec = EPM_register_action_handler("RSH-action-handler", "", RSHtoggleAttribute_handler);
+
+    return ec;
+}
+
+
+extern DLLAPI int RSH_register_callbacks()
+{
+
+    CUSTOM_register_exit("RSH", "USER_gs_shell_init_module",
+                                               (CUSTOM_EXIT_ftn_t) Register_RSHtoggleAttribute_handler );
+
+    return ITK_ok;
+}
+
+
+/////////////////////
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+/*HEAD CHECKIN_ITEM_REVISION CCC ITK */
+#include <stdlib.h>
+#include <tccore/aom.h>
+#include <tc/emh.h>
+#include <tc/tc.h>
+#include <sa/tcfile.h>
+#include <itk/mem.h>
+#include <sa/user.h>
+#include <res/res_itk.h>
+
+#define EXIT_FAILURE 1 
+#define ERROR_CHECK(X) (report_error( __FILE__, __LINE__, #X, (X)))
+static void report_error( char *file, int line, char *function, int return_code)
+{
+    if (return_code != ITK_ok)
+    {
+        char *error_message_string;
+        EMH_get_error_string (NULLTAG, return_code, &error_message_string);
+        printf ("ERROR: %d ERROR MSG: %s.\n", return_code, error_message_string);
+        printf ("FUNCTION: %s\nFILE: %s LINE: %d\n", function, file, line);
+        if(error_message_string) MEM_free(error_message_string);
+        printf("\n Exiting program! \n");
+        exit (EXIT_FAILURE);    
+    }
+}
+
+static void do_it(void)
+{
+    logical 
+        is_checked_out = FALSE;
+    tag_t 
+        item_revision = NULLTAG, 
+        reservation_object = NULLTAG, 
+        user = NULLTAG;
+    char  
+        userid[SA_user_size_c+1] = "";
+
+    ERROR_CHECK(ITEM_find_rev("5913011", "A", &item_revision));
+    if (item_revision == NULLTAG)
+    {
+        printf("Item Revision NOT found!\n");
+    }
+    else
+    {
+        ERROR_CHECK(RES_is_checked_out(item_revision, &is_checked_out));
+        if (is_checked_out == FALSE)
+        {
+            printf("Item Revision is NOT checked out!\n");
+        }
+        else
+        {
+            ERROR_CHECK(RES_ask_reservation_object(item_revision, 
+                &reservation_object));
+            ERROR_CHECK(RES_ask_user(reservation_object, &user));
+            ERROR_CHECK(SA_ask_user_person_name(user, userid));
+            printf("Item Revision is checked out by: %s\n", userid);
+            ERROR_CHECK(RES_checkin(item_revision));
+            printf("Item Revision has been checked in!\n");
+        }
+    }   
+}
+
+int ITK_user_main(int argc, char* argv[])
+{
+    int
+        status = 0; 
+   
+    ITK_initialize_text_services( ITK_BATCH_TEXT_MODE );
+    status = ITK_auto_login();
+    if (  (status != ITK_ok)) printf("\n Login Failed! \n\n");
+    else
+    {
+        printf("\n Login successful! \n\n");
+        ITK_set_journalling(TRUE);
+        do_it();
+    }
+    ITK_exit_module(TRUE);
+    return status;
+}
+
+/////////////////////
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+#include <iostream>
+#include <epm/epm.h>
+#include <epm/epm_task_template_itk.h>
+#include <epm/signoff.h>
+#include <tc/emh.h>
+#include <tcinit/tcinit.h>
+#include <tc/tc_startup.h>
+#include <sa/group.h>
+#include <sa/role.h>
+
+int create_resource_pool_adhoc_signoff(EPM_action_message_t msg)
+{
+    int ifail = ITK_ok;
+    ResultStatus stat;
+
+    try
+    {
+        tag_t tRootTask = NULLTAG;
+        stat = EPM_ask_root_task(msg.task, &tRootTask);
+
+        tag_t tTask = msg.task;
+
+        if (msg.action == EPM_start_action  && msg.proposed_state == EPM_started)
+        {
+            tag_t tGroup = NULLTAG;
+            stat = SA_find_group("dba", &tGroup);
+
+            tag_t tRole = NULLTAG;
+            stat = SA_find_role2("DBA", &tRole);
+
+            tag_t tPool = NULLTAG;
+            stat = EPM_get_resource_pool(tGroup, tRole, FALSE, &tPool);
+
+            int n = 0;
+            scoped_smptr<tag_t> tSignoffs;
+            stat = EPM_create_adhoc_signoff(tTask, tPool, &n, &tSignoffs);
+
+            stat = EPM_set_adhoc_signoff_selection_done(tTask, TRUE);
+        }
+    }
+    catch(IFail & ex)
+    {
+        return ex.ifail();
+    }
+    return ifail;
+}
+
+
+////////////////////////
+
+#include <iostream>
+#include <epm/epm.h>
+#include <tc/emh.h>
+#include <tc/tc.h>
+#include <tc/tc_startup.h>
+#include <sa/user.h>
+#include <tccore/aom.h>
+#include <tccore/aom_prop.h>
+
+#include <metaframework/BusinessObjectRef.hxx>
+#include <base_utils/IFail.hxx>
+#include <base_utils/TcResultStatus.hxx>
+#include <base_utils/ScopedSmPtr.hxx>
+#include <mld/logging/TcMainLogger.hxx>
+
+using namespace std;
+using namespace Teamcenter;
+using Teamcenter::Main::logger;
+
+int remove_all_reviewers(tag_t selectSignoffTaskTag)
+{
+    int ifail = ITK_ok;
+    ResultStatus stat;
+    try
+    {
+        int nReviewersTags = 0;
+        scoped_smptr<tag_t> spReviewersTags;    
+        stat = EPM_ask_attachments(selectSignoffTaskTag, EPM_signoff_attachment, &nReviewersTags, &spReviewersTags);
+        cout << endl << "Before Number of Reviewers: " << nReviewersTags << endl;
+        for (int ii = 0; ii < nReviewersTags; ii++)
+        {       
+            int nValues = 0;
+            scoped_smptr<char*> spValues;
+            stat = AOM_ask_displayable_values(spReviewersTags[ii], "group_member", &nValues, &spValues);
+            for( int jj = 0 ; jj < nValues; jj++ )
+                cout << "    " <<  spValues.get()[jj] << endl;
+        }
+        
+        stat = EPM_remove_attachments(selectSignoffTaskTag, nReviewersTags, spReviewersTags.get() );
+        
+        stat = EPM_ask_attachments(selectSignoffTaskTag, EPM_signoff_attachment, &nReviewersTags, &spReviewersTags);
+        cout << endl << "After Number of Reviewers: " << nReviewersTags << endl;
+        for (int ii = 0; ii < nReviewersTags; ii++)
+        {
+            int nValues = 0;
+            scoped_smptr<char*> spValues;
+            stat = AOM_ask_displayable_values(spReviewersTags[ii], "group_member", &nValues, &spValues);
+            for( int jj = 0 ; jj < nValues; jj++ )
+                cout << "    " <<  spValues.get()[jj] << endl;
+        }       
+    }
+    catch( const IFail &e )
+    {
+        ifail = e.ifail();
+        cout << "\n    error " << ifail << endl;
+        cout << "    "<< e.getMessage() <<endl;
+    }
+    return ifail;
+}
+
+//////////////////
+
+
+/*
+    Instructions:
+        Save this file as GTAC_register_action_handler_callbacks.c
+        The naming format is very important.
+            GTAC_register_action_handler_callbacks.c
+            GTAC_register_callbacks() - function name
+            GTAC - the name of the executable
+
+
+        Compile
+            %TC_ROOT%\sample\compile -DIPLIB=none
+                 GTAC_register_action_handler_callbacks.c
+        Link
+            %TC_ROOT%\sample\link_custom_exits GTAC
+        Move File
+            copy GTAC.dll %TC_USER_LIB%
+
+
+        Set the following multi valued string Site Preference
+        TC_customization_libraries=
+        GTAC
+
+
+    Handler Placement:
+        "Start" Task Action on the DO Task
+*/
+#include <ict/ict_userservice.h>
+#include <tccore/custom.h>
+#include <itk/mem.h>
+#include <tc/tc.h>
+#include <user_exits/user_exits.h>
+#include <tc/emh.h>
+#include <epm/epm.h>
+#include <sa/sa.h>
+#include <stdarg.h>
+
+
+static void ECHO(char *format, ...)
+{
+    char msg[1000];
+    va_list args;
+    va_start(args, format);
+    vsprintf(msg, format, args);
+    va_end(args);
+    printf(msg);
+    TC_write_syslog(msg);
+}
+
+
+#define IFERR_REPORT(X) (report_error( __FILE__, __LINE__, #X, X, FALSE))
+#define ERROR_CHECK(X) if (IFERR_REPORT(X)) return (X)
+
+
+static int report_error(char *file, int line, char *call, int status,
+    logical exit_on_error)
+{
+    if (status != ITK_ok)
+    {
+        int
+            n_errors = 0,
+            *severities = NULL,
+            *statuses = NULL;
+        char
+            **messages;
+
+
+        EMH_ask_errors(&n_errors, &severities, &statuses, &messages);
+        if (n_errors > 0)
+        {
+            ECHO("\n%s\n", messages[n_errors-1]);
+            EMH_clear_errors();
+        }
+        else
+        {
+            char *error_message_string;
+            EMH_get_error_string (NULLTAG, status, &error_message_string);
+            ECHO("\n%s\n", error_message_string);
+        }
+
+
+        ECHO("error %d at line %d in %s\n", status, line, file);
+        ECHO("%s\n", call);
+
+
+        if (exit_on_error)
+        {
+            ECHO("Exiting program!\n");
+            exit (status);
+        }
+    }
+
+
+    return status;
+}
+
+
+extern DLLAPI int GTAC_action_handler(EPM_action_message_t message)
+{
+    int
+        count,
+        n_attachments = 0;
+    tag_t
+        *attachments = NULL,
+        group = NULLTAG,
+        job = NULLTAG,
+        resourcePool = NULLTAG,
+        role = NULLTAG,
+        root_task = NULLTAG,
+        signoff = NULLTAG,
+        *unassigned_profiles = NULL;
+  int i = 0;
+  tag_t tcProjectTag = NULLTAG;
+  char * temp1;
+  char* temp2;
+
+
+    ECHO("GTAC_action_handler\n");
+
+
+    ERROR_CHECK(EPM_ask_root_task( message.task, &root_task));
+    ECHO("  root_task = %d\n", root_task);
+
+
+    ERROR_CHECK(EPM_ask_attachments(root_task, EPM_target_attachment,&n_attachments, &attachments));
+    if (n_attachments == 0) return 1;  // fail
+ for(i = 0; i<n_attachments; i++)
+ {
+  ECHO("inside for loop\n");
+  ERROR_CHECK(PROJ_find("001", &tcProjectTag));
+  
+  ERROR_CHECK(PROJ_assign_objects(1,&tcProjectTag, 1, &attachments[i]));
+  
+  ERROR_CHECK(POM_tag_to_string(tcProjectTag,&temp1));
+  
+  ERROR_CHECK(POM_tag_to_string(attachments[i],&temp2));
+  ECHO("project tag UID %s,atachment UID %s \n ",temp1, temp2);
+ }
+
+    ECHO("  Done returning ITK_ok\n");
+ 
+ return ITK_ok;
+}
+
+
+extern DLLAPI int GTAC_register_action_handler(int *decision, va_list args)
+{
+    *decision = ALL_CUSTOMIZATIONS;
+
+
+    ECHO("GTAC_register_action_handler\n");
+
+
+    ERROR_CHECK(EPM_register_action_handler("GTAC-action-handler",
+        "Placement: Assign Task Action of select-signoff-team task",
+        GTAC_action_handler));
+
+
+    return ITK_ok;
+}
+
+
+extern DLLAPI int GTAC_register_callbacks ()
+{
+    ECHO("GTAC_register_callbacks\n");
+
+
+    ERROR_CHECK(CUSTOM_register_exit ( "GTAC", "USER_gs_shell_init_module",
+       (CUSTOM_EXIT_ftn_t) GTAC_register_action_handler ));
+
+
+    return ITK_ok;
+}
+
+/////////////
+
+#include <iostream>
+#include <epm\epm.h>
+#include <tccore\aom.h>
+#include <tccore\aom_prop.h>
+
+#include <base_utils/IFail.hxx>
+#include <base_utils/ScopedSmPtr.hxx>
+#include <base_utils/TcResultStatus.hxx>
+
+using namespace std;
+using namespace Teamcenter;
+
+extern "C" int set_signoff_property_from_handler(EPM_action_message_t msg)
+{
+    int ifail = ITK_ok;
+    ResultStatus stat;
+
+    try
+    {
+        tag_t task = msg.task;
+        int n_signoffs = 0;
+        scoped_smptr<tag_t> signoffs;
+        stat = EPM_ask_attachments(task, EPM_signoff_attachment, &n_signoffs, &signoffs);
+
+        /* assumming only one signoff */
+        tag_t signoff = signoffs[0];
+        stat = AOM_lock(signoff);
+        stat = AOM_set_value_string(signoff, "a4_Additional_Info", "Set from Handler");
+        stat = AOM_save(signoff);
+
+        stat = AOM_refresh(signoff, TRUE);
+
+        scoped_smptr<char> value;
+        stat = AOM_ask_value_string(signoff, "a4_Additional_Info", &value);
+        printf("\n\t value: %s \n", value.get());
+        TC_write_syslog("\n\t value: %s \n", value.get());
+        stat = AOM_unload(signoff);
+
+    }
+    catch( const IFail &e )
+    {
+        cout << "error " << e.ifail() << endl;
+        cout << e.getMessage() << endl;
+    }
+   return ifail;
+}
+
+////////////////
+
+#include <epm/signoff.h>
+#include <sa/groupmember.h>
+#include <tccore/aom_prop.h>
+
+#include <iostream>
+#include <Error_Exception.hxx>
+#include <base_utils/IFail.hxx>
+#include <base_utils/ScopedSmPtr.hxx>
+#include <base_utils/TcResultStatus.hxx>
+#include <mld/logging/TcMainLogger.hxx>
+
+using namespace std;
+using namespace Teamcenter;
+using Teamcenter::Main::logger;
+
+int remove_signoff_profile(tag_t review_task)
+{
+    int ifail = ITK_ok;
+    ResultStatus rstat;
+    try
+    {
+        int n_tasks = 0;
+        scoped_smptr<tag_t> tasks;
+        rstat = AOM_ask_value_tags(review_task, "child_tasks", &n_tasks,&tasks);
+        for (int ii = 0; ii < n_tasks; ii++)
+        {
+            scoped_smptr<char> task_type;
+            rstat = AOM_UIF_ask_value(tasks[ii], "object_type", &task_type);
+            if (strcmp(task_type.getString(), "Select Signoff Team Task") == 0)
+            {
+                tag_t sst_task = tasks[ii];
+
+                EPM_state_t state;
+                rstat = EPM_ask_state(sst_task, &state);
+                if (state == EPM_completed)
+                {
+                    ifail = EPM_already_completed;
+                    cout << "Cannot remove signoff profile because the"; 
+                    cout << " select-signoff-team task is complete." << endl;
+                }
+                else
+                {
+                    int n_signoff = 0;
+                    scoped_smptr<tag_t> signoffs;
+                    rstat = EPM_ask_attachments(sst_task, EPM_signoff_attachment, 
+                        &n_signoff, &signoffs);                                     
+                    if (n_signoff == 0)
+                    {
+                        cout << "No signoff profiles exist!" << endl;
+                    }
+                    else
+                    {
+                        tag_t member = NULLTAG;
+                        SIGNOFF_TYPE_t type; 
+                        rstat = EPM_ask_signoff_member(signoffs[0], &member, &type);
+                                                
+                        tag_t groupmembers[1] = {member};
+                        rstat = EPM_remove_signoffs(review_task, 1, &groupmembers[0]);
+                    }
+                }
+            }
+        }
+    }
+    catch( const IFail &e )
+    {
+        ifail = e.ifail();
+        /*
+            EPM_signoff_profile_not_staffed is returned like an error 
+            but is really only information.
+        */
+        if (ifail == EPM_signoff_profile_not_staffed)
+        {
+            cout << "INFORMATION: The required staffing for the signoff";
+            cout << " profiles are not complete." << endl;
+        }
+        else
+        {
+            cout << "error " << e.ifail() << endl;
+            cout << e.getMessage() << endl;;    
+            logger()->error(e.ifail(),e.getMessage().c_str());
+        }
+    }
+    return ifail;
+}
+
+///////////////
+
+#include <A2gtac/A2AuditEPMTaskReject.hxx>
+
+#include <string.h>
+#include <pom/pom/pom.h>
+#include <tccore/aom_prop.h>
+
+/* disable unreferenced formal parameter errors */
+#pragma warning(disable: 4100)
+
+
+
+int A2AuditEPMTaskReject(tag_t EPMPerformSignoffTaskTag,
+                         int secondaryObjectCount, /* not used */
+                         tag_t* secondaryObjectTags, /* not used */
+                         char** secondaryQualifiers, /* not used */
+                         tag_t eventType, /* not used */
+                         int paramCount,
+                         char** paramNames,
+                         char** paramValues,
+                         int errorCode, /* not used */
+                         const char* errorMessage, /* not used */
+                         tag_t Fnd0WorkflowAuditTag)
+{
+    int ifail = ITK_ok;
+    if ( paramCount ==0 ) return ITK_ok;
+
+    tag_t signoffTag = NULLTAG;
+    for ( int ii = 0; ii < paramCount; ii++ )
+    {
+        if(strcmp(paramNames[ii],"signoff") == 0)
+        {
+            char* signoffUID=paramValues[ii];
+            ifail = POM_string_to_tag(signoffUID, &signoffTag);
+            if(ifail != ITK_ok) return ifail;
+            break;
+        }
+    }
+
+    if (signoffTag == NULLTAG)
+    {
+        return ITK_ok;
+    }
+
+    tag_t auditClassTag = NULLTAG;
+    ifail = POM_class_of_instance(Fnd0WorkflowAuditTag, &auditClassTag);
+    if(ifail != ITK_ok) return ifail;
+
+    char* auditClassName = NULL;
+    ifail = POM_name_of_class (auditClassTag, &auditClassName);
+    if(ifail != ITK_ok) return ifail;
+
+    tag_t signoffClassTag = NULLTAG;
+    ifail = POM_class_of_instance( signoffTag, &signoffClassTag);
+    if(ifail != ITK_ok) return ifail;
+
+    char* signoffClassName = NULL;
+    ifail = POM_name_of_class (signoffClassTag, &signoffClassName);
+    if(ifail != ITK_ok) return ifail;
+    
+    logical exists = false;
+    ifail = POM_attr_exists("a2_custom_property", signoffClassName, &exists);
+    if(ifail != ITK_ok) return ifail;
+    if (exists == TRUE)
+    {
+        char* propVal = NULL;
+        ifail = AOM_ask_value_string (signoffTag, "a2_custom_property" ,&propVal);
+        if(ifail != ITK_ok) return ifail;
+        
+        exists=false;
+        ifail = POM_attr_exists("a2_signoff_custom_property", auditClassName, &exists);
+        if(ifail != ITK_ok) return ifail;
+        if (exists == TRUE)
+        {
+            ifail = AOM_set_value_string(Fnd0WorkflowAuditTag, 
+                        "a2_signoff_custom_property", propVal);
+            if(ifail != ITK_ok) return ifail;
+        }
+        if(propVal) MEM_free(propVal);
+    }
+    if (auditClassName) MEM_free(auditClassName);
+    if (signoffClassName) MEM_free(signoffClassName);
+    return ifail;
+}
+
+//////////
+
+static void add_required_reviewer(tag_t task_tag, tag_t group_member_tag)
+{
+    int ifail = ITK_ok;
+    
+    /**************************************************************************
+        Possible values for signoff_required:
+        * Optional - Signoff decision is not required as long as quorum is met
+            and can be manually overridden to Required Modifiable 
+                     before perform signoffs task starts.
+                     
+        * RequiredModifiable - Signoff decision is required even if quorum is
+            met and can be manually overridden back to Optional before perform
+            signoffs task starts.   
+            
+        * RequiredUnmodifiable - Signoff decision is required even if quorum is
+            met and cannot be manually overridden to Optional before perform 
+            signoffs task starts    
+    */  
+    char signoff_required[] = "RequiredUnmodifiable";   
+    
+    ifail = EPM_add_reviewers_on_task_with_signoff(task_tag, TRUE, 1, 
+                &group_member_tag, signoff_required);
+    if(ifail != ITK_ok) {/* add your error logic here */}
+    
+    ifail = EPM_set_adhoc_signoff_selection_done (task_tag,TRUE);
+    if(ifail != ITK_ok) {/* add your error logic here */}
+    
+    ifail = EPM_trigger_action (task_tag, EPM_complete_action, "Some comment");
+    if(ifail != ITK_ok) {/* add your error logic here */}
+}
+
+/////////////////
+
+#include <tccore/aom_prop.h>
+#include <epm/epm.h>
+#include <epm/signoff.h>
+#include <sa/user.h>
+
+static void report_signoff_team(tag_t perform_signoff_task_tag)
+{    
+    int n_signoffs = 0;
+    tag_t *signoffs = NULL;
+    IFERR_REPORT(EPM_ask_attachments(perform_signoff_task_tag, EPM_signoff_attachment, &n_signoffs, &signoffs));
+    for (int ii = 0; ii < n_signoffs; ii++)
+    {
+        tag_t member_tag = NULLTAG;
+        SIGNOFF_TYPE_t member_type_tag;
+        IFERR_ABORT(EPM_ask_signoff_member(signoffs[ii], &member_tag, &member_type_tag));
+        if(member_type_tag == SIGNOFF_GROUPMEMBER)
+        {
+            tag_t user_tag = NULLTAG;
+            IFERR_ABORT(SA_ask_groupmember_user(member_tag, &user_tag));
+            
+            char user_id[SA_user_size_c + 1] = "";
+            IFERR_ABORT(SA_ask_user_identifier(user_tag, user_id));
+            
+            tag_t person_tag = NULLTAG;
+            IFERR_ABORT(SA_ask_user_person(user_tag, &person_tag));
+            
+            char *person_name = NULL;
+            IFERR_ABORT(SA_ask_person_name2( person_tag, &person_name));
+                        
+            printf("\t User: %s - Person: %s\n", user_id, person_name);           
+            if(person_name) MEM_free(person_name);
+        }        
+        else if(member_type_tag == SIGNOFF_RESOURCEPOOL)
+        {   
+            char *object_string = NULL;
+            IFERR_REPORT(AOM_ask_value_string(member_tag, "object_string", &object_string));
+            printf("\t Resource Pool: %s \n", object_string);
+            if(object_string) MEM_free(object_string);
+        }   
+
+    }
+    if(signoffs) MEM_free(signoffs);
+}
+
+////////////////////
+
+#include <pom/pom/pom.h>
+
+static void getSignoffAuditRecords(tag_t task_tag, tag_t signoff_tag, int *n_records, tag_t **records)
+{
+    tag_t class_tag = NULLTAG;
+    POM_class_id_of_class( "Fnd0WorkflowAudit", &class_tag);
+    
+    tag_t object_attr = NULLTAG;
+    POM_attr_id_of_attr("fnd0Object", "Fnd0WorkflowAudit", &object_attr);
+    
+    tag_t signoff_attr = NULLTAG;
+    POM_attr_id_of_attr("fnd0Signoff", "Fnd0WorkflowAudit", &signoff_attr);
+    
+    tag_t userid_attr = NULLTAG;
+    POM_attr_id_of_attr("fnd0UserId", "Fnd0WorkflowAudit", &userid_attr);
+    
+    tag_t logged_date_attr  = NULLTAG;
+    POM_attr_id_of_attr( "fnd0LoggedDate",  "Fnd0WorkflowAudit", &logged_date_attr );
+    
+    tag_t find_task = NULLTAG;   
+    POM_create_enquiry_on_tag (class_tag, object_attr, POM_is_equal_to, &task_tag, &find_task);
+    
+    tag_t find_signoff = NULLTAG;
+    POM_create_enquiry_on_tag (class_tag, signoff_attr, POM_is_equal_to, &signoff_tag, &find_signoff);
+    
+    tag_t find_task_signoffs = NULLTAG;
+    POM_combine_enquiries( find_task , POM_and , find_signoff , &find_task_signoffs);
+    
+    int n_sort_attrs = 1;
+    int sort_order[1] = {POM_order_ascending};
+    POM_order_enquiry( find_task_signoffs, 1, &logged_date_attr, sort_order );
+
+    int n_found = 0;
+    tag_t *found = NULL;
+    POM_execute_enquiry(find_task_signoffs, &n_found, &found);
+    *n_records = n_found;
+    (*records) = (tag_t *) MEM_alloc ( sizeof (tag_t) * n_found);
+    for(int ii = 0;  ii < n_found; ii++)
+    {
+        (*records)[ii] = found[ii];
+    }  
+    if(n_found > 0) MEM_free(found); 
+}
+
+//////////////
+
+#include <epm/epm.h>
+
+void get_signoff_attachments(tag_t task, int *n_attachs, tag_t **attachs)
+{
+    IFERR_REPORT(EPM_ask_attachments(task, EPM_signoff_attachment, n_attachs, attachs));
+}
+
+///////////
+
+
+#include <tccore/aom.h>
+#include <tccore/aom_prop.h>
+#include <epm/epm.h>
+
+/* disable unreferenced formal parameter errors */
+#pragma warning(disable: 4100)
+
+int set_signoff_custom_property(EPM_action_message_t message)
+{
+    int ifail = ITK_ok;
+    int numSignoffs = 0;
+    tag_t *signoffTags = NULL;
+    ifail = EPM_ask_attachments(message.task, EPM_signoff_attachment,
+            &numSignoffs, &signoffTags);
+    if (ifail == ITK_ok && numSignoffs > 0)
+    {
+        for( int ii = 0; ii < numSignoffs; ii++)
+        {
+            ifail = AOM_refresh(signoffTags[0], TRUE);
+            if(ifail != ITK_ok) return ifail;
+
+            ifail = AOM_set_value_string(signoffTags[0],
+                "a2_custom_property", "some value");
+            if(ifail != ITK_ok) return ifail;
+
+            ifail = AOM_save(signoffTags[0]);
+            if(ifail != ITK_ok) return ifail;
+
+            ifail = AOM_unlock(signoffTags[0]);
+            if(ifail != ITK_ok) return ifail;
+
+            ifail = AOM_unload(signoffTags[0]);
+            if(ifail != ITK_ok) return ifail;
+            MEM_free(signoffTags);
+        }
+    }
+    return ITK_ok;
+}
+
+int A2SetSignoffCustomProperty( METHOD_message_t *msg, va_list args )
+{
+    int ifail = ITK_ok;
+    ifail = EPM_register_action_handler("Set-Signoff-Custom-Property", 
+            "Placement: Complete on select-signoff-team", 
+            set_signoff_custom_property);
+    return ifail;
+}
+
+////////////
+
+How to execute a Custom Action handler during  a delegation
+Symptom
+---------------
+custom handlers are not executed during a delegation.
+Hardware/Software Configuration
+Platform: INTEL
+OS: WINDOW
+OS Version: 732SP1
+
+Family: TEAMCENTER
+Application: CORE_FUNCTIONS
+Function: 
+Subfunction: 
+Release: V9.1.2.4
+Solution
+a new preference has been introdduced for this.
+
+1. set up the Teamcenter Preference EPM_delegate_notification_handlers, which 
+will contain the list of the custom handler to be executed.
+=
+for instance:
+EPM_delegate_notification_handlers=
+AH-delegate-control
+
+2. place the handler AH-delegate-control in the start action of the 
+perform-signoff.
+
+3. This handler can be written in order to filter the execution only for the 
+delegation like this.
+	if(msg.action != EPM_assign_approver_action)
+	{
+		ECHO("\t not EPM_assign_approver_action, skipping\n");
+		ECHO("customlib_AH_handler END\n");	
+		return ITK_ok;
+	}
+
+this is working from Teamcenter 10.1.x. on.
+
+//////////////
+
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+/*HEAD ACTION_HANDLER_TO_ASSIGN_RESOURCE_POOL_AS_REVIEWER CCC ITK */
+/*
+    Instructions:
+        Save this file as GTAC_register_action_handler_callbacks.c
+        The naming format is very important.
+            GTAC_register_action_handler_callbacks.c
+            GTAC_register_callbacks() - function name
+            GTAC - the name of the executable
+
+        Compile
+            %TC_ROOT%\sample\compile -DIPLIB=none
+                 GTAC_register_action_handler_callbacks.c
+        Link
+            %TC_ROOT%\sample\link_custom_exits GTAC
+        Move File
+            copy GTAC.dll %TC_USER_LIB%
+
+        Set the following multi valued string Site Preference
+        TC_customization_libraries=
+        GTAC
+
+    Handler Placement:
+        "Assign" Task Action on the select-signoff-team of an Review Task
+*/
+#include <ict/ict_userservice.h>
+#include <tccore/custom.h>
+#include <itk/mem.h>
+#include <tc/tc.h>
+#include <user_exits/user_exits.h>
+#include <tc/emh.h>
+#include <epm/epm.h>
+#include <sa/sa.h>
+#include <stdarg.h>
+
+static void ECHO(char *format, ...)
+{
+    char msg[1000];
+    va_list args;
+    va_start(args, format);
+    vsprintf(msg, format, args);
+    va_end(args);
+    printf(msg);
+    TC_write_syslog(msg);
+}
+
+#define IFERR_REPORT(X) (report_error( __FILE__, __LINE__, #X, X, FALSE))
+#define ERROR_CHECK(X) if (IFERR_REPORT(X)) return (X)
+
+static int report_error(char *file, int line, char *call, int status,
+    logical exit_on_error)
+{
+    if (status != ITK_ok)
+    {
+        int
+            n_errors = 0,
+            *severities = NULL,
+            *statuses = NULL;
+        char
+            **messages;
+
+        EMH_ask_errors(&n_errors, &severities, &statuses, &messages);
+        if (n_errors > 0)
+        {
+            ECHO("\n%s\n", messages[n_errors-1]);
+            EMH_clear_errors();
+        }
+        else
+        {
+            char *error_message_string;
+            EMH_get_error_string (NULLTAG, status, &error_message_string);
+            ECHO("\n%s\n", error_message_string);
+        }
+
+        ECHO("error %d at line %d in %s\n", status, line, file);
+        ECHO("%s\n", call);
+
+        if (exit_on_error)
+        {
+            ECHO("Exiting program!\n");
+            exit (status);
+        }
+    }
+
+    return status;
+}
+
+extern DLLAPI int GTAC_action_handler(EPM_action_message_t message)
+{
+    int
+        count,
+        n_attachments = 0;
+    tag_t
+        *attachments = NULL,
+        group = NULLTAG,
+        job = NULLTAG,
+        resourcePool = NULLTAG,
+        role = NULLTAG,
+        root_task = NULLTAG,
+        signoff = NULLTAG,
+        *unassigned_profiles = NULL;
+
+    ECHO("GTAC_action_handler\n");
+
+    ERROR_CHECK(EPM_ask_root_task( message.task, &root_task));
+    ECHO("  root_task = %d\n", root_task);
+
+    ERROR_CHECK(EPM_ask_attachments(root_task, EPM_target_attachment,
+        &n_attachments, &attachments));
+    if (n_attachments == 0) return 1;  // fail
+
+    ERROR_CHECK(AOM_ask_group(attachments[0], &group));
+    ECHO("  group = %d\n", group);
+
+    if (attachments) MEM_free(attachments);
+
+    ERROR_CHECK(SA_ask_group_default_role(group, &role) );
+    ECHO("  role = %d\n", role);
+
+    ERROR_CHECK(EPM_get_resource_pool(group, role, FALSE, &resourcePool));
+    ECHO("  resourcePool = %d\n", resourcePool);
+
+    ERROR_CHECK(EPM_ask_job(message.task, &job));
+    ECHO("  job = %d\n", job);
+
+    ERROR_CHECK(EPM_ask_unassigned_profiles(job, message.task, &count,
+        &unassigned_profiles));
+    ECHO("  count = %d\n", count);
+    if (count == 0) return 1;  // fail
+
+    ERROR_CHECK(EPM_create_profile_signoff(message.task, resourcePool,
+        unassigned_profiles[0], &signoff));
+    ECHO("  signoff = %d\n", signoff);
+
+    if (unassigned_profiles) MEM_free(unassigned_profiles);
+
+    ECHO("  Done returning ITK_ok\n");
+
+    return ITK_ok;
+}
+
+extern DLLAPI int GTAC_register_action_handler(int *decision, va_list args)
+{
+    *decision = ALL_CUSTOMIZATIONS;
+
+    ECHO("GTAC_register_action_handler\n");
+
+    ERROR_CHECK(EPM_register_action_handler("GTAC-action-handler",
+        "Placement: Assign Task Action of select-signoff-team task",
+        GTAC_action_handler));
+
+    return ITK_ok;
+}
+
+extern DLLAPI int GTAC_register_callbacks ()
+{
+    ECHO("GTAC_register_callbacks\n");
+
+    ERROR_CHECK(CUSTOM_register_exit ( "GTAC", "USER_gs_shell_init_module",
+       (CUSTOM_EXIT_ftn_t) GTAC_register_action_handler ));
+
+    return ITK_ok;
+}
+Document Information
+Document ID:tc_api117
+Issue Date:Jun-06-2007
+Revision Date:May-23-2013
+Product:TC_Engineering,Teamcenter
+Submitted by:Donna Baumann
+API Type:ITK
+Language Ext:c
+ 
+///////////////////////////
+
+Symptom
+---------------
+ITK function EPM_set_decision returns error 22100
+Solution
+Replace the call to 
+   EPM_set_decision(task, user, decision, "Auto-Signoff Performed", TRUE)
+
+With these calls 
+   EPM_ask_attachments(task, EPM_signoff_attachment
+       &n_signoffs, &signoffs)
+   EPM_remove_attachments(task, n_signoffs, signoffs)
+   EPM_set_task_result(task, "Approved")
+   EPM_trigger_action(task, EPM_complete_action, "Auto-Signoff Performed")
+
+///////////////////////
+
+Sample ITK function : list signoff details of workspace object
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+/*HEAD LIST_SIGNOFF_DETAILS_OF_WORKSPACE_OBJECT CCC ITK */
+void list_signoff_details_of_workspace_object(tag_t object)
+{   
+    logical
+        verdict = FALSE;
+    int
+        ii = 0,
+        n_statuses = 0,
+        n_signoffs = 0,
+        kk = 0;
+    tag_t
+        *statuses = NULL;
+    char  
+        *object_string = NULL,
+        object_type[WSO_name_size_c + 1] = "",
+        *status_name = NULL,
+        **signers = NULL,
+        *date_string = NULL,
+        decision_string[3][12] = {"Rejected", "No Decision", "Approved"};
+    EPM_decision_t    
+        *decisions = NULL;  
+    date_t
+        *sign_off_dates = NULL;
+
+
+    verdict = is_workspace_object(object);
+    if (verdict == FALSE)
+    {
+        printf("Object must be Workspace Object!\n");
+        exit (1);
+    }
+    else
+    {
+        IFERR_REPORT(WSOM_ask_object_id_string(object, &object_string));
+        IFERR_REPORT(WSOM_ask_object_type(object, object_type));
+        printf("%s  Type: %s \n", object_string, object_type);
+        SAFE_MEM_FREE(object_string);
+
+        IFERR_REPORT(WSOM_ask_release_status_list(object, &n_statuses, 
+            &statuses));
+        printf("  Number of statuses: %d \n\n", n_statuses);
+        for (ii = 0; ii < n_statuses; ii++)
+        {
+            IFERR_REPORT(AOM_ask_name(statuses[ii], &status_name));
+            printf("    Status Name: %s\n", status_name);
+            SAFE_MEM_FREE(status_name);
+
+            IFERR_REPORT(EPM_ask_signoff_details(object, statuses[ii], 
+                &n_signoffs, &decisions, &signers, &sign_off_dates));
+            for (kk = 0; kk < n_signoffs; kk++)
+            {
+                IFERR_REPORT(ITK_date_to_string(sign_off_dates[kk], 
+                    &date_string));
+                printf("      %s %s %s\n\n", signers[kk], 
+                    decision_string[decisions[kk]], date_string);
+                SAFE_MEM_FREE(date_string);
+            }
+            for (kk = 0; kk < n_signoffs; kk++) SAFE_MEM_FREE(signers[kk]);
+            SAFE_MEM_FREE(signers);
+            SAFE_MEM_FREE(decisions);
+            SAFE_MEM_FREE(sign_off_dates);
+        }
+        SAFE_MEM_FREE(statuses);
+    }
+}
+
+///////////////////
+
+Symptom
+---------------
+Some ITK functions require a signoff object tag as input. this does not seem 
+to be part of the EPM_action_message_t or EPM_rule_message_t.  How can the 
+signoff object tag be found?
+Solution
+The signoff object tag is an attachment of the task.  You can get the tag by 
+calling EPM_ask_attachments using an attachment type of EPM_signoff_attachment.
+Example:
+    EPM_ask_attachments(task, EPM_signoff_attachment, &n_signoffs, &signoffs);
+
+/////////////////
+
+EPM_set_decision error 33037, EPM task not complete
+Symptom
+---------------
+  ) Site upgraded to V9.1.2.
+  ) EPM_set_decision in a custom batch ITK program errors out.
+
+ERROR: 33037 ERROR MSG: EPM_task_not_complete : The task %1$s is not
+complete..
+
+ANALYSIS
+----------------------------------------
+  ) Previously used CR_set_decision.
+  ) However, ITK program got a message when used in V9.1.2
+
+*************************************************
+*************************************************
+* WARNING - CR_set_decision is deprecated in 
+* Teamcenter Engineering version V9.1
+* and no longer supported in V11.0
+* Replace this call to CR_set_decision with EPM_set_decision
+setting preference/environment variable IMAN_no_obsolete_message (to anything)
+will suppress these messages
+*************************************************
+
+  ) No '*** ERROR code' lines in syslog
+  ) Simple Review Process with Review Task
+    i.e.
+
+    MyProcess
+      Review Task
+	select-signoff-team
+	perform-signoffs
+
+  ) Uses CR_ask_job to get Job tag for ItemRevision,
+    EPM_ask_root_task to get tag for root task
+
+      EPM_ask_root_task(tagJob,&tagRootTask)
+
+    then calls EPM_ask_sub_task to get task for EPM_set_decision.
+Hardware/Software Configuration
+Family    : TC_ENGR-IMAN
+Application : CUSTOMIZATION
+Function    : ITK
+Subfunction : 
+Release     : V9.1.2
+Solution
+  ) EPM_set_decision needs the tag for the perform-signoffs,
+    instead of the tag for Review Task.
+
+  ) For example, use CR_ask_job to get Job tag for ItemRevision,
+    then EPM_ask_root_task to get tag for root task
+
+      EPM_ask_root_task(tagJob,&tagRootTask)
+
+    and two calls to EPM_ask_sub_task to get perform-signoffs
+
+      EPM_ask_sub_task(tagRootTask,"Review Task,&tagReviewTask)
+      EPM_ask_sub_task(tagReviewTask,"perform-signoffs",&tagSignoffTask)
+
+    Finally, pass in the Signoff Task tag to EPM_set_decision
+
+      EPM_set_decision(
+	  tagSignoffTask,tagUser,CR_approve_decision,"Approved",TRUE)
+
+////////////////////
+
+Re: ITK program to assign a Task to a User
+if you want to assign a reviewer (as in select-signoff-team task)
+try: CR_add_reviewers() 
+I think you should put the task name as the release_level_name
+but I'm not sure.
+
+#include 
+int CR_add_reviewers(
+tag_t job, /*  */
+const char * release_level_name, /*  */
+int n_groupmembers, /*  */
+tag_t * groupmembers /*  */
+);
+
+
+if you want to assign a user as a responsible-party of the task
+try: EPM_assign_responsible_party(),
+
+#include 
+int EPM_assign_responsible_party(
+tag_t task, /*  */
+tag_t responsible_party /*  */
+);
+
+good luck,
+Pnina.
+
+
+"Prasad AVN"  wrote:
+>
+>HI,
+>
+>  In developing a ITK function to assign a Task ( of Process Template "Task"
+>not
+>"Review Task" ) to a User, I could not find equivalent ITK function in epm.h
+>and
+>cr.h.
+>   
+>   Eg: like        AssignTaskToUser ( tag_t tagTask, tag_t tagUser) .
+>
+>  
+>  Is there any way around?
+>
+>  Thanks a lot in advance.
+>
+>Regards,
+>Prasad.
+
+////////////////
+
+CODE ( sample from GTAC ):
+
+============================================================
+
+/*HEAD REGISTER_RULE_HANDLERS_USING_CUSTOM_EXITS CCC ITK */
+
+/*
+
+  Instructions:
+
+    Save this file as GTAC_register_callbacks.c
+
+    The naming format is very important.
+
+      GTAC_register_callbacks.c
+
+      GTAC_register_callbacks() - function name
+
+      GTAC - the name of the executable
+
+ 
+
+    Compile
+
+      %TC_ROOT%\sample\compile -DIPLIB=libuser_exits
+
+         GTAC_register_callbacks.c
+
+    Link
+
+      %TC_ROOT%\sample\link_custom_exits GTAC
+
+    Move File
+
+      copy GTAC.dll %TC_BIN%
+
+ 
+
+ 
+
+    Set the following site environment variable in the .iman_env in TCEng V9
+
+    or using Preference Manager in later versions.
+
+    TC_customization_libraries=
+
+    GTAC
+
+*/
+
+#include <ict/ict_userservice.h>
+
+#include <tccore/tcaehelper.h>
+
+#include <user_exits/aiws_ext.h>
+
+#include <tc/preferences.h>
+
+#include <ss/ss_errors.h>
+
+#include <tccore/custom.h>
+
+#include <itk/mem.h>
+
+#include <tc/tc.h>
+
+#include <user_exits/user_exits.h>
+
+#include <tccore/method.h>
+
+#include <tc/emh.h>
+
+#include <epm/epm.h>
+
+#include <tccore/tctype.h>
+
+#include <tccore/item.h>
+
+#include <epm/epm.h>
+
+#include <tccore/workspaceobject.h>
+
+ 
+
+#define EXIT_FAILURE 1
+
+#define ERROR_CHECK(X) (report_error( __FILE__, __LINE__, #X, (X)))
+
+static void report_error( char *file, int line, char *function, int return_code)
+
+{
+
+  if (return_code != ITK_ok)
+
+  {
+
+    char *error_msg_string;
+
+ 
+
+    EMH_get_error_string (NULLTAG, return_code, &error_msg_string);
+
+    printf("ERROR: %d ERROR MSG: %s.\n", return_code, error_msg_string);
+
+    TC_write_syslog("ERROR: %d ERROR MSG: %s.\n", return_code,
+
+      error_msg_string);
+
+    printf ("FUNCTION: %s\nFILE: %s LINE: %d\n", function, file, line);
+
+    TC_write_syslog("FUNCTION: %s\nFILE: %s LINE: %d\n",
+
+      function, file, line);
+
+    if(error_msg_string) MEM_free(error_msg_string);
+
+  }
+
+}
+
+ 
+
+EPM_decision_t GTAC_rule_handler(EPM_rule_message_t message)
+
+{
+
+  int
+
+    n_attachments = 0,
+
+    ii = 0;
+
+  tag_t
+
+    *attachments = NULL,
+
+    class_tag = NULLTAG;
+
+  char
+
+    task_name[WSO_name_size_c+1] = "",
+
+    *class_name = NULL,
+
+    description[WSO_desc_size_c+1] = "";
+
+  EPM_decision_t
+
+    decision = EPM_go;
+
+ 
+
+  FILE *fp;
+
+ 
+
+  fp = fopen("GTAC_rule.txt", "w");
+
+ 
+
+  fprintf(fp, "\n GTAC_rule_handler \n"); fflush(fp);
+
+ 
+
+  ERROR_CHECK(EPM_ask_name(message.task, task_name));
+
+  fprintf(fp, "\n\t message.task name: %s\n", task_name); fflush(fp);
+
+ 
+
+  ERROR_CHECK(EPM_ask_attachments(message.task, EPM_target_attachment,
+
+    &n_attachments, &attachments));
+
+  fprintf(fp, "\t %s has %d attachments\n", task_name, n_attachments); fflush(fp);
+
+ 
+
+  for (ii = 0; ii < n_attachments; ii++)
+
+  {
+
+    ERROR_CHECK(POM_class_of_instance(attachments[ii], &class_tag));
+
+    ERROR_CHECK(POM_name_of_class(class_tag, &class_name));
+
+    fprintf(fp, "\t class name -> [%s] \n", class_name); fflush(fp);
+
+     if (strcmp(class_name, "Drawing") == 0)
+
+     {
+
+      ERROR_CHECK(WSOM_ask_description(attachments[ii], description));
+
+      fprintf(fp, "\t description -> [%s] \n", description); fflush(fp);
+
+      if ( strlen(description) == 0 )
+
+        decision = EPM_nogo;
+
+      else
+
+        decision = EPM_go;
+
+     }
+
+  }
+
+  if (class_name) MEM_free(class_name);
+
+  if(attachments) MEM_free(attachments);
+
+ 
+
+  fclose(fp);
+
+ 
+
+  return decision;
+
+}
+
+ 
+
+int GTAC_register_rule_handler(int *decision, va_list args)
+
+{
+
+  int ec = ITK_ok;
+
+ 
+
+  *decision = ALL_CUSTOMIZATIONS;
+
+ 
+
+  printf("\n GTAC_registe_rule_handler \n");
+
+ 
+
+  ec = EPM_register_rule_handler("GTAC-rule-handler", "", GTAC_rule_handler);
+
+  if (ec == ITK_ok)
+
+    printf("\t Registered GTAC_rule_handler!\n\n");
+
+  else
+
+    printf("\t FAILED to register GTAC_rule_handler\n\n");
+
+ 
+
+  return ec;
+
+}
+
+ 
+
+extern DLLAPI int GTAC_register_callbacks ()
+
+{
+
+  printf("\n GTAC_register_callbacks \n");
+
+ 
+
+  CUSTOM_register_exit ( "GTAC", "USER_gs_shell_init_module",
+
+    (CUSTOM_EXIT_ftn_t) GTAC_register_rule_handler );
+
+ 
+
+  return ITK_ok;
+
+}
+
+//////////////////
+
+Following my TC-12 Workflow Designer documentation -
+
+"...
+
+Alternatively, you can create a custom action handler that uses ITK to check for the required criteria,
+
+as long as the handler uses the EPM_set_condition_task_result ITK call to set the task result
+
+to true or false. "
+
+ 
+
+I end my custom handler with -
+
+=====================
+
+...
+
+if(!success)
+
+   {
+
+ 
+
+   TC_write_syslog("\n RSHchkProperty_handler: EPM_set_condition_task_result FALSE \n\n");
+
+   IFERR_REPORT(EPM_set_condition_task_result(message.task, EPM_RESULT_FALSE));
+
+   return false;
+
+   }
+
+  else
+
+   {
+
+ TC_write_syslog("\n RSHchkProperty_handler: EPM_set_condition_task_result TRUE \n\n");
+
+ IFERR_REPORT(EPM_set_condition_task_result(message.task, EPM_RESULT_TRUE));  
+
+ return true;
+
+   }
+
+...
+
+===============================================
+
+ 
+
+And my syslog correctly indicates that my handler is taking the correct path for my test use-case that should evaluate to false -
+
+====================================
+
+...
+
+RSHchkProperty_handler: EPM_set_condition_task_result FALSE
+
+...
+
+====================================
+
+ 
+
+However, my workflow appears to be following the Condition Task true path, which results in a required sign-off task
+
+////////////////////////
+
+#include <iostream>
+#include <epm\epm.h>
+#include <tccore\aom.h>
+#include <tccore\aom_prop.h>
+
+#include <base_utils/IFail.hxx>
+#include <base_utils/ScopedSmPtr.hxx>
+#include <base_utils/TcResultStatus.hxx>
+
+using namespace std;
+using namespace Teamcenter;
+
+extern "C" int set_signoff_property_from_handler(EPM_action_message_t msg)
+{
+    int ifail = ITK_ok;
+    ResultStatus stat;
+
+    try
+    {
+        tag_t task = msg.task;
+        int n_signoffs = 0;
+        scoped_smptr<tag_t> signoffs;
+        stat = EPM_ask_attachments(task, EPM_signoff_attachment, &n_signoffs, &signoffs);
+
+        /* assumming only one signoff */
+        tag_t signoff = signoffs[0];
+        stat = AOM_lock(signoff);
+        stat = AOM_set_value_string(signoff, "a4_Additional_Info", "Set from Handler");
+        stat = AOM_save(signoff);
+
+        stat = AOM_refresh(signoff, TRUE);
+
+        scoped_smptr<char> value;
+        stat = AOM_ask_value_string(signoff, "a4_Additional_Info", &value);
+        printf("\n\t value: %s \n", value.get());
+        TC_write_syslog("\n\t value: %s \n", value.get());
+        stat = AOM_unload(signoff);
+
+    }
+    catch( const IFail &e )
+    {
+        cout << "error " << e.ifail() << endl;
+        cout << e.getMessage() << endl;
+    }
+   return ifail;
+}
+
+///////////////////
+
+#include <epm/signoff.h>
+#include <sa/groupmember.h>
+#include <tccore/aom_prop.h>
+
+#include <iostream>
+#include <Error_Exception.hxx>
+#include <base_utils/IFail.hxx>
+#include <base_utils/ScopedSmPtr.hxx>
+#include <base_utils/TcResultStatus.hxx>
+#include <mld/logging/TcMainLogger.hxx>
+
+using namespace std;
+using namespace Teamcenter;
+using Teamcenter::Main::logger;
+
+int remove_signoff_profile(tag_t review_task)
+{
+    int ifail = ITK_ok;
+    ResultStatus rstat;
+    try
+    {
+        int n_tasks = 0;
+        scoped_smptr<tag_t> tasks;
+        rstat = AOM_ask_value_tags(review_task, "child_tasks", &n_tasks,&tasks);
+        for (int ii = 0; ii < n_tasks; ii++)
+        {
+            scoped_smptr<char> task_type;
+            rstat = AOM_UIF_ask_value(tasks[ii], "object_type", &task_type);
+            if (strcmp(task_type.getString(), "Select Signoff Team Task") == 0)
+            {
+                tag_t sst_task = tasks[ii];
+
+                EPM_state_t state;
+                rstat = EPM_ask_state(sst_task, &state);
+                if (state == EPM_completed)
+                {
+                    ifail = EPM_already_completed;
+                    cout << "Cannot remove signoff profile because the"; 
+                    cout << " select-signoff-team task is complete." << endl;
+                }
+                else
+                {
+                    int n_signoff = 0;
+                    scoped_smptr<tag_t> signoffs;
+                    rstat = EPM_ask_attachments(sst_task, EPM_signoff_attachment, 
+                        &n_signoff, &signoffs);                                     
+                    if (n_signoff == 0)
+                    {
+                        cout << "No signoff profiles exist!" << endl;
+                    }
+                    else
+                    {
+                        tag_t member = NULLTAG;
+                        SIGNOFF_TYPE_t type; 
+                        rstat = EPM_ask_signoff_member(signoffs[0], &member, &type);
+                                                
+                        tag_t groupmembers[1] = {member};
+                        rstat = EPM_remove_signoffs(review_task, 1, &groupmembers[0]);
+                    }
+                }
+            }
+        }
+    }
+    catch( const IFail &e )
+    {
+        ifail = e.ifail();
+        /*
+            EPM_signoff_profile_not_staffed is returned like an error 
+            but is really only information.
+        */
+        if (ifail == EPM_signoff_profile_not_staffed)
+        {
+            cout << "INFORMATION: The required staffing for the signoff";
+            cout << " profiles are not complete." << endl;
+        }
+        else
+        {
+            cout << "error " << e.ifail() << endl;
+            cout << e.getMessage() << endl;;    
+            logger()->error(e.ifail(),e.getMessage().c_str());
+        }
+    }
+    return ifail;
+}
+
+/////////
+
+
+/* 
+    This code is only valid in Tc10 and earlier versions 
+*/
+#include <epm/epm.h>
+
+static void approve_review_task(tag_t perform_signoff_task_tag)
+{
+    int n_signoffs = 0;
+    tag_t *signoffs = NULL;
+    IFERR_REPORT(EPM_ask_attachments(perform_signoff_task_tag, 
+        EPM_signoff_attachment, &n_signoffs, &signoffs));
+        
+    tag_t signoff_tag = signoffs[0]; // should only be one     
+    IFERR_ABORT(EPM_set_task_decision2(perform_signoff_task_tag, signoff_tag, 
+        CR_approve_decision, ""));
+    if(signoffs) MEM_free(signoffs);
+}
+
+///////////
+
+#include <ict/ict_userservice.h>
+
+#include <tccore/tcaehelper.h>
+
+#include <user_exits/aiws_ext.h>
+
+#include <tc/preferences.h>
+
+#include <ss/ss_errors.h>
+
+#include <tccore/custom.h>
+
+#include <itk/mem.h>
+
+#include <tc/tc.h>
+
+#include <user_exits/user_exits.h>
+
+#include <tccore/method.h>
+
+#include <tc/emh.h>
+
+#include <epm/epm.h>
+
+#include <tccore/tctype.h>
+
+#include <tccore/item.h>
+
+#include <epm/epm.h>
+
+#include <tccore/workspaceobject.h>
+
+ 
+
+#define EXIT_FAILURE 1
+
+#define ERROR_CHECK(X) (report_error( __FILE__, __LINE__, #X, (X)))
+
+static void report_error( char *file, int line, char *function, int return_code)
+
+{
+
+  if (return_code != ITK_ok)
+
+  {
+
+    char *error_msg_string;
+
+ 
+
+    EMH_get_error_string (NULLTAG, return_code, &error_msg_string);
+
+    printf("ERROR: %d ERROR MSG: %s.\n", return_code, error_msg_string);
+
+    TC_write_syslog("ERROR: %d ERROR MSG: %s.\n", return_code,
+
+      error_msg_string);
+
+    printf ("FUNCTION: %s\nFILE: %s LINE: %d\n", function, file, line);
+
+    TC_write_syslog("FUNCTION: %s\nFILE: %s LINE: %d\n",
+
+      function, file, line);
+
+    if(error_msg_string) MEM_free(error_msg_string);
+
+  }
+
+}
+
+ 
+
+EPM_decision_t GTAC_rule_handler(EPM_rule_message_t message)
+
+{
+
+  int
+
+    n_attachments = 0,
+
+    ii = 0;
+
+  tag_t
+
+    *attachments = NULL,
+
+    class_tag = NULLTAG;
+
+  char
+
+    task_name[WSO_name_size_c+1] = "",
+
+    *class_name = NULL,
+
+    description[WSO_desc_size_c+1] = "";
+
+  EPM_decision_t
+
+    decision = EPM_go;
+
+ 
+
+  FILE *fp;
+
+ 
+
+  fp = fopen("GTAC_rule.txt", "w");
+
+ 
+
+  fprintf(fp, "\n GTAC_rule_handler \n"); fflush(fp);
+
+ 
+
+  ERROR_CHECK(EPM_ask_name(message.task, task_name));
+
+  fprintf(fp, "\n\t message.task name: %s\n", task_name); fflush(fp);
+
+ 
+
+  ERROR_CHECK(EPM_ask_attachments(message.task, EPM_target_attachment,
+
+    &n_attachments, &attachments));
+
+  fprintf(fp, "\t %s has %d attachments\n", task_name, n_attachments); fflush(fp);
+
+ 
+
+  for (ii = 0; ii < n_attachments; ii++)
+
+  {
+
+    ERROR_CHECK(POM_class_of_instance(attachments[ii], &class_tag));
+
+    ERROR_CHECK(POM_name_of_class(class_tag, &class_name));
+
+    fprintf(fp, "\t class name -> [%s] \n", class_name); fflush(fp);
+
+     if (strcmp(class_name, "Drawing") == 0)
+
+     {
+
+      ERROR_CHECK(WSOM_ask_description(attachments[ii], description));
+
+      fprintf(fp, "\t description -> [%s] \n", description); fflush(fp);
+
+      if ( strlen(description) == 0 )
+
+        decision = EPM_nogo;
+
+      else
+
+        decision = EPM_go;
+
+     }
+
+  }
+
+  if (class_name) MEM_free(class_name);
+
+  if(attachments) MEM_free(attachments);
+
+ 
+
+  fclose(fp);
+
+ 
+
+  return decision;
+
+}
+
+ 
+
+int GTAC_register_rule_handler(int *decision, va_list args)
+
+{
+
+  int ec = ITK_ok;
+
+ 
+
+  *decision = ALL_CUSTOMIZATIONS;
+
+ 
+
+  printf("\n GTAC_registe_rule_handler \n");
+
+ 
+
+  ec = EPM_register_rule_handler("GTAC-rule-handler", "", GTAC_rule_handler);
+
+  if (ec == ITK_ok)
+
+    printf("\t Registered GTAC_rule_handler!\n\n");
+
+  else
+
+    printf("\t FAILED to register GTAC_rule_handler\n\n");
+
+ 
+
+  return ec;
+
+}
+
+ 
+
+extern DLLAPI int GTAC_register_callbacks ()
+
+{
+
+  printf("\n GTAC_register_callbacks \n");
+
+ 
+
+  CUSTOM_register_exit ( "GTAC", "USER_gs_shell_init_module",
+
+    (CUSTOM_EXIT_ftn_t) GTAC_register_rule_handler );
+
+ 
+
+  return ITK_ok;
+
+}
+
+ 
+
+//////////////////
+
+I resolved this by changing the following code :
+
+ 
+
+from:
+
+======================================================================
+
+ERROR_CHECK(EPM_ask_attachments(message.task, EPM_target_attachment, &n_attachments, &attachments));
+
+ 
+
+======================================================================
+
+ 
+
+ 
+
+to:
+
+ 
+
+======================================================================
+
+tag_t job_tag = NULLTAG;
+
+  tag_t root_tag = NULLTAG;
+
+  fprintf(fp, "\n Asking for job tag. \n"); fflush(fp);
+
+ERROR_CHECK(EPM_ask_job(message.task,&job_tag));
+
+fprintf(fp, "\n Asking for root task. \n"); fflush(fp);
+
+ERROR_CHECK(EPM_ask_root_task(job_tag,&root_tag));
+
+fprintf(fp, "\n Asking for attachments. \n"); fflush(fp);
+
+  ERROR_CHECK(EPM_ask_attachments(root_tag, EPM_target_attachment, &n_attachments, &attachments));
+
+  // ERROR_CHECK(EPM_ask_attachments(message.task, EPM_target_attachment, &n_attachments, &attachments));
+
+
+//////////////////////
+
+
