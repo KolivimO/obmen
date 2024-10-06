@@ -1,0 +1,1477 @@
+///
+
+C# SOA progrqam that checks if a user has acccess to an item
+Symptom
+---------------
+Need help in correctly using IRMService.CheckAccessorsPrivileges. How to get 
+the GroupMember objects to test against, what are the Privilege Names 
+available, and finally, how to call IRMService.CheckAccessorsPrivileges method?
+Hardware/Software Configuration
+Family: TEAMCENTER
+Application: SOA_FRAMEWORK
+Function: .NET_CLIENT
+Subfunction: ALL
+Release: V9.1.0.2
+Solution
+The following C# code example will demonstrate how to use 
+IRMService.CheckAccessorsPrivileges. This example was tested with the 
+HelloTeamcenter and you will need to add Reference, TcSoaAdministrationStrong, 
+TcSoaAdministrationTypes to the project to build.
+
+In addition, you will have to update the code to use your own ModelObjects.
+
+
+
+/*************** IRM.cs *****************/
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+using Teamcenter.Soa.Client.Model;
+using Teamcenter.Soa.Client.Model.Strong;
+
+using Teamcenter.Services.Strong.Administration;
+using Teamcenter.Soa.Exceptions;
+using Teamcenter.Services.Strong.Query._2006_03.SavedQuery;
+using Teamcenter.Services.Strong.Core;
+using Teamcenter.Soa.Common;
+using Teamcenter.Services.Strong.Query;
+using Teamcenter.Services.Strong.Query._2008_06.SavedQuery;
+using Teamcenter.Services.Strong.Administration._2006_03.IRM;
+
+namespace HelloTeamcenter.hello
+{
+    /*	Possible privilege names
+     *	ADD_CONTENT, ASSIGN_TO_PROJECT, Administer_ADA_Licenses, BATCH_PRINT, 
+CHANGE, CHANGE_OWNER, CICO,
+	COPY, DELETE, DEMOTE, DIGITAL_SIGN, EXPORT, IMPORT, IP_ADMIN, 
+IP_Classifier, ITAR_ADMIN, ITAR_Classifier,
+	MARKUP, PROMOTE, PUBLISH, READ, REMOTE_CICO, REMOVE_CONTENT, 
+REMOVE_FROM_PROJECT, SUBSCRIBE, TRANSFER_IN,
+	TRANSFER_OUT, TRANSLATION, UNMANAGE, WRITE, WRITE_ICOS 
+     */
+
+    class IRM
+    {
+	private IRMService irmService;
+	private DataManagementService dmService;
+	private SavedQueryService queryService;
+	private const string savedQuery = "__EINT_group_members";
+
+	private User user;
+	private ImanQuery query = null;
+
+	List<ModelObject> modelObjectList = new List<ModelObject>();
+	List<GroupMember> groupMemberList = new List<GroupMember>();
+	
+	public IRM(User _user)
+	{
+	    irmService = 
+IRMService.getService(Teamcenter.ClientX.Session.getConnection());
+	    dmService = 
+DataManagementService.getService(Teamcenter.ClientX.Session.getConnection());
+	    queryService = 
+SavedQueryService.getService(Teamcenter.ClientX.Session.getConnection());
+
+	    user = _user;
+
+	    setObjectPolicy();
+	}
+
+	public bool loadObjects()
+	{
+	    ServiceData sData = dmService.LoadObjects(new string[] { 
+"Q1cFqHC5ItqSsD", "AzSBeZA0ItqSsD", "gofFbi4vItqSsD" });
+
+	    for(int i = 0; i < sData.sizeOfPlainObjects(); i++)
+		modelObjectList.Add(sData.GetPlainObject(i));
+
+	    return (modelObjectList.Count > 0) ? true : false;
+	}
+
+	public void ShowAccess()
+	{
+	    string[] privilegeNames = new string[] { "READ", "WRITE", "DELETE" 
+};
+
+	    if (getGroupMembers())
+	    {
+		foreach (GroupMember member in groupMemberList)
+		{
+		    CheckAccessorPrivilegesResponse resp = 
+irmService.CheckAccessorsPrivileges(member, modelObjectList.ToArray(), 
+privilegeNames);
+
+		    if (!ServiceDataError(resp.ServiceData))
+		    {
+			StringBuilder buff = new StringBuilder();
+
+			foreach (PrivilegeReport report in 
+resp.PrivilegeReports)
+			{
+			    buff.Length = 0;
+			    buff.Append("ModelObject: 
+").Append(report.Object.Uid);
+
+			    foreach (Privilege priv in report.PrivilegeInfos)
+				buff.Append(", 
+").Append(priv.PrivilegeName).Append(":").Append((priv.Verdict) ? "TRUE" : 
+"FALSE");
+
+			    Console.WriteLine(buff.ToString());
+			}
+		    }
+		}
+	    }
+	}
+
+	protected bool getGroupMembers()
+	{
+	    if (setSaveQuery())
+	    {
+		try
+		{
+		    QueryInput qryInput = new QueryInput();
+
+		    qryInput.LimitList = new ModelObject[0];
+		    qryInput.MaxNumToReturn = 0;
+		    qryInput.Query = query;
+		    qryInput.ResultsType = 0;
+		    qryInput.Entries = new string[] { "User" };
+		    qryInput.Values = new string[] { user.User_name };
+
+		    
+Teamcenter.Services.Strong.Query._2007_09.SavedQuery.SavedQueriesResponse 
+qryResp = queryService.ExecuteSavedQueries(new QueryInput[] { qryInput });
+
+		    if (!ServiceDataError(qryResp.ServiceData))
+		    {
+			string[][] uids = new 
+string[qryResp.ArrayOfResults.Length][];
+
+			for (int i = 0; i < qryResp.ArrayOfResults.Length; i++)
+			{
+			    uids[i] = qryResp.ArrayOfResults[i].ObjectUIDS;
+			}
+
+			foreach (string[] grpUIDs in uids)
+			{
+			    ServiceData sData = dmService.LoadObjects(grpUIDs);
+
+			    if (!ServiceDataError(sData))
+			    {
+				for (int i = 0; i < 
+sData.sizeOfPlainObjects(); i++)
+				{
+				    ModelObject mObj = sData.GetPlainObject(i);
+
+				    if (mObj is GroupMember)
+				    {
+					groupMemberList.Add((GroupMember)mObj);
+				    }
+				}
+			    }
+			}
+
+			return (groupMemberList.Count > 0) ? true : false;
+		    }
+		}
+		catch (NotLoadedException e)
+		{
+		    Console.WriteLine(e.StackTrace);
+		}
+	    }
+
+	    return false;
+	}
+
+	protected bool setSaveQuery()
+	{
+	    GetSavedQueriesResponse qryResp = queryService.GetSavedQueries();
+
+	    if (!ServiceDataError(qryResp.ServiceData))
+	    {
+		foreach (SavedQueryObject qObj in qryResp.Queries)
+		{
+		    if (qObj.Name.Equals(savedQuery))
+		    {
+			this.query = qObj.Query;
+			return true;
+		    }
+		}
+	    }
+
+	    return false;
+	}
+
+	protected bool ServiceDataError(ServiceData data)
+	{
+	    if (data.sizeOfPartialErrors() > 0)
+	    {
+		for (int i = 0; i < data.sizeOfPlainObjects(); i++)
+		{
+		    foreach (string msg in data.GetPartialError(i).Messages)
+			Console.WriteLine(msg);
+		}
+
+		return true;
+	    }
+
+	    return false;
+	}
+
+	protected void setObjectPolicy()
+	{
+	    SessionService session = 
+SessionService.getService(Teamcenter.ClientX.Session.getConnection());
+	    ObjectPropertyPolicy policy = new ObjectPropertyPolicy();
+
+	    policy.AddType("GroupMember", new String[] { "object_name" });
+	    session.SetObjectPropertyPolicy(policy);
+	}
+    }
+}
+///
+
+Getting BOM in Java plugin
+I am trying to recursively get all ItemRevisions for all open projects
+in the current session, from within a Java plugin. 
+
+Were I in a standalone Java application, rather than a plugin, I could
+get a com.teamcenter.soa.client.Connection. Then I could get a
+com.teamcenter.soa.client.model.ModelManager, and call
+getObjectsFromStore(). Sorting this returned Vector of ModelObjects for
+projects only (object.getType().getClassName().equals("TC_Project"))
+gives me all projects. Then for each project, I could use the
+com.teamcenter.services.strong.core.DataManagementService to load up the
+properties using getProperties, to get its name and id. Now using the
+com.teamcenter.services.strong.query.SavedQueryService, I could execute
+an "Objects in Projects" query, with filters for "Project ID" =
+myProjectId, and "Type" = "Item". This gives me the uids for all top
+level items in a project. I can load them as before using
+dmService.getProperties, get the Item and Revision from each uid using
+getItemAndRelatedObjects and then, using the
+com.teamcenter.services.strong.cad.StructureManagementService
+createBOMWindows function, recursively walk the bom for all sub-level
+Items.
+
+BUT.... the above only works in a standalone java application. In a java
+plugin, I have a TCSession, and can therefore get only a
+com.teamcenter.services.rac.core.DataManagementService, and a
+com.teamcenter.services.rac.core.StructureManagementService. I can get
+the projects' uids using the ModelManager as before, (getting the
+necessary Connection from the TCSession.getSoaConnection.) Except now
+the dmService.loadObjects returns a TCComponent type. This is where my
+problems start, because, given a project as a TCComponent type, I can't
+find out what to do with it. Queries just throw, the
+DataManagementService I was using before just throws, and my previous
+approach won't work.
+
+I had hoped to use the TCComponentManager. It has a dumpComponents
+function that gives me a tantalising glimpse of everything I'm after.
+But the class is un-published, and guessing values for the String
+arguments, for example of its getComponents function, has worn me down.
+
+///
+
+Convert .prt (UGPART) drawing file to PDF using SOA toolkit
+Hey All,
+
+Using SOA toolkit i was able to search an item By its ID and was able to download the drawing UGPART file which comes with the .prt extension , Now I want to convert this downloaded file into a PDF, I tried third party libraries and nothing helped, does anyone know how to achieve this
+
+I am using C# .Net SOA tool kit
+
+Thanks and Regards
+
+General Discussion
+NX Customization And Programming
+Teamcenter
++1 more
+Share
+2 answers
+288 views
+
+#PLM#CAD
+
+7 months ago
+@Ash_​  I think this can be achieved by using NXopen libraries. You can develop a custom utility that would help you in converting the .prt file to PDF format and then you can integrate this utility within your SOA application.
+
+
+Santosh Kori
+
+Edited March 13, 2024 at 9:02 AM
+Interactively in NX2312 user can export the PDF through File->Export->PDF
+
+ Refer below mentioned test code to export the drawing file to PDF
+
+using System;
+
+using NXOpen;
+
+ 
+
+public class NXJournal
+
+{
+
+ public static void Main(string[] args)
+
+ {
+
+   NXOpen.Session theSession = NXOpen.Session.GetSession();
+
+   NXOpen.Part workPart = theSession.Parts.Work;
+
+   NXOpen.Part displayPart = theSession.Parts.Display;
+
+   NXOpen.Session.UndoMarkId markId1;
+
+   markId1 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Invisible, "Start");
+
+   
+
+   NXOpen.PrintPDFBuilder printPDFBuilder1;
+
+   printPDFBuilder1 = workPart.PlotManager.CreatePrintPdfbuilder();
+
+   
+
+   printPDFBuilder1.Scale = 1.0;
+
+   
+
+   printPDFBuilder1.Append = true;
+
+   
+
+   printPDFBuilder1.Size = NXOpen.PrintPDFBuilder.SizeOption.ScaleFactor;
+
+   
+
+   printPDFBuilder1.Units = NXOpen.PrintPDFBuilder.UnitsOption.English;
+
+   
+
+   printPDFBuilder1.XDimension = 8.5;
+
+   
+
+   printPDFBuilder1.YDimension = 11.0;
+
+   
+
+   printPDFBuilder1.OutputText = NXOpen.PrintPDFBuilder.OutputTextOption.Polylines;
+
+   
+
+   printPDFBuilder1.RasterImages = true;
+
+   
+
+   theSession.SetUndoMarkName(markId1, "Export PDF Dialog");
+
+   
+
+   NXOpen.Session.UndoMarkId markId2;
+
+   markId2 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Invisible, "Export PDF");
+
+   
+
+   theSession.DeleteUndoMark(markId2, null);
+
+   
+
+   NXOpen.Session.UndoMarkId markId3;
+
+   markId3 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Invisible, "Export PDF");
+
+   
+
+   printPDFBuilder1.Watermark = "";
+
+   
+
+   NXOpen.NXObject[] sheets1 = new NXOpen.NXObject[1];
+
+   NXOpen.Drawings.DraftingDrawingSheet draftingDrawingSheet1 = ((NXOpen.Drawings.DraftingDrawingSheet)workPart.DraftingDrawingSheets.FindObject("Sheet 1"));
+
+   sheets1[0] = draftingDrawingSheet1;
+
+   printPDFBuilder1.SourceBuilder.SetSheets(sheets1);
+
+   
+
+   printPDFBuilder1.CreateNewFromUi = false;
+
+   
+
+   printPDFBuilder1.Filename = "C:\\Temp\\Test.pdf";
+
+   
+
+   NXOpen.NXObject nXObject1;
+
+   nXObject1 = printPDFBuilder1.Commit();
+
+   
+
+   theSession.DeleteUndoMark(markId3, null);
+
+   
+
+   theSession.SetUndoMarkName(markId1, "Export PDF");
+
+   
+
+   printPDFBuilder1.Destroy();
+
+   
+
+   theSession.DeleteUndoMark(markId1, null);   
+
+ 
+
+   
+
+ }
+
+ public static int GetUnloadOption(string dummy) { return (int)NXOpen.Session.LibraryUnloadOption.Immediately; }
+
+}
+
+ 
+
+Then user can integrate this utility within your SOA application. 
+
+
+///
+
+Teamcenter::Services::Query::_2012_10::Finder::SearchInput searchInput;
+
+searchInput.searchCriteria.insert(std::pair<std::string, std::string>("item_id","*testItem*"));
+
+searchInput.startIndex = 0;
+
+searchInput.maxToLoad = 100;
+
+searchInput.maxToReturn = 100;
+
+searchInput.providerName = "Fnd0BaseProvider";
+
+ 
+
+Teamcenter::Services::Query::_2012_10::Finder::SearchResponse resp =
+
+finderService->performSearch(searchInput);
+
+ 
+
+But I can't find anything. Can anyone help me?
+
+Thanks in advance.
+
+///
+
+ /*!
+         * \brief Remove a release status for an object
+         * \param[in]  iObjectUID UID of the object
+         * \param[in]  iStatusName Name of the status
+         */
+        public void Remove_Release_Status(string iObjectUID, string iStatusName)
+        {
+            WorkflowService workflowService = WorkflowService.getService(gConnection);
+            ReleaseStatusOption[] releaseStatusOptions = new ReleaseStatusOption[1];
+            releaseStatusOptions[0] = new ReleaseStatusOption()
+            {
+                NewReleaseStatusTypeName = iStatusName,
+                Operation = "Delete"
+            };
+ 
+            WorkspaceObject[] objectsToRelease = new WorkspaceObject[1];
+            objectsToRelease[0] = GetObjectFromUID(iObjectUID) as WorkspaceObject;
+ 
+            ReleaseStatusInput[] releaseStatusInput = new ReleaseStatusInput[1];
+            releaseStatusInput[0] = new ReleaseStatusInput() { Operations = releaseStatusOptions, Objects = objectsToRelease };
+ 
+            SetReleaseStatusResponse response = workflowService.SetReleaseStatus(releaseStatusInput);
+            if (response.ServiceData.sizeOfPartialErrors() > 0)
+            {
+                ErrorStack errorStack = response.ServiceData.GetPartialError(0);
+                throw new Exception(string.Join("\n", errorStack.Messages));
+            }
+        }
+
+///
+
+Dou you still need this information?
+
+ 
+
+Understanding the "HelloTeamcenter" example project is the first step.
+
+ 
+
+Then there are some functions in "DataManagementService" like "GetItemFromAttribute" where you can pass the AttributeInfo by using "itemId=ITEMID_TO_SEARCH".
+
+ 
+
+In C#, there is a function called "Checked_out" directly when you have your "ItemRevision" class object.
+
+ 
+
+For the last part, you need to read the "release_status_list" property from TC
+
+///
+
+Iam having TC14.3.0.5, and Iam trying to use ASP.NET WEB api(framework 8.0) where getting 'The type initializer for 'Teamcenter.Soa.Internal.Utils.HttpClient' threw an exception' while sessionservice.login. What can be the solution?
+
+///
+
+You may not need to repeat the search field i.e. object_name. In the same line search criteria you can enter the required search parameter values using semicolon ( ; ) for ex. in your case it should be *ABC*XYZ*;*XYZ*ABC*.
+
+
+Semicolon is the default separator and can be changed using a preference WSOM_find_list_separator
+
+///
+
+def get_bom_view(item_id, rev_id):
+    if not is_precise(item_id, rev_id):
+        bom_search_query = f"""
+        select distinct wso.pobject_name as RootBVR, child.pitem_id as Occurrence, bvr.rbom_viewu, occ.rocc_threadu, occ.pref_designator, note.pval_0, cav.pcav2MFGPN, cav.pcav2Manufacturer, cav.pcav2Cost
+        from PPSOCCURRENCE occ
+        join PPSBOMVIEWREVISION bvr on bvr.puid = occ.rparent_bvru
+        join PWORKSPACEOBJECT wso on wso.puid = bvr.puid
+        left join PITEM child on child.puid = occ.rchild_itemu
+        left join PITEMREVISION rev on rev.ritems_tagu = child.puid
+        left join PCAV2PARTREVISION cav on cav.puid = rev.puid
+        left join PNOTE_TEXTS_0 note on (note.puid = occ.rnotes_refu and (note.pval_0 = 'Buy' or note.pval_0 = 'Consign' or note.pval_0 = 'Make' or note.pval_0 = 'Sub-Contract' or note.pval_0 = 'N/A' or note.pval_0 IS NULL))
+        where wso.pobject_name like '{item_id}/{rev_id}-View'
+        """
+    else:
+        bom_search_query = f"""
+        select distinct wso.pobject_name as RootBVR, item.pitem_id, bvr.rbom_viewu, occ.rocc_threadu, occ.pref_designator, note.pval_0, cav.pcav2MFGPN, cav.pcav2Manufacturer, cav.pcav2Cost
+        from PPSOCCURRENCE occ
+        join PPSBOMVIEWREVISION bvr on bvr.puid = occ.rparent_bvru
+        join PWORKSPACEOBJECT wso on wso.puid = bvr.puid
+        left join PCAV2PARTREVISION cav on cav.puid = occ.rchild_itemu
+        left join PITEMREVISION rev on cav.puid = rev.puid
+        left join PITEM item on item.puid = rev.ritems_tagu
+        left join PNOTE_TEXTS_0 note on (note.puid = occ.rnotes_refu and (note.pval_0 = 'Buy' or note.pval_0 = 'Consign' or note.pval_0 = 'Make' or note.pval_0 = 'Sub-Contract' or note.pval_0 = 'N/A' or note.pval_0 IS NULL))
+        where wso.pobject_name like '{item_id}/{rev_id}-View'
+        """
+    return execute_query(bom_search_query
+
+///
+
+Select ('** Item name ***') as Father
+  , (SELECT max([PITEMREVISION].[pitem_revision_id]) FROM [tc].[dbo].[PITEM] inner join [dbo].[PITEMREVISION] on [PITEMREVISION].[ritems_tagu]=[PITEM].[puid]
+ group by [PITEM].[puid], [PITEM].[pitem_id]
+having [pitem_id] ='** Item name ***') as Father_REVISION
+ 
+, sum([PPSOCCURRENCE].[pqty_value]) as qty
+ ,[PITEM].[pitem_id] AS FILS
+,[PITEM].[ruom_tagu]
+,[psymbol]
+ 
+From [tc].[dbo].[PPSOCCURRENCE]
+ 
+inner Join [dbo].[PITEM] on [PITEM].[puid]=[PPSOCCURRENCE].[rchild_itemu]
+Left Join [dbo].[PUNITOFMEASURE] on [PUNITOFMEASURE].[puid]=[PITEM].[ruom_tagu]
+ 
+group by [PPSOCCURRENCE].[rparent_bvru], [PPSOCCURRENCE].[rchild_itemu], [PITEM].[pitem_id], [PITEM].[ruom_tagu], [psymbol]
+ 
+having [rparent_bvru] = (SELECT top 1 [PSTRUCTURE_REVISIONS].[pvalu_0]
+                                        From [tc].[dbo].[PITEM]
+                                        inner Join [dbo].[PITEMREVISION] on [PITEMREVISION].[ritems_tagu]=[PITEM].[puid]
+                                        inner Join [dbo].[PSTRUCTURE_REVISIONS] on [PSTRUCTURE_REVISIONS].[puid]=[PITEMREVISION].[puid]
+                                      where [PITEM].[pitem_id] ='** Item name ***'
+                                      order by [pitem_revision_id] desc)
+ 
+ order by [PITEM].[pitem_id]
+
+///
+
+// Pseudocode for setting up a dynamic wait condition
+
+function checkQueryResults() {
+
+  // Perform the query and check the results
+
+  var results = attributeExplorer.performQuery();
+
+  if (results.yDim >= 1) {
+
+    // If the condition is met, proceed with the desired action
+
+    print results[0, 1];
+
+  } else {
+
+    // If the condition is not met, set a timeout to check again
+
+    setTimeout(checkQueryResults, 1000); // Check again after 1 second
+
+  }
+
+}
+
+ 
+
+// Initial call to start the checking process
+
+checkQueryResults();
+
+///
+
+SOA java: how to retrieve an ImanVolume by his name
+Hello Guy,
+
+I hope someone will be able to help me:
+
+I wanted to find a ImanVolume from its name in Java;
+
+I think I have to use the performSearch function but I get 0 result...
+
+Could you tell me what's wrong?
+
+here is my code:
+
+ 
+
+	/*!
+	 * \brief Get a Volume ModelObject
+	 * \param[in]  iConnection TC Connection object
+	 * \param[in]  iVolume Name of the volume
+	 * \return volume object
+	 */
+	public static ModelObject Get_Volume(Connection iConnection, String iVolume) throws Exception
+	{
+		Map<String, String> searchCriteria = Map.of( "volume_name", iVolume);
+		SearchInput2 searchInput = new SearchInput2();
+		searchInput.providerName = "Fnd0BaseProvider";
+		searchInput.searchCriteria = searchCriteria;
+		searchInput.startIndex = 0;
+		searchInput.maxToReturn = 1;
+		searchInput.maxToLoad = 1;
+		searchInput.searchFilterFieldSortType = "Alphabetical";
+		searchInput.internalPropertyName = "volume_name";
+		
+		FinderService finderService = FinderService.getService(iConnection);
+		SearchResponse2 response = finderService.performSearch(searchInput);
+ 
+		if (response.serviceData.sizeOfPartialErrors() > 0)
+		{
+			String ErrorMsg = "";
+			for (int i = 0; i < response.serviceData.sizeOfPartialErrors(); i++)
+			{
+				ErrorStack errorStack = response.serviceData.getPartialError(i);
+				String[] messages = errorStack.getMessages();
+				for (String msg : messages)
+				{ ErrorMsg = ErrorMsg + msg + "\n"; }
+			}
+			throw new Exception(ErrorMsg);
+		}
+ 
+		if (response.searchResults.length != 1)
+		{ throw new Exception("Get_Volume: " + iVolume + " not found. " + response.searchResults.length); }
+	
+		return response.searchResults[0];
+
+///
+
+
+LucasRomier (Romier Solutions)
+
+a year ago
+How about a query that checks all workitems that were created prior to your date, and therefore surely were available at that date:
+
+created:[0 to "your date"] AND status:("")
+For 2023-06-22 that would be:
+
+created:[0 TO 30000000] AND status:(open)
+ 
+
+If you want to check which WIs had the status XYZ on a specified date, I recommend using the above approach to get a hold of all available WIs of that date and to then check through its revisions what status the WI had on that day.
+
+///
+
+How to Add Customized Query in Quick Search
+Hi,
+
+ 
+
+We would like to add our customized Query in Quick Search, so we modified the preferences Quick_Access_Queries and Quick_Access_Queries_Atrributes shown in the attached screenshots.
+
+ 
+
+Also, we modified qry_text_locale.xml and added our custom query name. Then we ran generate_client_meta_cache -u=infodba -p=infodba -g=dba generate all, cleared all the cashes and restarted the TC services.
+
+ 
+
+In the end, we're still getting errors while using this custom quick search.
+
+ 
+
+Would you please help and find out which part of implementation is not performed properly?
+
+ 
+
+Thanks,
+
+Fuchun Ma
+
+Hi Jamie,
+
+ 
+
+Thanks for the hints. I found that User Entry L10N Key has to be matched with User Entry Name to make this work.
+
+ 
+
+Regards,
+
+Fuchun Ma
+
+
+///
+
+In QueryBuilder, set the Search Class to Item. In the Attribute Selection section, scroll to the bottom and double-click Referenced By. In the dialog that pops up, set Search Class to ItemRevision. Double-click Item [Item]. This will close the dialog and return you to Attribute Selection where you will be able to select ItemRevision attributes to build your query.
+
+///
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using Teamcenter.Schemas.Soa._2006_03.Exceptions;
+using Teamcenter.Services.Strong.Core;
+using Teamcenter.Services.Strong.Core._2008_06.DataManagement;
+using Teamcenter.Services.Strong.Core._2006_03.DataManagement;
+using Teamcenter.Services.Strong.Core._2007_01.DataManagement;
+using Teamcenter.Soa.Client.Model;
+using Teamcenter.Soa.Exceptions;
+using System.Collections;
+using Teamcenter.ClientX;
+ 
+namespace Teamcenter.Hello
+{
+    public class CreateItemExample
+    {
+        public DataManagementService dmService;
+        public void CreateItem()
+        {
+            CreateIn[] createObjectsInput = new CreateIn[]
+         {
+               new CreateIn
+               {
+                   Data = new CreateInput
+                   {
+                       BoName = "Item",
+                       StringProps = new System.Collections.Hashtable
+                       {
+                           {
+                               "object_name",
+                               "My Item Name"
+                           }
+                       },
+                       CompoundCreateInput =
+                       {
+                           {
+                               "IMAN_master_form",
+                               new CreateInput[]
+                               {
+                                   new CreateInput
+                                   {
+                                       BoName = "Item Master",
+                                       StringProps = new System.Collections.Hashtable
+                                       {
+                                           {
+                                               "object_desc",
+                                               "My Master"
+                                           }
+                                       }
+                                   }
+                               }
+                           },
+                           {
+                               "revision",
+                               new CreateInput[]
+                               {
+                                   new CreateInput
+                                   {
+                                       BoName = "ItemRevision",
+                                       CompoundCreateInput =
+                                       {
+                                           {
+                                               "IMAN_master_form_rev",
+                                               new CreateInput[]
+                                               {
+                                                   new CreateInput
+                                                   {
+                                                       BoName = "ItemRevision Master",
+                                                       StringProps = new System.Collections.Hashtable
+                                                       {
+                                                           {
+                                                               "object_desc",
+                                                               "My Revision Master"
+                                                           }
+                                                       }
+                                                   }
+                                               }
+                                           }
+                                       }
+                                   }
+                               }
+                           }
+                       }
+                   }
+               }
+         };
+            var createObjectsResponse = dmService.CreateObjects(createObjectsInput);
+ 
+        }
+ 
+    }
+ 
+}
+
+///
+
+Rename the query by adding two underscores at the beginning - it will only be visible to dbas.
+
+///
+
+import com.teamcenter.services.strong.core.DataManagementService;
+import com.teamcenter.services.strong.query.SavedQueryService;
+import com.teamcenter.services.strong.query._2006_03.SavedQuery;
+import com.teamcenter.soa.client.Connection;
+import com.teamcenter.soa.client.model.ModelObject;
+import com.teamcenter.soa.client.model.ServiceData;
+import com.teamcenter.soa.client.model.strong.EPMJob;
+import com.teamcenter.soa.client.model.strong.ImanQuery;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
+import javax.ejb.Stateless;
+import javax.faces.bean.RequestScoped;
+
+@Stateless
+@RequestScoped
+public class QueryBean {
+
+    public  List<EjbJob> queryJobs(Connection connection, String taskName)
+    {
+        ImanQuery query = null;
+        SavedQueryService queryService = SavedQueryService.getService(connection);
+        DataManagementService  dmService = DataManagementService.getService(connection);
+        try
+        {
+
+            SavedQuery.GetSavedQueriesResponse savedQueries = queryService.getSavedQueries();
+
+            if (savedQueries.queries.length == 0)
+            {
+                 return null;
+            }
+
+            for (int i = 0; i < savedQueries.queries.length; i++)
+            {
+  
+                if (savedQueries.queries[i].name.equals("General..."))//поменять на Админ - информация о служащем
+                {
+                    query = savedQueries.queries[i].query;
+                    break;
+                }
+            }
+            if (query == null)
+            {
+               return null;
+            }
+            com.teamcenter.services.strong.query._2007_06.SavedQuery.SavedQueryInput savedQueryInput[] = new com.teamcenter.services.strong.query._2007_06.SavedQuery.SavedQueryInput[1];
+            savedQueryInput[0] = new com.teamcenter.services.strong.query._2007_06.SavedQuery.SavedQueryInput();
+            savedQueryInput[0].query = query;
+            savedQueryInput[0].limitListCount = 0;
+            savedQueryInput[0].limitList = new ModelObject[0];
+            savedQueryInput[0].entries = new String[]{"Type", "Name" };//поменять на "Пользователь"
+            savedQueryInput[0].values = new String[2];
+            savedQueryInput[0].values[0] = "Job";
+            savedQueryInput[0].values[1] =taskName;
+
+            com.teamcenter.services.strong.query._2007_06.SavedQuery.ExecuteSavedQueriesResponse savedQueryResult = queryService.executeSavedQueries(savedQueryInput);
+
+            
+            com.teamcenter.services.strong.query._2007_06.SavedQuery.SavedQueryResults found = savedQueryResult.arrayOfResults[0];
+            System.out.println("Query task count="+found.numOfObjects);
+
+            ServiceData dataJobs  = dmService.getProperties(found.objects, new String[]{ "object_name" });//поменять на "person"
+
+            List<EjbJob> arr= new ArrayList<EjbJob>();
+
+            for (int i=0 ; i<dataJobs.sizeOfPlainObjects(); i++){
+
+		ModelObject modelObj= dataJobs.getPlainObject(i);
+		EPMJob job=(EPMJob) modelObj;
+                String jobName=job.get_object_name();
+                EjbJob milJob=new EjbJob(job, jobName);
+                arr.add(milJob);
+            }
+
+            dmService.unloadObjects(found.objects);
+            return arr;
+        }
+        catch (Exception e)
+        {
+           return null;
+        }
+     }
+ 
+}
+
+///
+
+Подскажите как на java получить список пользователей заведенных в TeamCenter??
+
+Пытаюсь вызвать сохраненный запрос, но он почему то всегда возвращает массив нулевой длины. Хотя явно указываю имя пользователя infodba.
+
+ImanQuery queryUser = null;
+
+		
+
+		SavedQueryService queryService = SavedQueryService.getService(Session.getConnection());
+
+		try
+
+		{
+
+			FindSavedQueriesCriteriaInput savedCriteraInput[] = new FindSavedQueriesCriteriaInput[1];
+
+			savedCriteraInput[0] = new FindSavedQueriesCriteriaInput();
+
+			savedCriteraInput[0].queryNames = new String[1];
+
+			savedCriteraInput[0].queryNames[0] = "Админ - Информация о служащем";
+
+			savedCriteraInput[0].queryType = 0;
+
+			savedCriteraInput[0].queryDescs = new String[1];
+
+			savedCriteraInput[0].queryDescs[0] = new String();
+
+			FindSavedQueriesResponse savedQueries = queryService.findSavedQueries(savedCriteraInput);
+
+			if (savedQueries.savedQueries.length < 1)
+
+			{
+
+				System.out.println("There are no saved queries in the system.");
+
+				return;
+
+			}
+
+			queryUser = savedQueries.savedQueries[0];
+
+			if (queryUser == null)
+
+				return;
+
+			
+
+			try
+
+			{
+
+				DataManagementService dmService = DataManagementService.getService(Session.getConnection());
+
+				dmService.getProperties(new ModelObject[]{queryUser}, new String[]{"query_name"});
+
+				System.out.println(queryUser.get_query_name());
+
+				IniLoader iniLoader = new IniLoader();
+
+				SavedQueryInput savedQueryInput[] = new SavedQueryInput[1];
+
+				savedQueryInput[0] = new SavedQueryInput();
+
+				savedQueryInput[0].query = queryUser;
+
+				savedQueryInput[0].maxNumToReturn = 999999999;
+
+				savedQueryInput[0].limitListCount = 0;
+
+				savedQueryInput[0].resultsType = 0;
+
+				savedQueryInput[0].limitList = new ModelObject[0];
+
+				savedQueryInput[0].entries = new String[]{"PersonName", "UserId"};
+
+				savedQueryInput[0].values = new String[]{"infodba", "infodba"};
+
+				savedQueryInput[0].maxNumToInflate = 999999999;
+
+				
+
+				ExecuteSavedQueriesResponse savedQueryResult = queryService.executeSavedQueries(savedQueryInput);
+
+				SavedQueryResults found = savedQueryResult.arrayOfResults[0];
+
+				System.out.println("Found user:");
+
+				ModelObject[] objects = found.objects;
+
+				if(objects == null)
+
+					return;
+
+				System.out.println("objects.length"+objects.length);
+
+			}
+
+			catch (Exception e)
+
+			{
+
+				System.out.println("ExecuteSavedQuery service request failed.");
+
+				System.out.println(e.getMessage());
+
+				return;
+
+			}
+
+		}
+
+		catch (ServiceException e)
+
+		{
+
+			System.out.println("GetSavedQueries service request failed.");
+
+			System.out.println(e.getMessage());
+
+			return;
+
+		}
+
+///
+
+package com.teamcenter.query;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpSession;
+
+import com.teamcenter.clientx.Session;
+import com.teamcenter.schemas.soa._2006_03.exceptions.ServiceException;
+import com.teamcenter.services.strong.core.DataManagementService;
+import com.teamcenter.services.strong.core.LOVService;
+import com.teamcenter.services.strong.core._2007_06.LOV.AttachedLOVsResponse;
+import com.teamcenter.services.strong.core._2007_06.LOV.LOVInfo;
+import com.teamcenter.services.strong.query.SavedQueryService;
+import com.teamcenter.services.strong.query._2006_03.SavedQuery.GetSavedQueriesResponse;
+import com.teamcenter.services.strong.query._2007_06.SavedQuery.ExecuteSavedQueriesResponse;
+import com.teamcenter.services.strong.query._2007_06.SavedQuery.SavedQueryInput;
+import com.teamcenter.services.strong.query._2007_06.SavedQuery.SavedQueryResults;
+import com.teamcenter.soa.client.model.ModelObject;
+import com.teamcenter.soa.client.model.Property;
+import com.teamcenter.soa.client.model.strong.Dataset;
+import com.teamcenter.soa.client.model.strong.ImanQuery;
+import com.teamcenter.soa.client.model.strong.Item;
+import com.teamcenter.soa.client.model.strong.ItemRevision;
+import com.teamcenter.soa.client.model.strong.ListOfValuesString;
+import com.teamcenter.soa.exceptions.NotLoadedException;
+
+import foton.picture.exception.FutianTCQueryException;
+import foton.picture.vo.PictureVO;
+import foton.picture.util.IConstants;
+import foton.picture.util.JPEGDownloadFromTC;
+import foton.picture.util.PropertiesService;
+
+public class Query {
+
+	private SavedQueryService queryService = null;
+
+	private ImanQuery query = null;
+
+	private final static String QUERY_STYLE_PICTURE = Messages
+			.getString("Query.stylePicture"); //$NON-NLS-1$
+
+	private final static String QUERY_ITEM = "Item..."; //$NON-NLS-1$
+
+	public Query() {
+		if (Session.getConnection() != null) {
+			this.queryService = SavedQueryService.getService(Session
+					.getConnection());
+		}
+	}
+
+	/**
+	 * 调用TC中的“造型图片查询” 以“F6_PictureRevision”的属性值作为查询条件，查询所有符合条件的Item 返回List<PictureVO>
+	 * 输入查询条件Map ：attributeMap 如果查询条件中没有输入值调用queryItemRevisionByType()
+	 */
+	public SavedQueryResults queryAllItemRevisionByAttribute(
+			Map<String, Object> attributeMap) throws Exception {
+		if (attributeMap == null) {
+			return this.queryAllItemRevisionByType();
+		}
+
+		initQueryObject(QUERY_STYLE_PICTURE);
+		List<String[]> list = initQueryAttributes(attributeMap);
+
+		if (list == null) {
+			return this.queryAllItemRevisionByType();
+		}
+
+		SavedQueryInput savedQueryInput[] = new SavedQueryInput[1];
+		savedQueryInput[0] = new SavedQueryInput();
+		savedQueryInput[0].query = this.query;
+		// savedQueryInput[0].maxNumToReturn = 10000;
+		// savedQueryInput[0].limitListCount = 0;
+		savedQueryInput[0].limitList = new ModelObject[0];
+		savedQueryInput[0].entries = list.get(0);
+		savedQueryInput[0].values = list.get(1);
+		// savedQueryInput[0].maxNumToInflate = 10000;
+
+		ExecuteSavedQueriesResponse savedQueryResult = this.queryService
+				.executeSavedQueries(savedQueryInput);
+		SavedQueryResults found = savedQueryResult.arrayOfResults[0];
+		return found;
+	}
+
+	/**
+	 * 调用TC中的“零组件...” 查询类型是“F6_Picture”的所有Item， 返回SavedQueryResults
+	 */
+	public SavedQueryResults queryAllItemRevisionByType() throws Exception {
+		initQueryObject(QUERY_ITEM);
+
+		SavedQueryInput savedQueryInput[] = new SavedQueryInput[1];
+		savedQueryInput[0] = new SavedQueryInput();
+		savedQueryInput[0].query = this.query;
+		// savedQueryInput[0].maxNumToReturn = 10000;
+		// savedQueryInput[0].limitListCount = 0;
+		savedQueryInput[0].limitList = new ModelObject[0];
+		savedQueryInput[0].entries = new String[] { "Type" }; //$NON-NLS-1$
+		savedQueryInput[0].values = new String[] { "F6_Picture" }; //$NON-NLS-1$
+		// savedQueryInput[0].maxNumToInflate = 10000;
+
+		ExecuteSavedQueriesResponse savedQueryResult = this.queryService
+				.executeSavedQueries(savedQueryInput);
+		SavedQueryResults found = savedQueryResult.arrayOfResults[0];
+		return found;
+	}
+
+	/**
+	 * 分页下载图片，
+	 * 
+	 * @param found
+	 * @param page
+	 * @return
+	 * @throws Exception
+	 */
+	public List<PictureVO> getPictureVOByPage(SavedQueryResults found,
+			int page, int perCount, HttpSession session) throws Exception {
+		// System.out.println("found items:" + found.objects.length);
+		// //$NON-NLS-1$
+		SavedQueryResults foundResult = new SavedQueryResults();
+		ModelObject[] modelObjects = new ModelObject[perCount];
+
+		int begin = (page - 1) * perCount;
+		int end = page * perCount - 1;
+
+		if (found.numOfObjects - 1 < end) {
+			end = found.numOfObjects - 1;
+		}
+
+		int i = 0;
+
+		for (begin = (page - 1) * perCount; begin <= end; begin++) {
+			modelObjects[i] = found.objects[begin];
+			i++;
+		}
+
+		foundResult.objects = modelObjects;
+
+		List<PictureVO> pictures = getPictureVOList(foundResult, session);
+		return pictures;
+	}
+
+	/**
+	 * 被queryItemRevisionByAttribute()和queryItemRevisionByType()调用
+	 * 
+	 * @param SavedQueryResults
+	 * @return List<PictureVO>
+	 * @throws Exception
+	 */
+	private List<PictureVO> getPictureVOList(SavedQueryResults found,
+			HttpSession session) throws Exception {
+		List<PictureVO> pictures = new ArrayList<PictureVO>();
+		Map<String, PictureVO> sessionmap = (Map<String, PictureVO>) session
+				.getAttribute("map");
+
+		for (int i = 0; i < found.objects.length; i++) {
+			if (!(found.objects[i] instanceof Item))
+				continue;
+			DataManagementService dataService = DataManagementService
+					.getService(Session.getConnection());
+			dataService
+					.getProperties(found.objects, new String[] { "item_id",
+							"item_revision", "revision_list",
+							"displayable_revisions" });
+
+			PictureVO pictureVO = new PictureVO();
+			Item f6Item = (Item) found.objects[i];
+			String itemKey = f6Item.get_item_id();
+
+			if (session != null && sessionmap != null) {
+				if (sessionmap.containsKey(itemKey)) {
+					pictures.add(sessionmap.get(itemKey));
+					continue;
+				}
+			}
+
+			// 获取最后修改的版本
+
+			ItemRevision f6_pictureRev = (ItemRevision) f6Item
+					.get_revision_list()[f6Item.get_displayable_revisions().length - 1];
+			dataService.getProperties(new ModelObject[] { f6_pictureRev },
+					new String[] { "f6_Country", "f6_Band", "f6_SubBand",
+							"f6_Year", "f6_InterOunter", "f6_Outer",
+							"f6_Inter", "f6_CarType", "f6_Angle",
+							"IMAN_reference", "IMAN_specification" });
+			try {
+				pictureVO.setCountry(f6_pictureRev
+						.getPropertyDisplayableValue(IConstants.F6_COUNTRY));
+				pictureVO.setAngle(f6_pictureRev
+						.getPropertyDisplayableValue(IConstants.F6_ANGLE));
+				pictureVO.setBand(f6_pictureRev
+						.getPropertyDisplayableValue(IConstants.F6_BAND));
+				pictureVO.setCarType(f6_pictureRev
+						.getPropertyDisplayableValue(IConstants.F6_CAR_TYPE));
+				pictureVO.setInter(f6_pictureRev
+						.getPropertyDisplayableValue(IConstants.F6_INTER));
+				pictureVO
+						.setInterOunter(f6_pictureRev
+								.getPropertyDisplayableValue(IConstants.F6_INTER_OUNTER));
+				pictureVO.setOuter(f6_pictureRev
+						.getPropertyDisplayableValue(IConstants.F6_OUTER));
+				pictureVO.setYear(f6_pictureRev
+						.getPropertyDisplayableValue(IConstants.F6_YEAR));
+				pictureVO.setSubBand(f6_pictureRev
+						.getPropertyDisplayableValue(IConstants.F6_SUB_BAND));
+				pictureVO.setKey(itemKey);
+
+				pictureVO.setJpg(null);
+				pictureVO.setJpgName(IConstants.ERROR_PAGE_NAME);
+				pictureVO.setSp_jpgName(IConstants.ERROR_PAGE_NAME);
+
+				if (f6_pictureRev.get_IMAN_specification() != null) {
+					if (f6_pictureRev.get_IMAN_specification().length > 0) {
+
+						for (int p = 0; p < f6_pictureRev
+								.get_IMAN_specification().length; p++) {
+							ModelObject bom = f6_pictureRev
+									.get_IMAN_specification()[p];
+							if ("F6_StylePicture".equals(bom.getType()
+									.getName())) {
+								Dataset jpg = (Dataset) bom;
+								dataService.getProperties(
+										new ModelObject[] { jpg },
+										new String[] { "object_name" });
+								String name = jpg.get_object_name();
+								if (name.startsWith("sp_")) {
+									pictureVO.setSp_jpg(jpg);
+									JPEGDownloadFromTC
+											.downloadSPDatasets(
+													jpg,
+													(String) PropertiesService
+															.getInstance()
+															.getPropertyObject(
+																	IConstants.DOWNLOAD_SP_JPEG_PATH),
+													pictureVO);
+								} else {
+									pictureVO.setJpg(jpg);
+									JPEGDownloadFromTC
+											.downloadDatasets(
+													jpg,
+													(String) PropertiesService
+															.getInstance()
+															.getPropertyObject(
+																	IConstants.DOWNLOAD_JPEG_PATH),
+													pictureVO);
+								}
+							}
+						}
+
+					}
+				} else {
+					pictureVO.setJpg(null);
+					pictureVO.setJpgName(IConstants.ERROR_PAGE_NAME);
+					pictureVO.setSp_jpgName(IConstants.ERROR_PAGE_NAME);
+				}
+				// if(pictureVO.getJpg()!= null) {
+				pictures.add(pictureVO);
+				// }
+				/*
+				 * pictureVO.setCreateDateBefore(createDateBefore)
+				 * pictureVO.setCreateDateAfter(createDateAfter)
+				 * pictureVO.setOfferDateBefore(offerDateBefore)
+				 * pictureVO.setOfferDateAfter(offerDateAfter)
+				 * pictureVO.setUpdateDateBefore(updateDateBefore)
+				 * pictureVO.setUpdateDateAfter(updateDateAfter)
+				 */
+			} catch (NotLoadedException e) {
+				e.printStackTrace();
+				throw new FutianTCQueryException(e.getMessage());
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+				throw new FutianTCQueryException(e.getMessage());
+			} catch (IOException e) {
+				e.printStackTrace();
+				throw new FutianTCQueryException(e.getMessage());
+			}
+		}
+		return pictures;
+	}
+
+	/**
+	 * 获取TC中已保存的查询
+	 * 
+	 * @param queryName
+	 * @throws Exception
+	 */
+	private void initQueryObject(String queryName) throws Exception {
+		try {
+			if (this.queryService != null) {
+				GetSavedQueriesResponse savedQueries = this.queryService
+						.getSavedQueries();
+				if (savedQueries.queries.length == 0) {
+					throw new FutianTCQueryException(
+							"There are no saved queries in the system."); //$NON-NLS-1$
+				}
+
+				for (int i = 0; i < savedQueries.queries.length; i++) {
+					if (savedQueries.queries[i].name.equals(queryName)) {
+						this.query = savedQueries.queries[i].query;
+						break;
+					}
+				}
+
+				if (this.query == null) {
+					throw new FutianTCQueryException(
+							"There is not an " + queryName //$NON-NLS-1$
+									+ " query"); //$NON-NLS-1$
+				}
+			} else {
+				throw new FutianTCQueryException(
+						"TCSession Timedout. please relogin!"); //$NON-NLS-1$
+			}
+		} catch (ServiceException e) {
+			throw new FutianTCQueryException(
+					"GetSavedQueries service request failed." + e.getMessage()); //$NON-NLS-1$
+		}
+	}
+
+	/**
+	 * 被“造型图片查询”类调用，用于设置查询条件参数 去除值为NULL的和“”的查询条件
+	 * 
+	 * @param attributeMap
+	 * @throws Exception
+	 */
+	private List<String[]> initQueryAttributes(Map<String, Object> attributeMap) {
+		List<String[]> list = null;
+
+		if (attributeMap.size() > 0) {
+			Iterator<String> iter = attributeMap.keySet().iterator();
+			Map<String, String> condition = new HashMap<String, String>();
+
+			while (iter.hasNext()) {
+				String key = iter.next();
+				Object value = attributeMap.get(key);
+				if (value != null && !"".equals(value)) { //$NON-NLS-1$
+					condition.put(key, (String) value);
+				}
+			}
+
+			if (condition.size() > 0) {
+				Iterator<String> conditionIter = condition.keySet().iterator();
+
+				String[] entries = new String[condition.size()];
+				String[] values = new String[condition.size()];
+				int i = 0;
+				while (conditionIter.hasNext()) {
+					String key = conditionIter.next();
+					entries[i] = key;
+					values[i] = condition.get(key);
+					i++;
+				}
+				list = new ArrayList<String[]>();
+				list.add(entries);
+				list.add(values);
+			}
+		}
+		return list;
+	}
+
+	/**
+	 * soa读取lov方法
+	 * 
+	 * @param tcSession
+	 *            登录TC后获得的TCSession
+	 * @param className
+	 *            在这里指的是 F6_PictureRevision
+	 * @param attributeName
+	 *            在这里指的是 F6_PictureRevision的属性名称 如f6_Year
+	 * @return 数组 String类型的lov名称集合
+	 * @throws ServiceException
+	 * @throws NotLoadedException
+	 */
+	public String[] getLovListValue(Session tcSession, String className,
+			String attributeName) throws ServiceException, NotLoadedException {
+		LOVService lovService = LOVService
+				.getService(tcSession.getConnection());
+
+		LOVInfo lovinfo = new LOVInfo();
+		String arg[] = new String[] { attributeName };
+		lovinfo.typeName = className;
+		lovinfo.propNames = arg;
+		LOVInfo[] lov = { lovinfo };
+
+		AttachedLOVsResponse lovResponse = lovService.getAttachedLOVs(lov);
+		ListOfValuesString lovStr = (ListOfValuesString) lovResponse.serviceData
+				.getPlainObject(0);
+
+		String tp[] = getItemAttributeValue(tcSession, lovStr, "lov_values");
+
+		return tp;
+	}
+
+	// 获取业务对象上的字符串数组函数
+	private String[] getItemAttributeValue(Session session,
+			ModelObject modelObject, String attributeName)
+			throws NotLoadedException {
+
+		DataManagementService dmService = DataManagementService
+				.getService(session.getConnection());
+
+		ModelObject queryObjects[] = new ModelObject[] { modelObject };
+		String qryProps[] = new String[] { attributeName };
+
+		dmService.getProperties(queryObjects, qryProps);
+		Property fileTag = modelObject.getProperty(attributeName);
+		String setobjs[] = fileTag.getStringArrayValue();
+
+		return setobjs;
+	}
+
+}
+
+///
+
