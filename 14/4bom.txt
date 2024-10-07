@@ -1,0 +1,131 @@
+///
+
+Remove a BOMline with SOA
+I am trying to determine how to remove a BOMline with SOA. The soa calls from the Rac for this operation use a lot of internal methods.
+
+ 
+
+I found the Teamcenter.Services.Strong.Structuremanagement.StructureService.CutItems Method but the documentation says this will delete the item revisions as well.
+
+ 
+
+I just want to remove them from a BOM not delete outright. In that same StructureService class there is an Add method. Seems odd there is not a Remove method.
+
+ 
+
+Thanks in advance,
+
+Alexander
+
+/**
+
+* 移除BOM子结构
+
+* 
+
+* @param parentBOMLine 父节点
+
+* @param childLines  子节点
+
+* @return boolean true:~成功；false:~失败
+
+*/
+
+public boolean removeChildBOMLine(BOMWindow bomWindow, BOMLine parentBOMLine, BOMLine[] childLines) {
+
+com.teamcenter.services.strong.bom.StructureManagementService bomService = com.teamcenter.services.strong.bom.StructureManagementService
+
+.getService(AppXSession.getConnection());
+
+RemoveChildrenFromParentLineResponse response = bomService.removeChildrenFromParentLine(childLines);
+
+ServiceData serviceData = response.serviceData;
+
+if (!serviceDataError(serviceData)) {
+
+StructureManagementService m_smService = com.teamcenter.services.strong.cad.StructureManagementService.getService(AppXSession.getConnection());
+
+/* 保存 */
+
+m_smService.saveBOMWindows(new BOMWindow[] { bomWindow });
+
+/* 关闭BOM窗口，释放资源 */
+
+m_smService.closeBOMWindows(new BOMWindow[] { bomWindow });
+
+return true;
+
+} else {
+
+return false;
+
+}
+
+}
+
+
+please try this SOA API in com.teamcenter.services.strong.bom package
+
+StructureManagementService.removeChildrenFromParentLine
+
+///
+
+Move Example:
+Assembly_A
+|
+|-->SubAssembly_B (instance 1)
+|
+|-->SubAssembly_B (instance 2)
+|
+|-->SubAssembly_C
+| |
+| |-->Part_P1 (instance 1)
+|
+|-->SubAssembly_C
+| |
+| |-->Part_P1 (instance 2)
+
+
+To move "Part_P1" from SubAssembly_C to Sub_Assembly_B:
+relStrInfo4s[0] = new CreateOrUpdateRelativeStructureInfo4();
+relStrInfo4s[0].parentInfo = new RelativeStructureParentInfo();
+relStrInfo4s[0].parentInfo.parent = SubAssembly_B_ItemRev;
+relStrInfo4s[0].childInfo = new RelativeStructureChildInfo3[1];
+
+relStrInfo4s[0].childInfo[0] = new RelativeStructureChildInfo3();
+relStrInfo4s[0].childInfo[0].clientId = "Add_Part_P1_to_SubAssembly_B";
+relStrInfo4s[0].childInfo[0].child = Part_P1;
+relStrInfo4s[0].childInfo[0].occInfo = new RelOccInfo();
+relStrInfo4s[0].childInfo[0].occInfo.moveInfo = new MoveInfo();
+relStrInfo4s[0].childInfo[0].occInfo.moveInfo.commonParent = Assembly_A_ItemRev;
+relStrInfo4s[0].childInfo[0].occInfo.moveInfo.sourceAssembly = SubAssembly_C_ItemRev;
+relStrInfo4s[0].childInfo[0].occInfo.moveInfo.occThreadPathToBeMoved = occThreadPathToBeMoved;
+relStrInfo4s[0].childInfo[0].occInfo.moveInfo.occThreadPathTargetParent = targetParentOccThr;
+
+relStrInfo4s[0].childInfo[1] = new RelativeStructureChildInfo3();
+relStrInfo4s[0].childInfo[1].clientId = "Add_Part_P1_instance_2_to_SubAssembly_B";
+relStrInfo4s[0].childInfo[1].child = NULL; // For the second instance, set child to NULL
+relStrInfo4s[0].childInfo[1].occInfo = new RelOccInfo();
+relStrInfo4s[0].childInfo[1].occInfo.moveInfo = new MoveInfo();
+relStrInfo4s[0].childInfo[1].occInfo.moveInfo.commonParent = Assembly_A_ItemRev;
+relStrInfo4s[0].childInfo[1].occInfo.moveInfo.sourceAssembly = SubAssembly_C_ItemRev;
+relStrInfo4s[0].childInfo[1].occInfo.moveInfo.occThreadPathToBeMoved = occThreadPathToBeMoved;
+relStrInfo4s[0].childInfo[1].occInfo.moveInfo.occThreadPathTargetParent = targetParentOccThr;
+
+///
+
+   DocumentRevision targetAttachmentDocumentRevision = targetAttachments[0] as DocumentRevision;
+ 
+            ModelObject[] objects7 = { targetAttachmentDocumentRevision };
+            string[] attributes7 =
+            {
+                "contents", "object_string", "object_name", "process_stage_list",
+                "object_properties",
+                "current_name",  "current_desc", "release_statuses",
+                "item_revision", "MEProcess", "DocumentTitle", "DocumentSubject",
+                "ps_children", "item_revision", "Fnd0RelatesToDocuments"
+            };
+            dmService.GetProperties(objects7, attributes7);
+
+///
+

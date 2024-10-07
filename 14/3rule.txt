@@ -1,0 +1,380 @@
+///
+
+Unable to find Revision Rule
+Hi All,
+
+ 
+
+In one of our environment, One particular revision rule is not showing up in General search (Type=revision Rule). So I tried to create it from SM but it throwing error as already Revision rule with same name exists. But not showing up anywhere
+
+I queried the Database (PRevisionrule) table and able to see that particular Revision Rule
+
+
+Please suggest what could be the issue and any solution to this
+
+
+
+turn on bypass and search for the rule. It is most likely hidden by access manager. If the rev rule is not owned by infodba (I think), it will be hidden from the world and only visible to the owning user --- something like that.
+
+///
+
+Activate GRM rule for certain revision status ONLY
+I would like to restrict when a GRM rules is "activated", based on the status of the revision
+
+e.g. When the rev is Released, allow the grm action
+
+When the rev is Obsolete, disallow
+
+ 
+
+Is this possible? - GRM seems to only expose usersession conditions.
+
+If possible, what format should the condition syntax take
+
+Teamcenter
+
+kuy2o1
+
+2 years ago
+This is documented in the Business Modeler IDE guide - just search the PDF for "ImanGRM" and it should land somewhere where it lists the options. Sample below.
+
+ 
+
+Signature: SX4_AttachCondition ( ImanGRM g , ItemRevision p , OtherObject s , UserSession u )
+
+Expression: p.sx4_ReleaseStatusName = "Released"
+
+ 
+
+This will require a compound attribute on ItemRevision to return the name of the releas status. If your objects hold multiple statuses, the same can be achieved but the logic is a but more complex.
+
+///
+
+Is there a reason why you use a Naming Rule instead of a Revision Naming Rule
+
+ 
+
+We do have a different use case compared to your use case, but maybe you can achieve what you need by using a Revision Naming Rule.
+
+ 
+
+Best regards,
+
+Thomas
+
+///
+
+Is there an easier way to get ObjectManager and RootPart so that I can use my application's functions in RuleStream?
+RuleStreamUser ruleStreamUser = new RuleStreamUser();
+
+ruleStreamUser.ImportProfile(myRsUserFile, true);
+
+bool isLogin = ruleStreamUser.LogIn(false, myLogin, myPassword,
+
+
+RuleStreamUser.AUTHTYPE_SQLSERVERAUTH);
+
+ 
+
+Thread.CurrentPrincipal = ruleStreamUser;   
+
+ 
+
+RuleStreamApplication ruleStreamApplication = null;
+
+ 
+
+using (var stream = new FileStream(myRsAppBinaryFile, FileMode.Open))
+
+{
+
+          ruleStreamApplication = (RuleStreamApplication)new BinaryFormatter().Deserialize(stream);
+
+}
+
+ 
+
+DocManager docManager = new DocManager();
+
+ 
+
+ApplicationInfo applicationInfo = new ApplicationInfo();
+
+ 
+
+RuntimeModel runtimeModel = new RuntimeModel(ruleStreamUser, docManager, ruleStreamApplication, applicationInfo);
+
+ 
+
+XMLLaunchParamaters paramaters = new XMLLaunchParamaters();
+
+paramaters.XMLInputFilePath = myXMLInputFile;
+
+paramaters.Unattended = true;
+
+ 
+
+runtimeModel.LoadModel(myXMLInputFile, paramaters);
+
+ 
+
+KernelManager kernelManager = new KernelManager();
+
+ 
+
+ObjectManager objectManager = kernelManager.GetObjectManager();
+
+objectManager.LoadXML(myXMLFile, myProcessID);
+
+ 
+
+Part part = objectManager.RootPart();
+
+///
+
+excludeFilter
+public java.lang.String excludeFilter
+Filter to exclude the type of BOMLines. Valid values are: None2 -- Returns all information about the structure. ExcludeOverridden2 -- Excludes structure or property values that are removed by AbsOccs substitution. ExcludeICHistory2 -- Excludes structure (or property values) that are configured out by ICs. ExcludeGDEs2 -- Excludes lines that are GDEOccurrences. ExcludeImanItemLines2 -- Excludes any lines that are ImanItemLines.
+
+///
+
+public static class StructureManagement.CreateBOMWindowsInfo
+extends java.lang.Object
+main input structure that defines item or item revision of the top line in the BOM window
+Field Summary
+Fields
+Modifier and Type	Field and Description
+AssemblyArrangement	activeAssemblyArrangement
+Active assembly arrangement of this BOM window
+PSBOMView	bomView
+PSBOMView object reference
+java.lang.String	clientId
+Identifier that helps the client track the object(s) created
+Item	item
+Item object reference for which BOM window needs to create
+ItemRevision	itemRev
+ItemRevision object reference
+ModelObject	objectForConfigure
+Tag for Variant rule or option set to use on this BOM window
+StructureManagement.RevisionRuleConfigInfo	revRuleConfigInfo
+Structure with information about the RevisionRuleConfigInfo
+
+///
+
+com.teamcenter.services.strong.cae._2012_02
+Interface StructureManagement
+
+public interface StructureManagement
+Nested Class Summary
+Nested Classes
+Modifier and Type	Interface and Description
+static class 	StructureManagement.ExecuteRuleResponse2
+ExecuteRuleResponse2 represents the outputs of the published execute StructureMap and execute Data Map operations.
+Method Summary
+All MethodsInstance MethodsAbstract Methods
+Modifier and Type	Method and Description
+StructureManagement.ExecuteRuleResponse2	executeDatamap(ItemRevision rootIR, Snapshot snapshotFolder, RevisionRule revRule, VariantRule variantRule, java.lang.String domain)
+This operation creates an output BOM structure given the root ItemRevision of the root BOMLine of an input BOM structure along with its RevisionRule and the VariantRule.
+StructureManagement.ExecuteRuleResponse2	executeStructureMap(ItemRevision rootIR, Snapshot snapshotFolder, RevisionRule revRule, VariantRule variantRule, StructureMapRevision structureMapIR)
+This operation creates an output BOM structure given the root ItemRevision of the root BOMLine of an input BOM structure along with its RevisionRule and the VariantRule.
+Method Detail
+executeDatamap
+StructureManagement.ExecuteRuleResponse2 executeDatamap(ItemRevision rootIR,
+                                                        Snapshot snapshotFolder,
+                                                        RevisionRule revRule,
+                                                        VariantRule variantRule,
+                                                        java.lang.String domain)
+This operation creates an output BOM structure given the root ItemRevision of the root BOMLine of an input BOM structure along with its RevisionRule and the VariantRule. A Snapshot folder of the input BOM structure along with the VariantRule can also be provided as an input. The output BOM structure is determined by the XSLT-based Data Map rules executed against the input BOM structure. Data Map syntax is in compliance with the schema defined in tcsim_xslWithNode.xsd, located in TC_DATA.
+
+Data Map rules define the mapping between an input item type and its resulting output item type. Data Map rules are defined for an entire site and are stored in the datamapping.xml file located in TC_DATA. The name of the datampping file is defined by the site preference CAE_dataMapping_file.
+
+The Data Map rules can be configured for various domains defined as LOV objects under StructureMap Domains in BMIDE. To configure the domains, in the Extensions view in BMIDE, open LOV->StructureMap Domains and add additional domain values. The domain to be used for applying Data Map rules can also be provided as an input.
+
+To use this operation, a well-defined datamapping.xml is required in TC_DATA and the user should have either a simulation_author or rtt_author license.
+
+
+Use Cases:
+Use Case 1: Create an output structure given a top BOMLine of the input structure along with its configuration
+Given an input root BOMLine of a BOM structure, along with its RevisionRule and VariantRule, the user can apply Data Map rule to the BOM structure and generate a corresponding output BOM structure. The output BOM structure would consist of BOMLine occurrences of ItemRevision objects as defined in the datamapping.xml file. The user can review the actions executed with the process log returned with the BOMViewRevision. An email notification containing the activity log would be sent to the current user if the session option for email notification is set to true.
+
+Use Case 2: Create an output structure given a Snapshot folder of the input structure along with the variant rule
+Given a Snapshot folder of the input BOM structure and its VariantRule, the user can apply Data Map rules to the BOM structure and generate a corresponding output BOM structure. The output BOM structure would consist of BOMLine occurrences of ItemRevision objects as defined in the datamapping.xml file. The user can review the actions executed with the process log returned with the BOMViewRevision. An email notification containing the activity log would be sent to the current user if the session option for email notification is set to true.
+
+
+Teamcenter Component:
+CAE Integrations - Provides custom extensions to the Tc data model to capture the CAE data model; the services that provide behaviors that are specific to CAE clients and the client side code that accesses the data model and services.
+
+Version: Teamcenter 9.1
+Parameters:
+rootIR - ItemRevision of the root item of the input structure. This can be null if the snapshotFolder is provided as input to the operation. If the rootIR is not null and snapshotFolder is also provided as an input, then rootIR input will be ignored and snapshotFolder will take precedence.
+snapshotFolder - The Snapshot folder of the input structure. The snapshotFolder can be null if the root rootIR is used as an input to the operation. The snapshotFolder takes precedence over the rootIR.
+revRule - The RevisionRule of the input structure. This is an optional parameter and can be provided if the root ItemRevision is used as an input to the operation. This parameter will be ignored if snapshotFolder is used as an input.
+variantRule - The VariantRule for the input structure. This can be provided for both, the rootIR or snapshotFolder as input. This is an optional parameter and can be null.
+domain - The domain for the Data Map rules to be applied. The datamapping.xml file can be configured for various domains defined as LOV objects under StructureMap Domains in BMIDE. This argument is used to specify which domain to be used from the datamapping.xml file. If the value is not provided, the default is assumed to be CAE.
+Returns:
+The PSBOMViewRevision of the root of the newly created output structure is added to the Created list of the ServiceData. If the root of the output structure does not have a BOMViewRevision, then the ItemRevision of the root is added to the Created list of the ServiceData. An activity log is also returned which contains the results of the Data Map rules applied to the input structure and the output items created. The details include the type of the output item created, the Item ID of the output item, the relationships created between the input and the output ItemRevision. Any failures in creation of the output item or relationships are also returned as a part of the activity log.
+executeStructureMap
+StructureManagement.ExecuteRuleResponse2 executeStructureMap(ItemRevision rootIR,
+                                                             Snapshot snapshotFolder,
+                                                             RevisionRule revRule,
+                                                             VariantRule variantRule,
+                                                             StructureMapRevision structureMapIR)
+This operation creates an output BOM structure given the root ItemRevision of the root BOMLine of an input BOM structure along with its RevisionRule and the VariantRule. A Snapshot folder of the input BOM structure along with the VariantRule can also be provided as an input. The output BOM structure is determined by a combination of XSLT-based Data Map and StructureMap rules executed against the input BOM structure. Data Map/StructureMap syntax is in compliance with the schema defined in tcsim_xslWithNode.xsd, located in TC_DATA.
+
+Data Map rules define the mapping between an input item type and its resulting output item type. Data Map rules are defined for an entire site and are stored in the datamapping.xml file located in TC_DATA. The name of the data mapping file is defined by the site preference CAE_dataMapping_file.
+
+StructureMap rules tailor the output BOM Structure. There are several rule types:
+Filter - Removes input BOM lines (and their children) from Data Map evaluation.
+Include - Inserts item revisions in either the input or output BOM structure as required.
+Reuse - Retrieve existing item revision to be used in the output structure.
+Create Collector - Reorganization rule that creates "container" item revisions to move BOMLine objects and sub-assemblies around.
+Move to Collector - Reorganizational rule that moves BOMLine objects and sub-assemblies to collector components.
+Collapse Single Component Assembly - Identifying sub-assemblies with single child component, elevating the child component to the parent sub-assembly and removing the parent sub-assembly.
+Remove Empty Assembly - Identifying sub-assemblies with no child components and removing the empty sub-assembly.
+Skip - Skips the BOMLine but still process its children.
+
+
+StructureMap rules are stored an XML named reference in CAEStructureMap dataset attached to a StructureMapRevision. StructureMap rules are created with Simulation Process Management CAE Structure Designer.
+
+To use this operation, a well-defined datamapping.xml is required in TC_DATA and a StructureMapRevision with an attached CAEStructureMap dataset must exist and the user should have either a simulation_author or rtt_author license.
+
+Use Cases:
+Use Case 1:
+Given an input root BOMLine of a BOM structure, along with its RevisionRule and VariantRule, the user can apply a StructureMap rule to the BOM structure and generate a corresponding output BOM structure. The output BOM structure would consist of BOMLine occurrences of ItemRevision objects as defined in the datamapping.xml file and would be organized by the StructureMap rules defined in the CAEStructureMap dataset attached to the StructureMapRevision. The user can review the actions executed with the process log returned with the BOMViewRevision. An email notification containing the activity log would be sent to the current user if the session option for email notification is set to true.
+
+Use Case 2:
+Given a Snapshot folder of the input BOM structure and its VariantRule, the user can apply a StructureMap rule to the BOM structure and generate a corresponding output BOM structure. The output BOM structure would consist of BOMLine occurrences of ItemRevision objects as defined in the datamapping.xml file and would be organized by the StructureMap rules defined in the CAEStructureMap dataset attached to the StructureMapRevision. The user can review the actions executed with the process log returned with the BOMViewRevision. An email notification containing the activity log would be sent to the current user if the session option for email notification is set to true.
+
+
+Teamcenter Component:
+CAE Integrations - Provides custom extensions to the Tc data model to capture the CAE data model; the services that provide behaviors that are specific to CAE clients and the client side code that accesses the data model and services.
+
+Version: Teamcenter 9.1
+Parameters:
+rootIR - The ItemRevision of the root item of the input structure. This can be null if the snapshotFolder is provided as input to the operation. If the rootIR is not null and snapshotFolder is also provided as an input, then rootIR input will be ignored and snapshotFolder will take precedence.
+snapshotFolder - The Snapshot folder of the input structure. The snapshotFolder can be null if the root rootIR is used as an input to the operation. The snapshotFolder takes precedence over the rootIR.
+revRule - The RevisionRule of the input structure. This is an optional parameter and can be provided if the root ItemRevision is used as an input to the operation. This parameter will be ignored if snapshotFolder is used as an input.
+variantRule - The VariantRule for the input structure. This can be provided for both, the rootIR or snapshotFolder as input. This is an optional parameter and can be null.
+structureMapIR - The StructureMapRevision containing a CAEStructureMap Dataset with an XML named reference containing valid StructureMap rules.
+Returns:
+The PSBOMViewRevision of the root of the newly created output structure is added to the Created list of the ServiceData. If the root of the output structure does not have a BOMViewRevision, then the ItemRevision of the root is added to the Created list of the ServiceData. An activity log is also returned which contains the results of the Data Map and the StructureMap rules applied to the input structure and the output items created. The details include the type of the output item created, the names of the StructureMap rules applied, the Item ID of the output item, the relationships created between the input and the output ItemRevision. Any failures in creation of the output item or relationships are also returned as a part of the activity log.
+
+///
+
+StructureManagement.ReconfigureBOMWindowsResponse	reconfigureBOMWindows(StructureManagement.ReconfigureBOMWindowsInfo[] info)
+Deprecated. 
+As of Teamcenter 12.2, use the createOrReConfigureBOMWindows operation from the _2007_01 namespace.
+
+///
+
+reconfigureBOMWindows
+@Deprecated
+StructureManagement.ReconfigureBOMWindowsResponse reconfigureBOMWindows(StructureManagement.ReconfigureBOMWindowsInfo[] info)
+Deprecated. As of Teamcenter 12.2, use the createOrReConfigureBOMWindows operation from the _2007_01 namespace.
+This operation takes a list of BOMWindow objects and updates the contents of the windows (i.e. configuration) by applying the supplied RevisionRule and variant configuration information. If the RevisionRuleEntryProps::unitNo is set to -1 then it considers default unitNo or use the input RevisionRule object with no changes. If no value specified for RevisionRuleEntryProps::unitNo, then the input RevisionRule object used as modified/transient rule with unitNo as 0. If the value of preference PSM_enable_product_configurator is set to true, then Product Configurator variant rule will be honored.
+
+Use Cases:
+This operation is used to reconfigure the BOMWindow with new or modified RevisionRule and VariantRule information.
+
+Teamcenter Component:
+Product Structure Authoring - The application that allows people to create and manage product structure using the various components such as configuration management; option and variants etc.
+
+Version: Tc 8
+Parameters:
+info - This contains a list of ReconfigureBOMWindowsInfo struct objects which has BOMWindow objects and corresponding RevisionRule object and VariantRule object or StoredOptionSet object information.
+Returns:
+A structure with a list of reconfigured BOMWindow objects and the Service Data object. The serviceData returned with objects in case of success scenario. In case of failure scenario, this will return partial errors with serviceData with original input object(s) if any.
+
+Some of the application level errors codes are listed as below.
+46001 Invalid tag received by BOM Module
+
+///
+
+static class 	StructureManagement.RevisionRuleConfigInfo
+This contains the RevisionRule object configuration information.
+static class 	StructureManagement.RevisionRuleEntryProps
+This contains information about the RevisionRule Entry Properties.
+
+///
+
+StructureManagement.GetRevisionRulesResponse	getRevisionRules()
+The GetRevisionRules service gets all the persistent revision rules in the database.
+
+///
+
+Turns out it can be changed by setting is_packed_by_default to false when creating the BOM Window.
+
+///
+
+/*!
+	 * \brief Get a Volume ModelObject
+	 * \param[in]  iConnection TC Connection object
+	 * \param[in]  iVolume Name of the volume
+	 * \return volume object
+	 */
+	public static ModelObject Get_Volume(Connection iConnection, String iVolume) throws Exception
+	{
+		Map<String, String> searchCriteria = Map.of( "volume_name", iVolume);
+		SearchInput2 searchInput = new SearchInput2();
+		searchInput.providerName = "Fnd0BaseProvider";
+		searchInput.searchCriteria = searchCriteria;
+		searchInput.startIndex = 0;
+		searchInput.maxToReturn = 1;
+		searchInput.maxToLoad = 1;
+		searchInput.searchFilterFieldSortType = "Alphabetical";
+		searchInput.internalPropertyName = "volume_name";
+		
+		FinderService finderService = FinderService.getService(iConnection);
+		SearchResponse2 response = finderService.performSearch(searchInput);
+ 
+		if (response.serviceData.sizeOfPartialErrors() > 0)
+		{
+			String ErrorMsg = "";
+			for (int i = 0; i < response.serviceData.sizeOfPartialErrors(); i++)
+			{
+				ErrorStack errorStack = response.serviceData.getPartialError(i);
+				String[] messages = errorStack.getMessages();
+				for (String msg : messages)
+				{ ErrorMsg = ErrorMsg + msg + "\n"; }
+			}
+			throw new Exception(ErrorMsg);
+		}
+ 
+		if (response.searchResults.length != 1)
+		{ throw new Exception("Get_Volume: " + iVolume + " not found. " + response.searchResults.length); }
+	
+		return response.searchResults[0];
+
+///
+
+how can I apply VariantRule for BOMWindow in Java-SOA? (Teamcenter 12.4)
+Hi! When I want to see the items included for specific product variant in TeamCenter Rich Client, I need to:
+
+Load a specific stored option set in ConfigureVariants window.
+Uncheck Show Unconfidured Variant in View-Menu.
+Is there any way I can do it Java SOA Api? I am creating BOMWindow with createOrReConfigureBOMWindows method and can see that BOMWindow object has show_unconfigured_variants property. However, I neither see the way to change this property, nor the way to load configure variants. Are there any?
+
+Ok, now I understand, that one can use ConfigurationContext object by creating a BOMWindows. However, I still do not understand, how can I create ConfigurationContext object, that I can use then.
+
+///
+
+How can i copy revision rule using SOA ?
+I need to copy of the revision rule .
+
+ex) copy of "latest working' revision rule and setProperty 'rule_date' ...
+
+ 
+
+in RAC Programming, i can modifyRule in class 'RevisionRuleManager' .
+
+ 
+
+but, in SOA - I know how to copy.
+
+///
+
+https://teamcenter-open-gate.blogspot.com/2016/11/teamcenter-unified-architecture.html
+
+///
+
+

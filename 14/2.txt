@@ -1,0 +1,3466 @@
+///
+
+/* 
+*  Create custom Item A3_NRDummy/A3_NRDummyRevision.
+*
+*  Create A3_NamingRule with a counter
+*       Pattern: nnnnnn
+*       Initial Value: 200000
+*       Maxium Value: 999999
+*
+*  Attached the naming rule to A3_NRDummy.item_id
+*
+*  Create A3Item/A3ItemRevision.
+*
+*  Add four custom required properties.
+*       A3Item.a3_Prefix1
+*       A3Item.a3_Prefix2
+*       A3ItemRevision.a3_Prefix3
+*       A3ItemRevision.a3_Prefix4
+*
+*  Add all four properties are added to the Create Operation for the
+*  corresponding business object type.
+*
+*  Define and assign a A3_Item:create#Teamcenter::CreateInput,*:PreAction.
+*
+*  SaveAs ItemCreate XMLRenderingStylesheet to A3ItemCreate.
+*  To this XMLRenderingStylesheet I add these lines:
+*       <property name="a3_Prefix1" />
+*       <property name="a3_Prefix2" />
+*       <property name="revision:a3_Prefix3" />
+*       <property name="revision:a3_Prefix4" />
+*
+*/
+#include <A3_extension_rules/A3_A3Item_create_PreAction.hxx>
+#include <ug_va_copy.h>
+#include <iostream>
+#include <property/nr.h>
+#include <tc/emh.h>
+#include <tc/tc.h>
+#include <tc/tc_startup.h>
+#include <tccore/aom_prop.h>
+
+#include <base_utils/IFail.hxx>
+#include <base_utils/TcResultStatus.hxx>
+#include <base_utils/ScopedSmPtr.hxx>
+#include <metaframework/CreateInput.hxx>
+#include <mld/logging/TcMainLogger.hxx>
+
+#pragma warning(disable: 4189)
+
+using namespace std;
+using namespace Teamcenter;
+using Teamcenter::Main::logger;
+
+int A3_A3Item_create_PreAction( METHOD_message_t * msg, va_list args)
+{
+    int ifail = ITK_ok;
+    ResultStatus stat;
+    try
+    {
+        va_list largs;
+        va_copy( largs, args );
+        Teamcenter::CreateInput *itemCreInput = va_arg(largs, Teamcenter::CreateInput*);
+        va_end( largs );
+
+        /* Get the new ItemRevision CreateInput tag */
+        tag_t revCreInputTag = NULLTAG;
+        bool isNull = false;
+        stat = itemCreInput->getTag("revision", revCreInputTag, isNull);
+
+        string sPrefix1;
+        stat = itemCreInput->getString("a3_Prefix1", sPrefix1, isNull);
+
+        string sPrefix2;
+        stat = itemCreInput->getString("a3_Prefix2", sPrefix2, isNull);
+
+        scoped_smptr<char> spPrefix3;
+        stat = AOM_ask_value_string(revCreInputTag, "a3_Prefix3", &spPrefix3);
+        string sPrefix3 = spPrefix3.get();
+
+        scoped_smptr<char> spcPrefix4;
+        stat = AOM_ask_value_string(revCreInputTag, "a3_Prefix4", &spcPrefix4);
+        string sPrefix4 = spcPrefix4.get();
+
+        scoped_smptr<char> spcNextID;
+        stat = NR_next_value("A3_NRDummy", "item_id", NULLTAG,"", "", "", NULLTAG, ""," ", &spcNextID);
+        string sNextID = spcNextID.get();
+
+        string sItem_id = sPrefix1 + sPrefix2 + sPrefix3 + sPrefix4 + sNextID;
+        itemCreInput->setString("item_id", sItem_id, false);
+    }
+    catch( const IFail &e )
+    {
+        cout << "error " << e.ifail() << endl;
+        cout << e.getMessage() << endl;
+    }
+    return ifail;
+}
+
+///
+
+/*
+    Define and Assign extension rule on Item - BMF_ITEM_create_or_ref_id - BaseAction
+    Note: This extension rule MUST be defined and assigned to Business Object Type Item.
+
+*/
+#include <ug_va_copy.h>
+#include <me/me.h>
+#include <tccore/aom.h>
+#include <tccore/aom_prop.h>
+#include <tccore/tctype.h>
+
+#include <base_utils/IFail.hxx>
+#include <base_utils/TcResultStatus.hxx>
+#include <base_utils/ScopedSmPtr.hxx>
+#include <mld/logging/TcMainLogger.hxx>
+
+using namespace std;
+using namespace Teamcenter;
+using Teamcenter::Main::logger;
+
+int S4_BMF_ITEM_create_or_ref_id( METHOD_message_t* /*msg*/, va_list args )
+{
+    int ifail = ITK_ok;
+    ResultStatus stat;
+    
+    va_list largs;
+    va_copy( largs, args );     
+    tag_t ebom_node = va_arg(largs, tag_t); // Design
+    tag_t ebom_line_node = va_arg(largs, tag_t); // BOMLine
+    char *user_data = va_arg(largs, char*);
+    int* num_mfk_keys = va_arg(largs, int*);
+    char*** mfk_keys = va_arg(largs, char***);
+    char*** mfk_values = va_arg(largs, char***);
+    tag_t* to_be_created_type = va_arg(largs, tag_t*);
+    tag_t* create_input = va_arg(largs, tag_t*);
+    va_end( largs );
+    
+    tag_t part_item_type = NULLTAG;
+    tag_t part_rev_type = NULLTAG;
+    
+    tag_t item_create_input = NULLTAG;
+    tag_t revision_create_input = NULLTAG;
+
+    try
+    {
+        if("Design to be Skipped or Traversed ") /*Design to be Skipped or Traversed*/
+        {
+            *num_mfk_keys = 1;
+            *mfk_keys = (char **) MEM_alloc(sizeof(char *) * (*num_mfk_keys));
+            *mfk_values = (char **) MEM_alloc(sizeof(char *) * (*num_mfk_keys));
+            if ( *mfk_keys != NULL )
+            {
+                (*mfk_keys)[0] = (char *)MEM_alloc(sizeof(char) * strlen("SKIP_EBOM_LINES") + 1);//SKIP_EBOM_LINES for skip or TRAVERSE_EBOM_LINES for Traverse
+                (*mfk_values)[0] = (char *)MEM_alloc(sizeof(char) * 2);
+                if ( (*mfk_keys)[0] && (*mfk_values)[0] ) 
+                {
+                    tc_strcpy( (*mfk_keys)[0],"SKIP_EBOM_LINES");//TRAVERSE_EBOM_LINES for Traverse
+                    tc_strcpy( (*mfk_values)[0],"1");
+                }
+             }
+
+             return ITK_ok;
+        }
+        
+        stat = TCTYPE_find_type("Part", NULL, &part_item_type);
+        stat = TCTYPE_construct_create_input(part_item_type, &item_create_input);
+        
+        *to_be_created_type = part_item_type;
+        
+        if("Part Exists") /*If Part exists set item_type, item_id to create_input and return */
+        {
+            stat = AOM_set_value_string(item_create_input, "item_id", "001234");
+            *create_input = item_create_input;
+            return ITK_ok;
+        }
+        else /*Construct create_input for new Part item creation*/
+        {   
+            stat = TCTYPE_find_type("Part Revision", NULL , &part_rev_type);
+            stat = TCTYPE_construct_create_input(part_rev_type, &revision_create_input);
+            stat = AOM_set_value_string(revision_create_input, "item_revision_id", "001");
+            stat = AOM_set_value_string(revision_create_input, "object_name", "Test");
+            stat = AOM_set_value_string(item_create_input, "item_id", "001234");
+            stat = AOM_set_value_tag(item_create_input, "revision", revision_create_input);
+            *create_input = item_create_input;
+            return ITK_ok;          
+        }
+    }
+    catch( const IFail &ex )
+    {
+        logger()->error( ex.ifail(), ex.getMessage());
+        cout << ex.getMessage()  << endl;
+        cout << "error " << ex.ifail() << endl;        
+    }
+
+    return ifail;
+}
+
+///
+
+#include <property/nr.h>
+
+/*
+    Note: 
+    Custom code for BMF_ITEMREVISION_assign_rev_id must be assigned to COTS ItemRevision.
+    The code can check the type and progress accordingly as shown below.
+*/
+int A2_ItemRevision_BMF_ITEMREVISION_assign_rev_id_BaseAction( METHOD_message_t * msg, va_list args )
+{
+    int ifail = ITK_ok;
+    
+    va_list largs;
+    va_copy( largs, args );
+    tag_t item_tag = va_arg(largs, tag_t);
+    tag_t item_type_tag = va_arg(largs, tag_t);
+    logical *mod = va_arg(largs, logical *);
+    char **id = va_arg(largs, char **);
+    va_end( largs );
+
+    char type_name[TCTYPE_name_size_c + 1] = "";
+    ifail = TCTYPE_ask_name( item_type_tag, type_name );
+    if(ifail != ITK_ok )
+    {
+        return ifail;
+    }
+
+    if (strcmp(type_name, "A2ItemAssignId") == 0)
+    {
+        char *next_id = NULL;
+        /*
+            If the next_id is set to NULL either no Naming Rule is defined or
+            the Naming Rule does not have a counter.
+        */
+        ifail = NR_next_value(type_name, "item_revision_id", item_tag,"","","",NULLTAG,"","", &next_id );
+        if(ifail != ITK_ok )
+        {
+            return ifail;
+        }
+
+        *id = (char *) MEM_alloc(sizeof(char)*( tc_strlen(next_id) + 1 ) );
+        tc_strcpy( *id, next_id);
+        *mod = TRUE;
+        if(next_id) MEM_free(next_id);
+    }
+    else
+    {
+        ifail = ITEM_new_revision_id( item_tag, item_type_tag, mod, id );
+    }   
+    
+    return ITK_ok;
+}
+
+
+///
+
+/*
+    Call NR_next_value for next id generated for a particular pattern
+    in the Naming Rule.  Which can be for item_id OR item_revison_id.
+
+    Call NR_next_rev_options is for next id generated for a particular 
+    pattern in the Revision Naming Rule.  
+
+*/
+
+#include <iostream>
+
+#include <property/nr.h>
+#include <tc/tc.h>
+#include <tc/tc_startup.h>
+#include <tccore/item.h>
+#include <tccore/tctype.h>
+#include <base_utils/IFail.hxx>
+#include <base_utils/TcResultStatus.hxx>
+#include <mld/logging/TcMainLogger.hxx>
+
+using namespace std;
+using Teamcenter::Main::logger;
+
+int get_naming_rule_next_rev_id(tag_t item_tag, char **next_rev_id)
+{
+    int ifail = ITK_ok;
+    ResultStatus stat;
+    try
+    {
+        tag_t item_type_tag = NULLTAG;
+        stat = TCTYPE_ask_object_type(item_tag, &item_type_tag);
+
+        char *item_type_name = NULL;
+        stat = TCTYPE_ask_name2(item_type_tag, &item_type_name);
+
+        stat = NR_next_value(item_type_name, "item_revision_id", item_tag, "", "", "", NULLTAG, "", "", next_rev_id);
+        if (item_type_name)  MEM_free(item_type_name);
+    }
+    catch (const IFail &ex)
+    {
+        logger()->error(ex.ifail(), ex.getMessage());
+        cout << ex.getMessage() << endl;
+        cout << "error " << ex.ifail() << endl;
+    }
+    return ITK_ok;
+}
+
+
+///
+
+/*
+    Call NR_next_rev_options is for next id generated for a particular 
+    pattern in the Revision Naming Rule.  
+
+    Call NR_next_value for next id generated for a particular pattern
+    in the Naming Rule.  Which can be for item_id OR item_revison_id.
+*/
+
+#include <iostream>
+
+#include <property/nr.h>
+#include <tc/tc.h>
+#include <tc/tc_startup.h>
+#include <tccore/item.h>
+#include <tccore/tctype.h>
+#include <base_utils/IFail.hxx>
+#include <base_utils/TcResultStatus.hxx>
+#include <mld/logging/TcMainLogger.hxx>
+
+using namespace std;
+using Teamcenter::Main::logger;
+
+int get_revision_naming_rule_next_rev_id(tag_t item_tag, char **next_rev_id)
+{
+    int ifail = ITK_ok;
+    ResultStatus stat;
+    try
+    {
+        tag_t item_type_tag = NULLTAG;
+        stat = TCTYPE_ask_object_type(item_tag, &item_type_tag);
+
+        char *item_type_name = NULL;
+        stat = TCTYPE_ask_name2(item_type_tag, &item_type_name);
+
+        tag_t latest_rev_tag = NULLTAG;
+        stat = ITEM_ask_latest_rev(item_tag, &latest_rev_tag);
+
+        char *sec_rev_option = NULL;
+        char *suppl_rev_option = NULL;
+
+        stat = NR_next_rev_options(item_type_name, latest_rev_tag, next_rev_id, &sec_rev_option, &suppl_rev_option);
+        
+        /* Workaround for PR-9636836 */
+        *next_rev_id = (char *)MEM_alloc(sizeof(char) * (tc_strlen(init_rev_option) + 1));
+        tc_strcpy(*next_rev_id, strtok(init_rev_option, ",") );
+
+        if (item_type_name)  MEM_free(item_type_name);
+        if (sec_rev_option)  MEM_free(sec_rev_option);
+        if (suppl_rev_option)  MEM_free(suppl_rev_option);
+    }
+    catch (const IFail &ex)
+    {
+        logger()->error(ex.ifail(), ex.getMessage());
+        cout << ex.getMessage() << endl;
+        cout << "error " << ex.ifail() << endl;
+    }
+    return ITK_ok;
+}
+
+//
+
+#include <stdio.h>
+#include <ug_va_copy.h>
+#include <metaframework/CreateInput.hxx>
+
+extern "C" DLLAPI int  A2_gtac_extension_rule(METHOD_message_t *m, va_list args)
+{
+    printf("\n\n A2_gtac_extension_rule \n\n");
+
+    int ifail = ITK_ok;
+
+    va_list largs;
+    va_copy( largs, args );
+    Teamcenter::CreateInput *creInput = va_arg(largs, Teamcenter::CreateInput*);
+    va_end( largs );
+
+    tag_t item_tag = msg->object_tag;
+
+    tag_t rev_tag = NULLTAG;
+    std::string revision = "revision";
+    itemCreInput->getCompoundObjectTag(revision, rev_tag);
+
+    tag_t master_tag = NULLTAG;
+    std::string IMAN_master_form = "IMAN_master_form";
+    itemCreInput->getCompoundObjectTag(IMAN_master_form, master_tag);
+
+    tag_t revCreInputTag = NULLTAG;
+    bool isNull = false;
+    ifail = itemCreInput->getTag("revision", revCreInputTag, isNull);
+
+    return ifail;
+}
+
+///
+
+Sample SOA Java method : VariantManagement
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+/*
+This SOA java example will demonstrate how to use VariantManagementService.getBOMVariantRules.
+
+The HelloTeamcenter java example was used to test this example (found in, soa_client.zip)
+
+Update 'itemUID' to the UID of your BOM stucture root Item.
+
+The class can be used as follows:
+
+    VariantManagement vm = new VariantManagement(user, AppXSession.getConnection());
+        
+    if(vm.loadObjects())
+        vm.listBOMVariantRulesFromBOMWindow();
+*/
+
+
+package com.teamcenter.hello;
+
+import com.teamcenter.clientx.AppXSession;
+import com.teamcenter.schemas.soa._2006_03.exceptions.ServiceException;
+import com.teamcenter.services.strong.cad.StructureManagementService;
+import com.teamcenter.services.strong.cad._2007_01.StructureManagement.CreateBOMWindowsOutput;
+import com.teamcenter.services.strong.core.DataManagementService;
+import com.teamcenter.services.strong.core.SessionService;
+import com.teamcenter.services.strong.structuremanagement.VariantManagementService;
+import com.teamcenter.services.strong.structuremanagement._2013_05.VariantManagement.BOMVariantOptionValueEntry;
+import com.teamcenter.services.strong.structuremanagement._2013_05.VariantManagement.BOMVariantRuleContents;
+import com.teamcenter.services.strong.structuremanagement._2013_05.VariantManagement.BOMVariantRuleOutput;
+import com.teamcenter.services.strong.structuremanagement._2013_05.VariantManagement.BOMVariantRulesResponse;
+import com.teamcenter.services.strong.structuremanagement._2013_05.VariantManagement.GetBOMVariantRuleInput;
+import com.teamcenter.soa.client.Connection;
+import com.teamcenter.soa.client.model.ModelObject;
+import com.teamcenter.soa.client.model.ServiceData;
+import com.teamcenter.soa.client.model.strong.BOMWindow;
+import com.teamcenter.soa.client.model.strong.Item;
+import com.teamcenter.soa.client.model.strong.ItemRevision;
+import com.teamcenter.soa.client.model.strong.PSBOMView;
+import com.teamcenter.soa.client.model.strong.User;
+import com.teamcenter.soa.client.model.strong.VariantRule;
+import com.teamcenter.soa.common.ObjectPropertyPolicy;
+import com.teamcenter.soa.exceptions.NotLoadedException;
+
+public class VariantManagement
+{
+    private DataManagementService dmService;
+    private StructureManagementService structureService;
+    private VariantManagementService variantService;
+    
+    private Item item;
+    private VariantRule variantRule;
+    
+    private static final String itemUID = "QGUhUOOl4aTB3C";
+
+    
+    public VariantManagement(User user, Connection connection)
+    {
+        dmService = DataManagementService.getService(connection);
+        structureService = StructureManagementService.getService(connection);
+        variantService = VariantManagementService.getService(connection);
+        
+        setObjectPolicy();
+    }
+    
+    public boolean loadObjects()
+    {
+        ServiceData sData = dmService.loadObjects(new String[]{ itemUID });
+
+        if(!ServiceDataError(sData))
+        {
+            boolean success = false;
+            
+            for(int i = 0; i < sData.sizeOfPlainObjects(); i++)
+            {
+                ModelObject mObj = sData.getPlainObject(i);
+    
+                if(mObj instanceof Item)
+                {
+                    item = (Item) mObj;
+                    success = true;
+                }
+                else
+                    return false;
+            }
+            
+            return success;
+        }
+
+        return false;
+    }
+    
+    
+    public void listBOMVariantRulesFromBOMWindow()
+    {
+        try
+        {
+            ModelObject[] itemRevs = item.get_revision_list();
+            ModelObject[] bomViews = item.get_bom_view_tags();
+
+            for(ModelObject bomView : bomViews)
+            {
+                for(ModelObject itemRev : itemRevs)
+                {
+                    StructureManagementService.CreateBOMWindowsInfo bomWinInfo = new StructureManagementService.CreateBOMWindowsInfo();
+
+                    bomWinInfo.item = item;
+                    bomWinInfo.itemRev = (ItemRevision) itemRev;
+                    bomWinInfo.bomView = (PSBOMView) bomView;
+
+                    StructureManagementService.CreateBOMWindowsResponse bomResp = structureService.createBOMWindows(new StructureManagementService.CreateBOMWindowsInfo[]{ bomWinInfo });
+
+                    if(!ServiceDataError(bomResp.serviceData))
+                    {
+                        for(CreateBOMWindowsOutput creatOutput : bomResp.output)
+                        {
+                            GetBOMVariantRuleInput ruleInput = new GetBOMVariantRuleInput();
+                            
+                            ruleInput.clientId = "ID:" + ruleInput.hashCode();
+                            ruleInput.svrActionMode = 0; // to get variant rule from window. 
+                            ruleInput.window = creatOutput.bomWindow;
+                            
+                            BOMVariantRulesResponse resp = variantService.getBOMVariantRules(new GetBOMVariantRuleInput[]{ ruleInput });
+                            
+                            if(!ServiceDataError(resp.serviceData))
+                            {
+                                for(BOMVariantRuleOutput ruleOutput : resp.variantRuleData)
+                                {
+                                    for(BOMVariantRuleContents ruleContent : ruleOutput.rules)
+                                    {
+                                        for(BOMVariantOptionValueEntry option : ruleContent.bomVariantOptionValueEntry)
+                                        {
+                                            System.out.println("Name: " + option.optionName + ", " + option.optionDesc);
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            structureService.closeBOMWindows(new BOMWindow[]{ creatOutput.bomWindow });
+                        }
+                    }
+                }
+            }
+        }
+        catch(ServiceException e)
+        {
+            e.printStackTrace();
+        }
+        catch(NotLoadedException e)
+        {
+            e.printStackTrace();
+        }
+        catch(java.lang.ClassCastException e)
+        {
+            e.printStackTrace();
+        }
+    }
+    
+    protected boolean ServiceDataError(final ServiceData data)
+    {
+        if(data.sizeOfPartialErrors() > 0)
+        {
+            for(int i = 0; i < data.sizeOfPartialErrors(); i++)
+            {
+                for(String msg : data.getPartialError(i).getMessages())
+                    System.out.println(msg);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+    
+    protected void setObjectPolicy()
+    {
+        SessionService session = SessionService.getService(AppXSession.getConnection());
+        ObjectPropertyPolicy policy = new ObjectPropertyPolicy();
+
+        policy.addType("Item", new String[]{ "bom_view_tags", "revision_list" });
+        policy.addType("BOMLine", new String[]{ "bl_line_name" });
+        policy.addType("BOMWindow", new String[]{ "is_packed_by_default" });
+
+        session.setObjectPropertyPolicy(policy);
+    }
+}
+
+///
+
+Sample SOA Java SOAP : AddBOMLineToParent
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+/* This example was tested with the java HelloTcSoap example provided in the soa_client.zip file.
+It assumes you have the HelloTcSoap example working correctly. 
+
+This example will demonstrate how to add a BOMline to the TopLine (BOMline).
+ 
+Add the following XML code to the HelloTcSoap Build.xml file (after other codegenwsdlfilename nodes) 
+to auto-generate the needed java stub classes.
+-----------------------------------------------------------------------------------------------
+ 
+ <codegen wsdlfilename="${soa.home}/wsdls/Bom0806StructureManagementService.wsdl"
+                        output="${axis.out}" serverSide="false" unpackClasses="true" />
+  <codegen wsdlfilename="${soa.home}/wsdls/Query0706FinderService.wsdl"
+                        output="${axis.out}" serverSide="false" unpackClasses="true" />
+  <codegen wsdlfilename="${soa.home}/wsdls/Cad0806StructureManagementService.wsdl"
+                        output="${axis.out}" serverSide="false" unpackClasses="true" />
+ 
+Add the following code the the Hello.java to call/use the custom java code.
+---------------------------------------------------------------------------
+ 
+    AddBOMLineToParent bom = new AddBOMLineToParent();
+        
+    if(bom.loadObjects())
+        bom.updateStructure();
+
+    
+Add the following class to package com.teamcenter.hellosoap.
+------------------------------------------------------------ */
+
+package com.teamcenter.hellosoap;
+
+import java.util.Calendar;
+import java.util.Vector;
+import java.math.BigInteger;
+import java.rmi.RemoteException;
+
+import com.teamcenter.schemas.bom._2008_06.structuremanagement.AddOrUpdateChildrenToParentLineInfo;
+import com.teamcenter.schemas.bom._2008_06.structuremanagement.AddOrUpdateChildrenToParentLineInput;
+import com.teamcenter.schemas.bom._2008_06.structuremanagement.AddOrUpdateChildrenToParentLineResponse;
+import com.teamcenter.schemas.bom._2008_06.structuremanagement.ItemLineInfo;
+import com.teamcenter.schemas.cad._2007_01.structuremanagement.CreateBOMWindowsInfo;
+import com.teamcenter.schemas.cad._2007_01.structuremanagement.CreateBOMWindowsInput;
+import com.teamcenter.schemas.cad._2007_01.structuremanagement.CreateBOMWindowsOutput;
+import com.teamcenter.schemas.cad._2007_01.structuremanagement.CreateBOMWindowsResponse;
+import com.teamcenter.schemas.cad._2007_01.structuremanagement.RevisionRuleConfigInfo;
+import com.teamcenter.schemas.cad._2007_01.structuremanagement.RevisionRuleEntryProps;
+import com.teamcenter.schemas.cad._2008_06.structuremanagement.SaveBOMWindowsInput;
+import com.teamcenter.schemas.cad._2008_06.structuremanagement.SaveBOMWindowsResponse;
+import com.teamcenter.schemas.core._2007_09.datamanagement.LoadObjectsInput;
+import com.teamcenter.schemas.core._2008_06.session.SetObjectPropertyPolicyInput;
+import com.teamcenter.schemas.query._2007_06.finder.FindWorkspaceObjectsInput;
+import com.teamcenter.schemas.query._2007_06.finder.FindWorkspaceObjectsResponse;
+import com.teamcenter.schemas.query._2007_06.finder.WSOFindCriteria;
+import com.teamcenter.schemas.query._2007_06.finder.WSOFindSet;
+import com.teamcenter.schemas.query._2007_06.finder.WSOscopeType;
+import com.teamcenter.schemas.soa._2006_03.base.ErrorStack;
+import com.teamcenter.schemas.soa._2006_03.base.ErrorValue;
+import com.teamcenter.schemas.soa._2006_03.base.ModelObject;
+import com.teamcenter.schemas.soa._2006_03.base.Modifiers;
+import com.teamcenter.schemas.soa._2006_03.base.ObjectPropertyPolicy_type0;
+import com.teamcenter.schemas.soa._2006_03.base.PolicyProperty;
+import com.teamcenter.schemas.soa._2006_03.base.PolicyType;
+import com.teamcenter.schemas.soa._2006_03.base.RefId;
+import com.teamcenter.schemas.soa._2006_03.base.ServiceData;
+import com.teamcenter.services.bom._2008_06.Bom0806StructureManagementService;
+import com.teamcenter.services.cad._2007_01.Cad0701StructureManagementService;
+import com.teamcenter.services.cad._2008_06.Cad0806StructureManagementService;
+import com.teamcenter.services.core._2007_09.Core0709DataManagementService;
+import com.teamcenter.services.core._2007_09.InternalServerFaultFault;
+import com.teamcenter.services.core._2007_09.InvalidUserFaultFault;
+import com.teamcenter.services.core._2008_06.Core0806SessionService;
+import com.teamcenter.services.query._2007_06.Query0706FinderService;
+
+
+public class AddBOMLineToParent
+{
+    private Core0709DataManagementService dmService;
+    private Bom0806StructureManagementService bomService;
+    private Cad0701StructureManagementService structService701;
+    private Cad0806StructureManagementService structService806;
+    private Query0706FinderService finderService706;
+    
+    private ModelObject parentItem = null;
+    private ModelObject parentRev = null;
+    private ModelObject childItem = null;
+    private ModelObject childRev = null;
+    private ModelObject revisionRule = null;
+    
+    static final String parentItemUID = "QGUhUOOl4aTB3C"; /*** You will need to update these UIDs to match your environment ***/
+    static final String parentRevUID = "QGchUOOl4aTB3C";
+    static final String childItemUID = "AqbtEtU34aTB3C";
+    static final String childRevUID = "AuStEtU34aTB3C";
+        
+    static final ModelObject NULL_OBJECT = new ModelObject();
+    static final Calendar NULL_DATE = Calendar.getInstance();
+    static
+    {
+        NULL_OBJECT.setUid("AAAAAAAAAAAAAA");
+        NULL_DATE.set(1, 0, 1, 0, 0, 0);
+    }
+    
+    public AddBOMLineToParent()
+    {
+        dmService = (Core0709DataManagementService)Session.createServiceStub(Core0709DataManagementService.class);
+        bomService = (Bom0806StructureManagementService) Session.createServiceStub(Bom0806StructureManagementService.class);
+        structService701 = (Cad0701StructureManagementService) Session.createServiceStub(Cad0701StructureManagementService.class);
+        structService806 = (Cad0806StructureManagementService) Session.createServiceStub(Cad0806StructureManagementService.class);
+        finderService706 = (Query0706FinderService) Session.createServiceStub(Query0706FinderService.class);
+
+        setObjectPolicy();
+    }
+    
+    public boolean loadObjects()
+    {
+        Vector<Boolean> successList = new Vector<Boolean>();
+        
+        revisionRule = getWorkspaceObject("Latest Working", "RevisionRule");
+        
+        if(revisionRule == null)
+            return false;
+        
+        try
+        {   
+            LoadObjectsInput input = new LoadObjectsInput();
+            
+            input.addUids(parentItemUID);
+            input.addUids(parentRevUID);
+                        
+            ServiceData sData = dmService.loadObjects(input);
+            RefId[] ids = sData.getPlainObjs();
+            
+            if(ids != null && ids.length > 0)
+            {
+                ClientDataModel.addObjects(sData);
+                ModelObject[] objs = ClientDataModel.getObjects(ids);
+                
+                for(ModelObject mObj : objs)
+                {
+                    if(mObj.getClassName().equals("Item"))
+                    {
+                        parentItem =  mObj;
+                        successList.add(true);
+                    }
+                    else if(mObj.getClassName().equals("ItemRevision"))
+                    {
+                        parentRev =  mObj;
+                        successList.add(true);
+                    }
+                    else 
+                        return false;
+                }
+            }
+            
+            input = new LoadObjectsInput();
+            input.addUids(childItemUID);
+            input.addUids(childRevUID);
+            sData = dmService.loadObjects(input);
+            ids = sData.getPlainObjs();
+            
+            if(ids != null && ids.length > 0)
+            {
+                ClientDataModel.addObjects(sData);
+                ModelObject[] objs = ClientDataModel.getObjects(ids);
+                
+                for(ModelObject mObj : objs)
+                {
+                    if(mObj.getClassName().equals("Item"))
+                    {
+                        childItem =  mObj;
+                        successList.add(true);
+                    }
+                    else if(mObj.getClassName().equals("ItemRevision"))
+                    {
+                        childRev =  mObj;
+                        successList.add(true);
+                    }
+                    else
+                        return false;
+                }
+            }
+        }
+        catch (RemoteException e)
+        {
+            e.printStackTrace();
+        }
+        catch (InternalServerFaultFault e)
+        {
+            e.printStackTrace();
+        }
+        catch (InvalidUserFaultFault e)
+        {
+            e.printStackTrace();
+        }
+
+        return successList.size() == 4;
+    }
+    
+    protected ModelObject getWorkspaceObject(final String name, final String typeName)
+    {
+        try
+        {
+            WSOFindCriteria criteria = new WSOFindCriteria();
+            WSOFindSet set = new WSOFindSet();
+            FindWorkspaceObjectsInput input = new FindWorkspaceObjectsInput();
+
+            criteria.setObjectName(name);
+            criteria.setObjectType(typeName);
+            criteria.setScope(WSOscopeType.WSO_scope_All);
+            criteria.setOwner(NULL_OBJECT);
+            criteria.setGroup(NULL_OBJECT);
+            criteria.setCreatedBefore(NULL_DATE);
+            criteria.setCreatedAfter(NULL_DATE);
+            criteria.setModifiedAfter(NULL_DATE);
+            criteria.setModifiedBefore(NULL_DATE);
+            criteria.setReleasedAfter(NULL_DATE);
+            criteria.setReleasedBefore(NULL_DATE);
+            
+            set.setCriterias(new WSOFindCriteria[]{ criteria });
+            input.setFindList(new WSOFindSet[]{ set });
+
+            FindWorkspaceObjectsResponse resp = finderService706.findWorkspaceObjects(input);
+
+            if(!ServiceDataError(resp.getServiceData()) && resp.getOutputList().length > 0)
+            {
+                return resp.getOutputList()[0].getFoundObjects()[0];
+            }
+        }
+        catch(RemoteException e)
+        {
+            e.printStackTrace();
+        }
+        catch(com.teamcenter.services.query._2007_06.InvalidUserFaultFault e)
+        {
+            e.printStackTrace();
+        }
+        catch(com.teamcenter.services.query._2007_06.ServiceFaultFault e)
+        {
+            e.printStackTrace();
+        }
+        catch(com.teamcenter.services.query._2007_06.InternalServerFaultFault e)
+        {
+            e.printStackTrace();
+        }
+        
+        return null;
+    }
+    
+    public boolean updateStructure() 
+    {
+        RevisionRuleConfigInfo ruleConfig = new RevisionRuleConfigInfo();
+        RevisionRuleEntryProps ruleProp = new RevisionRuleEntryProps();
+        CreateBOMWindowsInfo bomWinInfo = new CreateBOMWindowsInfo();
+        CreateBOMWindowsInput createBOMWindowsInput = new CreateBOMWindowsInput();
+        
+        ruleProp.setUnitNo(new BigInteger("-1"));
+        ruleProp.setToday(true);
+        ruleProp.setDate(Calendar.getInstance());
+        ruleProp.setEndItem(parentItem);                                                  
+        ruleProp.setEndItemRevision(parentRev);
+        
+        ruleConfig.setClientId(ruleConfig.toString());
+        ruleConfig.setRevRule(revisionRule);
+        ruleConfig.setProps(ruleProp);
+       
+        bomWinInfo.setClientId(bomWinInfo.toString());
+        bomWinInfo.setItem(parentItem);
+        bomWinInfo.setItemRev(parentRev);
+        bomWinInfo.setRevRuleConfigInfo(ruleConfig);                                                           
+        bomWinInfo.setObjectForConfigure(revisionRule);   
+        bomWinInfo.setActiveAssemblyArrangement(parentRev);
+        bomWinInfo.setBomView(NULL_OBJECT);
+        
+        createBOMWindowsInput.addInfo(bomWinInfo);
+        
+        try 
+        {
+            CreateBOMWindowsResponse resp = structService701.createBOMWindows(createBOMWindowsInput);
+                       
+            if(!ServiceDataError(resp.getServiceData()) && resp.getOutput().length > 0)
+            {
+                AddOrUpdateChildrenToParentLineInfo parentLineInfo = new AddOrUpdateChildrenToParentLineInfo();
+                AddOrUpdateChildrenToParentLineInput parentLineInput = new AddOrUpdateChildrenToParentLineInput();
+                ItemLineInfo lineInfo = new ItemLineInfo();
+                
+                ClientDataModel.addObjects(resp.getServiceData());
+                CreateBOMWindowsOutput[] output = resp.getOutput();
+                ModelObject bomWindow = output[0].getBomWindow();
+                ModelObject bomLine = output[0].getBomLine(); // Topline
+
+                lineInfo.setClientId(bomWinInfo.toString());
+                lineInfo.setItem(NULL_OBJECT);
+                lineInfo.setItemRev(childRev);
+                lineInfo.setOccType("MEOther");
+                lineInfo.setBomline(NULL_OBJECT);
+               
+                parentLineInfo.setItems(new ItemLineInfo[]{ lineInfo });
+                parentLineInfo.setParentLine(bomLine);
+                parentLineInfo.setViewType("view");
+                
+                parentLineInput.addInputs(parentLineInfo);
+                
+                AddOrUpdateChildrenToParentLineResponse resp2 = bomService.addOrUpdateChildrenToParentLine(parentLineInput);
+                
+                if(!ServiceDataError(resp2.getServiceData()))
+                {
+                    SaveBOMWindowsInput input = new SaveBOMWindowsInput();
+                    
+                    input.setBomWindows(new ModelObject[]{ bomWindow });
+                    SaveBOMWindowsResponse resp3 = structService806.saveBOMWindows(input);
+                    
+                    if(!ServiceDataError(resp3.getServiceData()))
+                        return true;
+                }
+            }
+        }
+        catch(com.teamcenter.services.cad._2007_01.InvalidUserFaultFault e) 
+        {
+            e.printStackTrace();
+        }
+        catch(com.teamcenter.services.cad._2007_01.InternalServerFaultFault e) 
+        {
+            e.printStackTrace();
+        }
+        catch(com.teamcenter.services.bom._2008_06.InvalidUserFaultFault e) 
+        {
+            e.printStackTrace();
+        }
+        catch(com.teamcenter.services.bom._2008_06.InternalServerFaultFault e) 
+        {
+            e.printStackTrace();
+        }
+        catch(RemoteException e) 
+        {
+            e.printStackTrace();
+        }
+        catch(com.teamcenter.services.cad._2008_06.InvalidUserFaultFault e)
+        {   
+            e.printStackTrace();
+        }
+        catch(com.teamcenter.services.cad._2008_06.InternalServerFaultFault e)
+        {
+            e.printStackTrace();
+        }  
+        
+        return false;
+    }
+    
+    protected boolean ServiceDataError(final ServiceData data)
+    {
+        if (data.isPartialErrorsSpecified())
+        {
+            for(ErrorStack error : data.getPartialErrors())
+            {
+                for (ErrorValue value : error.getErrorValues())
+                    System.out.println(value.getMessage());
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+    
+    protected void setObjectPolicy()
+    {
+        try
+        {
+            Core0806SessionService session = (Core0806SessionService)Session.createServiceStub(Core0806SessionService.class);
+            SetObjectPropertyPolicyInput input = new SetObjectPropertyPolicyInput();
+            ObjectPropertyPolicy_type0 policy = new ObjectPropertyPolicy_type0();
+            PolicyType ptype;
+            PolicyProperty property;
+            Modifiers modifier = new Modifiers();
+            
+            modifier.setName("withProperties");
+            modifier.setValue("true");
+
+            ptype = new PolicyType();
+            ptype.setName("Item");
+            property = new PolicyProperty();
+            property.setName("bom_view_tags");
+            property.addModifiers(modifier);
+            ptype.addProperties(property);
+            property = new PolicyProperty();
+            property.setName("revision_list");
+            property.addModifiers(modifier);
+            ptype.addProperties(property);
+            policy.addTypes(ptype);
+            
+            ptype = new PolicyType();
+            ptype.setName("BOMLine");
+            property = new PolicyProperty();
+            property.setName("bl_line_name");
+            ptype.addProperties(property);
+            policy.addTypes(ptype);
+            
+            ptype = new PolicyType();
+            ptype.setName("BOMWindow");
+            property = new PolicyProperty();
+            property.setName("is_packed_by_default");
+            ptype.addProperties(property);
+            policy.addTypes(ptype);
+            
+            ptype = new PolicyType();
+            ptype.setName("RevisionRule");
+            property = new PolicyProperty();
+            property.setName("object_name");
+            ptype.addProperties(property);
+            policy.addTypes(ptype);
+            
+            input.setObjectPropertyPolicy(policy);
+            session.setObjectPropertyPolicy(input);
+        }
+        catch (com.teamcenter.services.core._2008_06.InternalServerFaultFault e)
+        {
+            e.printStackTrace();
+        }
+        catch (com.teamcenter.services.core._2008_06.InvalidUserFaultFault e)
+        {
+            e.printStackTrace();
+        }
+        catch (RemoteException e)
+        {
+            e.printStackTrace();
+        }
+    }
+}
+
+///
+
+/* 
+ *  Business Modeler Extension Rule Definition:
+ *      Business Object Name: ItemRevision
+ *      Business Object or Property: Property
+ *      Property Name: structure_revisions
+ *      Operation Name: setStructure_revisions
+ *      Extension Point: PreCondition
+ */
+#include <A2gtac/A2_prevent_deletion_of_BOMView_Revision_with_children.hxx>
+#include <A4gtac/A4customerrors_error.h>
+#include <iostream>
+
+#include <bom/bom_errors.h>
+#include <tc/tc.h>
+#include <tc/tc_startup.h>
+#include <tccore/aom_prop.h>
+
+#include <base_utils/IFail.hxx>
+#include <base_utils/ScopedSmPtr.hxx>
+#include <base_utils/TcResultStatus.hxx>
+
+using namespace Teamcenter;
+using namespace std;
+
+int A2_prevent_deletion_of_BOMView_Revision_with_children( METHOD_message_t * msg, va_list /*args*/)
+{
+    printf("\n %s \n", __FUNCTION__);
+    int ifail = ITK_ok;
+    ResultStatus rstat;
+    try
+    {
+        tag_t rev_tag  = msg->object_tag;
+
+        int n_children = 0;
+        scoped_smptr<tag_t> children;
+        rstat = AOM_ask_value_tags(rev_tag, "view", &n_children, &children);
+        if (n_children > 0)
+        {
+            EMH_store_error_s1(EMH_severity_error, 950001, 
+                "Cannot delete BVR with children");
+            ifail = 950001;
+        }
+    }
+    catch( const IFail &e )
+    {
+        printf("\n\n\n");
+        cout << "error " << e.ifail() << endl;
+        cout << e.getMessage() << endl;
+    }
+    return ifail;
+}
+
+///
+
+Sample ITK function : create bop window
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+
+#include <bom/bom.h>
+#include <cfm/cfm.h>    
+#include <me/me.h>
+#include <ps/ps.h>
+#include <tccore/aom.h>
+#include <tccore/item.h>
+
+static void create_bop_window(tag_t tProcess, tag_t tProcessRevision, tag_t tOperation, tag_t tOperationRevision)
+{
+    IFERR_REPORT(AOM_refresh(tProcess, TRUE));
+
+    tag_t tWindow = NULLTAG;
+    IFERR_REPORT(ME_create_bop_window(&tWindow));
+
+    tag_t tRule = NULLTAG; 
+    IFERR_REPORT(CFM_find("Latest Working", &tRule));    
+    IFERR_REPORT(BOM_set_window_config_rule(tWindow, tRule));
+
+    tag_t tTopLine = NULLTAG;
+    IFERR_REPORT(BOM_set_window_top_line(tWindow, tProcess, NULLTAG, NULLTAG, &tTopLine));  
+    
+    int iNumBVs = 0;
+    tag_t *ptBVs = NULL;
+    IFERR_REPORT(ITEM_list_bom_views(tProcess, &iNumBVs, &ptBVs));
+    if (iNumBVs == 0)
+    {  
+        tag_t tBv = NULLTAG;
+        IFERR_REPORT(PS_create_bom_view (NULLTAG, "", "", tProcess, &tBv));
+        IFERR_REPORT(AOM_save(tBv));
+
+        tag_t tBvr = NULLTAG;
+        IFERR_REPORT(PS_create_bvr (tBv, "", "",  false, tProcessRevision, &tBvr));
+        IFERR_REPORT(AOM_save (tBvr));
+        IFERR_REPORT(AOM_save (tProcess));
+    }
+    if(ptBVs) MEM_free(ptBVs);
+    tag_t tChildLine = NULLTAG;
+    IFERR_REPORT(BOM_line_add(tTopLine, tOperation, tOperationRevision, NULLTAG, &tChildLine));
+
+    IFERR_REPORT(BOM_save_window(tWindow)); 
+    IFERR_REPORT(BOM_close_window(tWindow));
+
+    IFERR_REPORT(AOM_refresh(tProcess, FALSE));
+    IFERR_REPORT(AOM_unload(tProcess));
+}
+
+///
+
+Sample ITK function : send item revision to pse
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+static void traverse_product_structure(tag_t line, int indention)
+{
+    indention++;
+   
+    char *name = NULL;
+    IFERR_REPORT(AOM_ask_value_string(line, "bl_line_name", &name));
+
+    /* indent to show hierarchy */
+    for (int ii = 0; ii < indention; ii++) printf ("  ");
+
+    printf("%s\n", name);
+    
+    int n_children;
+    tag_t *children = NULL;
+    IFERR_REPORT(BOM_line_ask_child_lines(line, &n_children, &children));
+    for (int ii = 0; ii < n_children; ii++)
+        traverse_product_structure(children[ii], indention);
+
+    if (name) MEM_free(name);
+    if (children) MEM_free(children);    
+}
+
+static void send_item_revision_to_pse(tag_t item_rev)    
+{       
+    tag_t window = NULLTAG;    
+    IFERR_REPORT(BOM_create_window (&window));
+    
+    tag_t rule = NULLTAG; 
+    IFERR_REPORT(CFM_find("Latest Working", &rule));    
+    IFERR_REPORT(BOM_set_window_config_rule(window, rule));
+    
+    IFERR_REPORT(BOM_set_window_pack_all(window, TRUE));
+    
+    tag_t top_line = NULLTAG;
+    IFERR_REPORT(BOM_set_window_top_line(window, NULLTAG, item_rev, NULLTAG, &top_line));
+    
+    int indention = 0;
+    traverse_product_structure(top_line, indention);
+    IFERR_REPORT(BOM_close_window(window));
+}
+
+///
+
+Sample ITK program : create occurrence effectivity
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+/*HEAD CREATE_OCCURRENCE_EFFECTIVITY CCC ITK */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdlib.h>
+#include <stdarg.h>
+#include <string.h>
+#include <tccore/aom.h>
+#include <tccore/aom_prop.h>
+#include <tccore/item.h>
+#include <bom/bom.h>
+#include <itk/mem.h>
+#include <tc/tc.h>
+#include <tccore/item.h>
+#include <bom/bom.h>
+#include <cfm/cfm.h>
+#include <ps/ps_errors.h>
+#include <tc/emh.h>
+#include <tc/tc.h>
+#include <ps/ps.h>
+
+#define ITEM_find_rev GTAC_find_rev
+#define IFERR_ABORT(X)  (report_error( __FILE__, __LINE__, #X, X, TRUE))
+#define IFERR_REPORT(X) (report_error( __FILE__, __LINE__, #X, X, FALSE))
+
+static int report_error(char *file, int line, char *call, int status, 
+    logical exit_on_error);
+static void ECHO(char *format, ...);
+static void GTAC_free(void *what);
+static int GTAC_find_rev(char *item_id, char *rev_id, tag_t *rev);
+
+static void do_it(void)
+{
+    tag_t end_item_rev = NULLTAG;
+    IFERR_ABORT(ITEM_find_rev("EndItem", "A", &end_item_rev ));
+    if (end_item_rev == NULLTAG) 
+    { 
+        ECHO("End Item Revision not found!\n"); 
+        exit (0);
+    }
+
+    tag_t assy_rev = NULLTAG;
+    IFERR_ABORT(ITEM_find_rev("Assy", "A", &assy_rev));
+    if (end_item_rev == NULLTAG) 
+    { 
+        ECHO("Assy Revision not found!\n"); 
+        exit (0);
+    }
+
+    int n_bvrs = 0;
+    tag_t *bvrs = NULL;
+    IFERR_ABORT(ITEM_rev_list_bom_view_revs(assy_rev, &n_bvrs, &bvrs));
+    if (n_bvrs == 0) 
+    { 
+        ECHO("Assy Revision BVR not found!\n"); 
+        exit (0);
+    }
+    // only be one bvr for this test case
+    tag_t assy_bvr = bvrs[0];
+    if (bvrs) MEM_free(bvrs);
+
+    tag_t window = NULLTAG;
+    IFERR_REPORT(BOM_create_window (&window));
+
+    tag_t rule = NULLTAG;
+    IFERR_REPORT(CFM_find("Latest Working", &rule));
+    IFERR_REPORT(BOM_set_window_config_rule(window, rule));
+    IFERR_REPORT(BOM_set_window_pack_all(window, TRUE));
+
+    tag_t top_line = NULLTAG;
+    IFERR_REPORT(BOM_set_window_top_line(window, NULLTAG, assy_rev, NULLTAG, 
+        &top_line));
+
+    int n_children = 0;
+    tag_t *children = NULL;
+    IFERR_REPORT(BOM_line_ask_child_lines(top_line, &n_children, &children));
+
+    // being lazy, just using first child line
+    tag_t bom_line = children[0];
+    if (children) MEM_free(children);
+
+    int bl_occurrence = 0;
+    IFERR_REPORT(BOM_line_look_up_attribute( "bl_occurrence", &bl_occurrence));
+
+    tag_t bl_occ = NULLTAG;
+    IFERR_REPORT(BOM_line_ask_attribute_tag(bom_line, bl_occurrence, &bl_occ));
+
+    IFERR_REPORT(AOM_refresh(assy_bvr, TRUE));
+    IFERR_REPORT(AOM_refresh(bl_occ, TRUE));
+
+    tag_t occ_eff = NULLTAG;
+    IFERR_REPORT(PS_occ_eff_create (assy_bvr, bl_occ, &occ_eff));
+    IFERR_REPORT(AOM_save(occ_eff));
+    IFERR_REPORT(AOM_save(bl_occ));
+    IFERR_REPORT(AOM_save(assy_bvr));
+
+    IFERR_REPORT(PS_occ_eff_set_id(assy_bvr, bl_occ, occ_eff, "Effectivity1"));
+    IFERR_REPORT(PS_occ_eff_set_enditemrev(assy_bvr, bl_occ, occ_eff, 
+        end_item_rev));
+    IFERR_REPORT(PS_occ_eff_set_unit_range(assy_bvr, bl_occ, occ_eff, 
+        "1-UP", true));
+
+    IFERR_REPORT(AOM_save(occ_eff));
+    IFERR_REPORT(AOM_unlock(occ_eff));
+    IFERR_REPORT(AOM_unload(occ_eff));
+
+    IFERR_REPORT(AOM_save(bl_occ));
+    IFERR_REPORT(AOM_unlock(bl_occ));
+    IFERR_REPORT(AOM_unload(bl_occ));
+
+    IFERR_REPORT(AOM_save(assy_bvr));
+    IFERR_REPORT(AOM_unlock(assy_bvr));
+    IFERR_REPORT(AOM_unload(assy_bvr));
+
+    IFERR_REPORT(BOM_save_window(window));
+    IFERR_REPORT(BOM_close_window(window));
+}
+
+int ITK_user_main(int argc, char* argv[])
+{
+    IFERR_REPORT(ITK_initialize_text_services(ITK_BATCH_TEXT_MODE));
+    IFERR_ABORT(ITK_auto_login());
+    IFERR_REPORT(ITK_set_journalling(TRUE));
+
+    do_it();
+
+    IFERR_REPORT(ITK_exit_module(FALSE));
+
+    return ITK_ok;
+}
+
+static int report_error(char *file, int line, char *call, int status,
+    logical exit_on_error)
+{
+    if (status != ITK_ok)
+    {
+        int
+            n_errors = 0;
+        const int
+            *severities = NULL,
+            *statuses = NULL;
+        const char
+            **messages;
+
+        EMH_ask_errors(&n_errors, &severities, &statuses, &messages);
+        if (n_errors > 0)
+        {
+            ECHO("\n%s\n", messages[n_errors-1]);
+            EMH_clear_errors();
+        }
+        else
+        {
+            char *error_message_string;
+            EMH_get_error_string (NULLTAG, status, &error_message_string);
+            ECHO("\n%s\n", error_message_string);
+        }
+
+        ECHO("error %d at line %d in %s\n", status, line, file);
+        ECHO("%s\n", call);
+        if (exit_on_error)
+        {
+            ECHO("%s", "Exiting program!\n");
+            exit (status);
+        }
+    }
+    return status;
+}
+
+static void ECHO(char *format, ...)
+{
+    char msg[1000];
+    va_list args;
+    va_start(args, format);
+    vsprintf(msg, format, args);
+    va_end(args);
+    printf(msg);
+    TC_write_syslog(msg);
+}
+
+static void GTAC_free(void *what)
+{
+    if (what != NULL)
+    {
+        MEM_free(what);
+        what = NULL;
+    }
+
+}
+
+static int GTAC_find_rev(char *item_id, char *rev_id, tag_t *rev)
+{
+    int
+        n = 0;
+    tag_t
+        *revs;
+    const char
+        *names[1] = { "item_id" },
+        *values[1] = { item_id };
+
+    IFERR_REPORT(ITEM_find_item_revs_by_key_attributes(1, names, values,
+        rev_id,
+        &n, &revs));
+    if (n > 0) *rev = revs[0];
+    if (revs) MEM_free(revs);
+
+    return 0;
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+///
+
+Sample ITK program : register item revision method to checkout copied datasets
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+/*HEAD REGISTER_ITEM_REVISION_METHOD_TO_CHECKOUT_COPIED_DATASETS CCC ITK */
+/* 
+    Instructions:
+        Save this file as GTAC_register_callbacks.c
+        The naming format is very important.
+            GTAC_register_callbacks.c
+            GTAC_register_callbacks() - function name
+            GTAC - the name of the executable
+
+        Compile 
+            %TC_ROOT%\sample\compile -DIPLIB=libuser_exits 
+                 GTAC_register_callbacks.c
+        Link
+            %TC_ROOT%\sample\link_custom_exits GTAC
+        Move File
+            copy GTAC.dll %TC_BIN%
+
+        Set the following environment variable in the .iman_env in TCEng V9
+        or using Preference Manager in later versions.
+        TC_customization_libraries=
+        GTAC
+*/
+#include <ict/ict_userservice.h>
+#include <tccore/tcaehelper.h>
+#include <user_exits/aiws_ext.h>
+#include <tc/preferences.h>
+#include <ss/ss_errors.h>
+#include <tccore/custom.h>
+#include <itk/mem.h>
+#include <tccore/grm.h>
+#include <tccore/grmtype.h>
+#include <tc/tc.h>
+#include <user_exits/user_exits.h>
+#include <tccore/method.h>
+#include <property/prop.h>
+#include <property/prop_msg.h>
+#include <tccore/tctype.h>
+#include <property/prop_errors.h>
+#include <tccore/item.h>
+#include <lov/lov.h>
+#include <sa/sa.h>
+#include <tc/emh.h>
+#include <res/reservation.h>
+#include <tccore/workspaceobject.h>
+#include <tc/wsouif_errors.h>
+#include <tccore/aom.h>
+#include <form/form.h>
+#include <tccore/typecannedmethod.h>
+#include <tccore/item_msg.h>
+#include <tccore/wso_msg.h>
+#include <tccore/grm.h>
+
+#define EXIT_FAILURE 1 
+#define ERROR_CHECK(X) (report_error( __FILE__, __LINE__, #X, (X)))
+static void report_error( char *file, int line, char *function, int return_code)
+{
+    if (return_code != ITK_ok)
+    {
+        char *error_message_string;
+
+        EMH_get_error_string (NULLTAG, return_code, &error_message_string);
+        printf ("ERROR: %d ERROR MSG: %s.\n", return_code, error_message_string);
+        printf ("FUNCTION: %s\nFILE: %s LINE: %d\n", function, file, line);
+        if(error_message_string) MEM_free(error_message_string);
+        printf("\nExiting program!\n");
+        exit (EXIT_FAILURE);    
+    }
+}
+
+int GTAC_deep_copy_post_action(METHOD_message_t *m, va_list args)
+{
+    int ii = 0;
+    tag_t  type = NULLTAG;
+    char  type_name[TCTYPE_name_size_c+1] = "";
+
+    /*************************************************************************/
+    /*                      ITEM_deep_copy_msg paramseters                   */
+    /*************************************************************************/
+    /* The Tag of the newly created Item Revision */
+    tag_t  new_rev = va_arg(args, tag_t); 
+
+    /* Whether the operation is Save As/Revise */
+    char*  operation = va_arg(args, char*); 
+
+    /* The IR over which Save As/Revise operation will be performed */
+    tag_t  parent_rev = va_arg(args, tag_t);
+
+    /* Number of deep copy rules set */
+    int*  copyCount = va_arg(args, int*); 
+
+    /* Deep Copy Rule Information */
+    ITEM_deepcopy_info_t*  copyInfo = va_arg(args, ITEM_deepcopy_info_t*);
+
+    /* Number of Datasets attached */
+    int*  count = va_arg(args, int*); 
+    
+    /* The tags of the deep copied attachments */
+    tag_t**  copied_objects = va_arg(args, tag_t**); 
+    /*************************************************************************/
+
+    fprintf(stdout, "\nGTAC_deep_copy_post_action...\n");
+
+    *decision = ALL_CUSTOMIZATIONS;
+
+    for (ii = 0; ii < *count; ii++)
+    {
+        ERROR_CHECK( TCTYPE_ask_object_type((*copied_objects)[ii], &type) );
+        ERROR_CHECK( TCTYPE_ask_name(type, type_name) );
+
+        if ( (strcmp(type_name, "UGMASTER") == 0) ||
+             (strcmp(type_name, "UGPART") == 0))
+        {
+            ERROR_CHECK( RES_checkout((*copied_objects)[ii], "auto checkout",
+                "001", "C:\\temp", RES_EXCLUSIVE_RESERVE) );
+        }
+    }
+    return ITK_ok;
+}
+
+int GTAC_register_methods(int *decision)
+{
+    int 
+        ec = ITK_ok;
+    METHOD_id_t
+        method;
+
+    *decision = ALL_CUSTOMIZATIONS;
+
+    fprintf(stdout, "\n GTAC_register_methods...\n");
+
+    ec = METHOD_find_method("ItemRevision", "ITEM_deep_copy", &method);
+    if (ec) fprintf(stdout, "Error %d - METHOD_find_method\n", ec);
+
+    if (method.id != NULLTAG)
+    {       
+        ec = METHOD_add_action(method, METHOD_post_action_type, 
+            (METHOD_function_t) GTAC_deep_copy_post_action, NULL);
+        if (ec != ITK_ok)
+            fprintf(stdout, "\tMETHOD_add_action error: %d!\n", ec);
+        else fprintf(stdout, "METHOD_add_action successful!\n");
+    }
+    else  fprintf(stdout, "Method NOT found!\n", ec);
+    return ec;
+}
+
+extern DLLAPI int GTAC_register_callbacks ()
+{ 
+   fprintf(stdout, "\nRegistering gtac\n"); 
+   CUSTOM_register_exit ( "GTAC", "USER_init_module", 
+       (CUSTOM_EXIT_ftn_t) GTAC_register_methods);
+
+  return ( ITK_ok );
+}
+
+///
+
+Sample ITK function : list all available revision rules
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+#include <cfm/cfm.h>
+#include <tccore/workspaceobject.h>
+
+static void list_all_available_revision_rules(void)
+{
+    int n_rev_rules = 0;
+    tag_t *rev_rule_tag_list = NULL;
+    IFERR_REPORT(CFM_list( &n_rev_rules, &rev_rule_tag_list));
+
+    char name[WSO_name_size_c+1]  ; 
+    for(int ii =0; ii < n_rev_rules; ii++)
+    {
+        IFERR_REPORT(WSOM_ask_name(rev_rule_tag_list[ii], name));
+        printf(" %s \n", name);
+    }
+}
+
+///
+
+Sample ITK program : item create rev post action
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+/*HEAD ITEM_CREATE_REV_POST_ACTION CCC ITK */
+/*
+    Setting up External Extension Rules in Business Modeler
+
+    To build:
+    %TC_ROOT%\sample\compile -DIPLIB=none item_create_rev_post_action.c
+    %TC_ROOT%\sample\link_custom_exits item_create_rev_post_action
+
+    Set up in Portal:
+    Admin-> Business Modeler. (Login)
+        Edit-> Options... -> Index-> New.
+            Name: BMF_CUSTOM_IMPLEMENTOR_PATH
+            Scope:  Site
+            Values: C:\path\to\my\executable
+        Create.
+        Cancel.
+
+    Extension Rules
+        Define Extension
+            Extension Details  
+                Name: item_create_rev_post_action
+                External
+                Language Type: C
+                Library: item_create_rev_post_action
+                Availablity: TYPE:ItemRevision:Create Revision:Post-Action
+        Assign Extensions
+            Extension Point Selection
+                ItemRevision
+                Type
+                Operation: Create Revision
+                Extension Point: Post-Action
+                +
+                Extension Name: item_create_rev_post_action
+            Apply
+*/
+#include <stdlib.h>
+#include <itk/bmf.h>
+#include <tc/emh.h>
+#include <tccore/item.h>
+#include <itk/mem.h>
+#include <tccore/workspaceobject.h>
+#include <bmf/libuserext_exports.h>
+
+extern USER_EXT_DLL_API int item_create_rev_post_action(METHOD_message_t* msg, va_list args)
+{
+    int    
+        ec = ITK_ok;
+    char   
+        message[133] = "",
+        *name = NULL,
+        object_type[WSO_name_size_c+1] = "";
+
+    /* ITEM_create_rev_msg - remember va_list is order specific */
+    tag_t  item = va_arg(args, tag_t); 
+    char   *rev_id = va_arg(args, char*);
+    tag_t  *new_rev = va_arg(args, tag_t*);
+    tag_t  item_rev_master_form = va_arg(args, tag_t);
+
+    /* demonstrate using the new rev tag */ 
+    ec = WSOM_ask_object_id_string (*new_rev, &name);
+    if (ec) TC_write_syslog("\n WSOM_ask_object_id_string error! \n\n");
+
+    ec = WSOM_ask_object_type(*new_rev, object_type);
+    if (ec) TC_write_syslog("\n WSOM_ask_object_type error! \n\n");
+
+    sprintf(message, "\n%s - %s\n\n", name, object_type);
+    TC_write_syslog(message);
+
+    if (name) MEM_free(name);
+
+    return ITK_ok;
+}
+
+///
+
+Sample ITK program : set item revision master form attribute based on bom attributes
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+/*HEAD SET_ITEM_REVISION_MASTER_FORM_ATTRIBUTE_BASED_ON_BOM_ATTRIBUTES CCC ITK */
+#include<stdlib.h>
+#include <bom/bom.h>
+#include <cfm/cfm.h>
+#include <tc/tc.h>
+#include <tccore/tctype.h>
+#include <tccore/item.h>
+#include <ps/ps_errors.h>
+#include <property/prop.h>
+#include <pom/pom/pom_tokens.h>
+
+#define EXIT_FAILURE 1
+#define ERROR_CHECK(x) {           \
+    int stat;                     \
+    char *err_string;             \
+    if( (stat = (x)) != ITK_ok)   \
+    {                             \
+    EMH_get_error_string (NULLTAG, stat, &err_string);                 \
+    printf ("ERROR: %d ERROR MSG: %s.\n", stat, err_string);           \
+    printf ("FUNCTION: %s\nFILE: %s LINE: %d\n",#x, __FILE__, __LINE__); \
+    if(err_string) MEM_free(err_string);                                \
+    exit (EXIT_FAILURE);                                                   \
+    }                                                                    \
+}
+
+static char total[256] = "";
+
+static void set_item_revisions_master_form_property(tag_t item_revision, 
+    char *property_name, char *property_value)
+{
+    int
+        n_secondary_objects = 0;
+    tag_t
+        relation = NULLTAG,
+        *secondary_objects = NULL,
+        irm_form = NULLTAG;
+
+    ERROR_CHECK(GRM_find_relation_type("IMAN_master_form", &relation));
+    
+    ERROR_CHECK(GRM_list_secondary_objects_only(item_revision, relation, 
+        &n_secondary_objects, &secondary_objects) );
+
+    /* should always be just one */
+    irm_form = secondary_objects[0];
+    if (secondary_objects) MEM_free(secondary_objects);
+
+    ERROR_CHECK(AOM_refresh(irm_form, TRUE));
+    ERROR_CHECK(AOM_set_value_string(irm_form, property_name, property_value));
+    ERROR_CHECK(AOM_save(irm_form));
+    ERROR_CHECK(AOM_unload(irm_form));
+}
+
+static tag_t ask_item_revisions_master_form(tag_t item_revision)
+{
+    int
+        n_secondary_objects = 0;
+    tag_t
+        relation = NULLTAG,
+        *secondary_objects = NULL,
+        item_revision_master_form = NULLTAG;
+
+    ERROR_CHECK(GRM_find_relation_type("IMAN_master_form", &relation));
+    ERROR_CHECK(GRM_list_secondary_objects_only(item_revision, relation, 
+        &n_secondary_objects, &secondary_objects));
+
+    /* should always be just one */
+    item_revision_master_form = secondary_objects[0];
+
+    if (secondary_objects) MEM_free(secondary_objects);
+    return item_revision_master_form;
+}
+
+static tag_t ask_item_revision_from_bom_line(tag_t bom_line)
+{
+    tag_t
+        item_revision = NULLTAG;
+    char 
+        *item_id = NULL,
+        *rev_id = NULL;
+    
+    ERROR_CHECK(AOM_ask_value_string(bom_line, "bl_item_item_id", &item_id ));
+    ERROR_CHECK(AOM_ask_value_string(bom_line, "bl_rev_item_revision_id", 
+        &rev_id));
+    ERROR_CHECK(ITEM_find_rev(item_id, rev_id, &item_revision));
+    
+    if (item_id) MEM_free(item_id);
+    if (rev_id) MEM_free(rev_id);
+    return item_revision;
+}
+
+static void traverse_product_structure(tag_t line, char *field_name)
+{
+    int 
+        ii, kk,
+        count;
+    tag_t 
+        *children = NULL,
+        item_revision = NULLTAG,
+        irm_form = NULLTAG;
+    char 
+        *value = NULL;
+
+    item_revision = ask_item_revision_from_bom_line(line);
+    irm_form = ask_item_revisions_master_form(item_revision);
+
+    ERROR_CHECK(AOM_ask_value_string(irm_form, field_name, &value));
+    strcat(total, value);
+
+    ERROR_CHECK(BOM_line_ask_child_lines(line, &count, &children));
+    for (ii = 0; ii < count; ii++)
+        traverse_product_structure(children[ii], field_name);
+
+    if (value) MEM_free(value);
+    if (children) MEM_free(children);    
+}
+
+static void send_item_revision_to_pse(tag_t item_revision, char *field_name)    
+{
+    tag_t
+        rule = NULLTAG,
+        window = NULLTAG,
+        bvr = NULLTAG,
+        top_line = NULLTAG;
+        
+    ERROR_CHECK(BOM_create_window (&window));
+    ERROR_CHECK(CFM_find("Latest Working", &rule));
+    ERROR_CHECK(BOM_set_window_config_rule(window, rule));
+    ERROR_CHECK(BOM_set_window_pack_all(window, TRUE));
+    ERROR_CHECK(BOM_set_window_top_line(window, NULLTAG, item_revision, bvr, 
+        &top_line));
+    traverse_product_structure(top_line, field_name);
+    ERROR_CHECK(BOM_close_window(window));
+}
+
+static void do_it(void)
+{
+    tag_t
+        item = NULLTAG,
+        item_revision = NULLTAG;
+    char
+        *item_id = ITK_ask_cli_argument("-i="),
+        *field_name = ITK_ask_cli_argument("-f=");
+
+    ERROR_CHECK(ITEM_find_item(item_id, &item)); 
+    if (!item) 
+    {
+        printf("\tItem %s not found!\n", item_id);
+        exit(EXIT_FAILURE); 
+    }
+
+    ERROR_CHECK(ITEM_ask_latest_rev(item, &item_revision));        
+ 
+    send_item_revision_to_pse(item_revision, field_name);
+    set_item_revisions_master_form_property(item_revision, field_name, total);
+}
+
+int ITK_user_main(int argc, char* argv[])
+{
+    int
+        status = 0; 
+    char
+        *message;
+    
+    ERROR_CHECK(ITK_initialize_text_services( 0 ));
+    status = ITK_auto_login();
+   
+    if (  (status != ITK_ok)) printf("iMAN login NOT successful.\n");
+    else
+    {
+        printf("iMAN login successful.\n\n");
+        ERROR_CHECK(ITK_set_journalling(TRUE));
+        do_it();
+    }
+    ITK_exit_module(TRUE);
+    return status;
+}
+
+///
+
+/*
+    Define and Assign extension rule on Item - BMF_ITEM_create_or_ref_id - BaseAction
+    Note: This extension rule MUST be defined and assigned to Business Object Type Item.
+
+*/
+#include <ug_va_copy.h>
+#include <me/me.h>
+#include <tccore/aom.h>
+#include <tccore/aom_prop.h>
+#include <tccore/tctype.h>
+
+#include <base_utils/IFail.hxx>
+#include <base_utils/TcResultStatus.hxx>
+#include <base_utils/ScopedSmPtr.hxx>
+#include <mld/logging/TcMainLogger.hxx>
+
+using namespace std;
+using namespace Teamcenter;
+using Teamcenter::Main::logger;
+
+int S4_BMF_ITEM_create_or_ref_id( METHOD_message_t* /*msg*/, va_list args )
+{
+    int ifail = ITK_ok;
+    ResultStatus stat;
+    
+    va_list largs;
+    va_copy( largs, args );     
+    tag_t ebom_node = va_arg(largs, tag_t); // Design
+    tag_t ebom_line_node = va_arg(largs, tag_t); // BOMLine
+    char *user_data = va_arg(largs, char*);
+    int* num_mfk_keys = va_arg(largs, int*);
+    char*** mfk_keys = va_arg(largs, char***);
+    char*** mfk_values = va_arg(largs, char***);
+    tag_t* to_be_created_type = va_arg(largs, tag_t*);
+    tag_t* create_input = va_arg(largs, tag_t*);
+    va_end( largs );
+    
+    tag_t part_item_type = NULLTAG;
+    tag_t part_rev_type = NULLTAG;
+    
+    tag_t item_create_input = NULLTAG;
+    tag_t revision_create_input = NULLTAG;
+
+    try
+    {
+        if("Design to be Skipped or Traversed ") /*Design to be Skipped or Traversed*/
+        {
+            *num_mfk_keys = 1;
+            *mfk_keys = (char **) MEM_alloc(sizeof(char *) * (*num_mfk_keys));
+            *mfk_values = (char **) MEM_alloc(sizeof(char *) * (*num_mfk_keys));
+            if ( *mfk_keys != NULL )
+            {
+                (*mfk_keys)[0] = (char *)MEM_alloc(sizeof(char) * strlen("SKIP_EBOM_LINES") + 1);//SKIP_EBOM_LINES for skip or TRAVERSE_EBOM_LINES for Traverse
+                (*mfk_values)[0] = (char *)MEM_alloc(sizeof(char) * 2);
+                if ( (*mfk_keys)[0] && (*mfk_values)[0] ) 
+                {
+                    tc_strcpy( (*mfk_keys)[0],"SKIP_EBOM_LINES");//TRAVERSE_EBOM_LINES for Traverse
+                    tc_strcpy( (*mfk_values)[0],"1");
+                }
+             }
+
+             return ITK_ok;
+        }
+        
+        stat = TCTYPE_find_type("Part", NULL, &part_item_type);
+        stat = TCTYPE_construct_create_input(part_item_type, &item_create_input);
+        
+        *to_be_created_type = part_item_type;
+        
+        if("Part Exists") /*If Part exists set item_type, item_id to create_input and return */
+        {
+            stat = AOM_set_value_string(item_create_input, "item_id", "001234");
+            *create_input = item_create_input;
+            return ITK_ok;
+        }
+        else /*Construct create_input for new Part item creation*/
+        {   
+            stat = TCTYPE_find_type("Part Revision", NULL , &part_rev_type);
+            stat = TCTYPE_construct_create_input(part_rev_type, &revision_create_input);
+            stat = AOM_set_value_string(revision_create_input, "item_revision_id", "001");
+            stat = AOM_set_value_string(revision_create_input, "object_name", "Test");
+            stat = AOM_set_value_string(item_create_input, "item_id", "001234");
+            stat = AOM_set_value_tag(item_create_input, "revision", revision_create_input);
+            *create_input = item_create_input;
+            return ITK_ok;          
+        }
+    }
+    catch( const IFail &ex )
+    {
+        logger()->error( ex.ifail(), ex.getMessage());
+        cout << ex.getMessage()  << endl;
+        cout << "error " << ex.ifail() << endl;        
+    }
+
+    return ifail;
+}
+
+///
+
+Sample Teamcenter C++ function : user query to find object by uid
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+/*
+*    Teamcenter Ouery Builder Definition
+*        Name: Find Object by UID
+*        Search Type: POM_object
+*        Modifiable Query Types: Local Query
+*        
+*        Search Critrea
+*           Attribute: timestamp
+*           User Entry L10N Key: UID
+*           User Entry Name: UID
+*           operator =
+*        Create
+*
+*    Execute utility to convert "Local Query" to "User Query"
+*
+*       %TC_BIN%\tc_set_query_where_run -query="Find Object by UID" -run=query
+*    
+*    Define and assign a BMIDE extension rule
+*       Business Object Name: ImanQuery
+*       Business Object Or Property: Type
+*       Operation Name: BMF_QRY_custom_execute
+*       Extension Point: BaseAction
+*       
+*/      
+#include <A3_extension_rules/A3_ImanQuery.hxx>
+
+int A3_ImanQuery( METHOD_message_t * /*msg*/, va_list args )
+{
+    int ifail = ITK_ok;
+
+    va_list largs;
+    va_copy( largs, args );
+    char  *qName = va_arg(largs, char*);
+    int   num_args = va_arg (largs, int);
+    char  **names = va_arg (largs, char **);
+    char  **values = va_arg (largs, char **);
+    int   *num_found = va_arg (largs, int*);
+    tag_t **found = va_arg (largs, tag_t **);
+    va_end( largs );
+
+    if (strcmp(qName, "Find Object by UID") == 0)
+    {
+        tag_t tObject = NULLTAG;
+        ITK__convert_uid_to_tag(values[0], &tObject);
+
+        *num_found = 1;
+        *found = (tag_t *) MEM_alloc(*num_found * sizeof(tag_t));
+        (*found)[0] = tObject;
+    }
+    return ifail;
+}
+
+///
+
+Sample ITK function : demo manufacturing BOM link design to ebom
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+/*
+    Define and Assign extension rule on 
+        BOMLine - BOM_link_design_to_ebom - BaseAction
+*/      
+#include <ug_va_copy.h>
+#include <me/me.h>
+
+int S4_BOM_link_design_to_ebom( METHOD_message_t* msg, va_list args )
+{
+    int ifail = ITK_ok;
+
+
+    va_list largs;
+    va_copy( largs, args );
+    tag_t tDesignLine = va_arg(args, tag_t); //Design BOM Line
+    tag_t tPartLine = va_arg(args, tag_t); //Part BOM Line
+    int iAlignMode  = va_arg(args, int); // Alignment Mode
+    va_end( largs );
+    
+    /*
+        Insert your custom logic before making alignment 
+        and finally do alignment
+    */
+    ifail = ME_align_design_bom(tDesignLine, tPartLine, iAlignMode);  
+
+    return ifail;
+}
+
+///
+
+Sample ITK function : demo manufacturing BMF ITEM sync
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+/*
+    Define and Assign extension rule on Item - BMF_ITEM_sync - BaseAction
+    Note: This extension rule MUST be defined and assigned to Business Object Type Item.
+
+*/
+#include <ug_va_copy.h>
+#include <me/me.h>
+
+ 
+int S4_BMF_ITEM_sync( METHOD_message_t* /*msg*/, va_list args )
+{
+    int ifail = ITK_ok;
+    
+    va_list largs;
+    va_copy( largs, args );
+    
+    /* Tag of the source Item */
+    tag_t ebom_item = va_arg(largs, tag_t); 
+    
+    /* BOMLine of the source Item whose children need to be synchronized. */
+    tag_t ebom_line_node = va_arg(largs, tag_t); 
+    
+    /* Target BOMLine where the sync needs to be done */
+    tag_t mbom_line_node  = va_arg(largs, tag_t); 
+    
+    va_end( largs );
+    
+    logical run_custom_code = FALSE;
+    
+    /* your code here */
+   
+    if (run_custom_code == FALSE) ifail = ME_USER_EXIT_CONTINUE;
+    
+    if (run_custom_code == TRUE) ifail = ITK_ok;
+
+    return ifail;
+}
+
+///
+
+Sample ITK function : demo manufacturing BMF ITEM action on release
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+/*
+    Define and Assign extension rule on Item - BMF_ITEM_action_on_release - BaseAction
+    Note: This extension rule MUST be defined and assigned to Business Object Type Item.
+
+*/
+#include <ug_va_copy.h>
+#include <me/me.h>
+
+int S4_BMF_ITEM_action_on_release( METHOD_message_t* msg, va_list args )
+{
+    int ifail = ITK_ok;
+
+    va_list largs;
+    va_copy( largs, args );
+    tag_t ebom_node = va_arg(largs, tag_t); // Design
+    tag_t ebom_line_node = va_arg(largs, tag_t); // BOMLine
+    tag_t  mbom_released_object  = va_arg(largs, tag_t); // Released Obj - Item or Item Rev or BVR
+    tag_t mbom_line_node = va_arg(largs, tag_t); // BOMLine
+    char *user_data = va_arg(largs, char*);
+    int sugg_action = va_arg(largs, int); // Suggested action on release
+    logical* modify_released =  va_arg(largs, logical*);
+    int*  action_on_release = va_arg(largs, int*);
+    va_end( largs );
+    
+    /* Action on Release to update property */
+    *action_on_release = 1;   
+    
+    /* Set true to enable bypass and do alignment */
+    *modify_released = false; 
+    
+    return ifail;
+}
+
+///
+
+Sample ITK program : revise item revision using deep copy rules
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+/*HEAD REVISE_ITEM_REVISION_USING_DEEP_COPY_RULES CCC ITK */
+#include <stdlib.h>
+#include <tccore/aom.h>
+#include <tc/emh.h>
+#include <tc/tc.h>
+#include <sa/tcfile.h>
+#include <itk/mem.h>
+#include <tccore/item.h>
+
+#define EXIT_FAILURE 1 
+#define ERROR_CHECK(X) (report_error( __FILE__, __LINE__, #X, (X)))
+static void report_error( char *file, int line, char *function, int return_code)
+{
+    if (return_code != ITK_ok)
+    {
+        char *error_message_string;
+        EMH_get_error_string (NULLTAG, return_code, &error_message_string);
+        printf ("ERROR: %d ERROR MSG: %s.\n", return_code, error_message_string);
+        printf ("FUNCTION: %s\nFILE: %s LINE: %d\n", function, file, line);
+        if(error_message_string) MEM_free(error_message_string);
+        printf("\nExiting program!\n");
+        exit (EXIT_FAILURE);    
+    }
+}
+
+#define EXIT_IF_NULL(X) (check_value(#X, (X)))
+static void check_value( char *function, int value )
+{
+    if ((value == 0) || (value == 0))
+    {
+        printf ("\t%s is NULL\n", function);
+        printf("\nExiting program!\n");
+        exit (EXIT_FAILURE);    
+    }
+}
+
+static void do_it(void)
+{
+    int
+        count = 0;
+    tag_t
+        existing_rev = NULLTAG, 
+        new_rev = NULLTAG, 
+        *objects = NULL;
+
+    ERROR_CHECK( ITEM_find_rev("9400918", "A", &existing_rev) );
+    EXIT_IF_NULL( existing_rev );
+
+    ERROR_CHECK( ITEM_copy_rev(existing_rev, "B", &new_rev) );
+
+    ERROR_CHECK( ITEM_perform_deepcopy(new_rev, ITEM_revise_operation, 
+        existing_rev, &count, &objects) );
+    MEM_free(objects);
+}
+
+int ITK_user_main(int argc, char* argv[])
+{
+    int
+        status = 0; 
+   
+    ITK_initialize_text_services( ITK_BATCH_TEXT_MODE );
+    status = ITK_auto_login();
+   
+    if (  (status != ITK_ok)) printf("\nLogin Failed!\n\n");
+    else
+    {
+        printf("\nLogin successful!\n\n");
+        ITK_set_journalling(TRUE);
+        do_it();
+    }
+    ITK_exit_module(TRUE);
+    return status;
+}
+
+///
+
+Sample SOA Java method : VariantManagement
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+/*
+This SOA java example will demonstrate how to use VariantManagementService.getBOMVariantRules.
+
+The HelloTeamcenter java example was used to test this example (found in, soa_client.zip)
+
+Update 'itemUID' to the UID of your BOM stucture root Item.
+
+The class can be used as follows:
+
+    VariantManagement vm = new VariantManagement(user, AppXSession.getConnection());
+        
+    if(vm.loadObjects())
+        vm.listBOMVariantRulesFromBOMWindow();
+*/
+
+
+package com.teamcenter.hello;
+
+import com.teamcenter.clientx.AppXSession;
+import com.teamcenter.schemas.soa._2006_03.exceptions.ServiceException;
+import com.teamcenter.services.strong.cad.StructureManagementService;
+import com.teamcenter.services.strong.cad._2007_01.StructureManagement.CreateBOMWindowsOutput;
+import com.teamcenter.services.strong.core.DataManagementService;
+import com.teamcenter.services.strong.core.SessionService;
+import com.teamcenter.services.strong.structuremanagement.VariantManagementService;
+import com.teamcenter.services.strong.structuremanagement._2013_05.VariantManagement.BOMVariantOptionValueEntry;
+import com.teamcenter.services.strong.structuremanagement._2013_05.VariantManagement.BOMVariantRuleContents;
+import com.teamcenter.services.strong.structuremanagement._2013_05.VariantManagement.BOMVariantRuleOutput;
+import com.teamcenter.services.strong.structuremanagement._2013_05.VariantManagement.BOMVariantRulesResponse;
+import com.teamcenter.services.strong.structuremanagement._2013_05.VariantManagement.GetBOMVariantRuleInput;
+import com.teamcenter.soa.client.Connection;
+import com.teamcenter.soa.client.model.ModelObject;
+import com.teamcenter.soa.client.model.ServiceData;
+import com.teamcenter.soa.client.model.strong.BOMWindow;
+import com.teamcenter.soa.client.model.strong.Item;
+import com.teamcenter.soa.client.model.strong.ItemRevision;
+import com.teamcenter.soa.client.model.strong.PSBOMView;
+import com.teamcenter.soa.client.model.strong.User;
+import com.teamcenter.soa.client.model.strong.VariantRule;
+import com.teamcenter.soa.common.ObjectPropertyPolicy;
+import com.teamcenter.soa.exceptions.NotLoadedException;
+
+public class VariantManagement
+{
+    private DataManagementService dmService;
+    private StructureManagementService structureService;
+    private VariantManagementService variantService;
+    
+    private Item item;
+    private VariantRule variantRule;
+    
+    private static final String itemUID = "QGUhUOOl4aTB3C";
+
+    
+    public VariantManagement(User user, Connection connection)
+    {
+        dmService = DataManagementService.getService(connection);
+        structureService = StructureManagementService.getService(connection);
+        variantService = VariantManagementService.getService(connection);
+        
+        setObjectPolicy();
+    }
+    
+    public boolean loadObjects()
+    {
+        ServiceData sData = dmService.loadObjects(new String[]{ itemUID });
+
+        if(!ServiceDataError(sData))
+        {
+            boolean success = false;
+            
+            for(int i = 0; i < sData.sizeOfPlainObjects(); i++)
+            {
+                ModelObject mObj = sData.getPlainObject(i);
+    
+                if(mObj instanceof Item)
+                {
+                    item = (Item) mObj;
+                    success = true;
+                }
+                else
+                    return false;
+            }
+            
+            return success;
+        }
+
+        return false;
+    }
+    
+    
+    public void listBOMVariantRulesFromBOMWindow()
+    {
+        try
+        {
+            ModelObject[] itemRevs = item.get_revision_list();
+            ModelObject[] bomViews = item.get_bom_view_tags();
+
+            for(ModelObject bomView : bomViews)
+            {
+                for(ModelObject itemRev : itemRevs)
+                {
+                    StructureManagementService.CreateBOMWindowsInfo bomWinInfo = new StructureManagementService.CreateBOMWindowsInfo();
+
+                    bomWinInfo.item = item;
+                    bomWinInfo.itemRev = (ItemRevision) itemRev;
+                    bomWinInfo.bomView = (PSBOMView) bomView;
+
+                    StructureManagementService.CreateBOMWindowsResponse bomResp = structureService.createBOMWindows(new StructureManagementService.CreateBOMWindowsInfo[]{ bomWinInfo });
+
+                    if(!ServiceDataError(bomResp.serviceData))
+                    {
+                        for(CreateBOMWindowsOutput creatOutput : bomResp.output)
+                        {
+                            GetBOMVariantRuleInput ruleInput = new GetBOMVariantRuleInput();
+                            
+                            ruleInput.clientId = "ID:" + ruleInput.hashCode();
+                            ruleInput.svrActionMode = 0; // to get variant rule from window. 
+                            ruleInput.window = creatOutput.bomWindow;
+                            
+                            BOMVariantRulesResponse resp = variantService.getBOMVariantRules(new GetBOMVariantRuleInput[]{ ruleInput });
+                            
+                            if(!ServiceDataError(resp.serviceData))
+                            {
+                                for(BOMVariantRuleOutput ruleOutput : resp.variantRuleData)
+                                {
+                                    for(BOMVariantRuleContents ruleContent : ruleOutput.rules)
+                                    {
+                                        for(BOMVariantOptionValueEntry option : ruleContent.bomVariantOptionValueEntry)
+                                        {
+                                            System.out.println("Name: " + option.optionName + ", " + option.optionDesc);
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            structureService.closeBOMWindows(new BOMWindow[]{ creatOutput.bomWindow });
+                        }
+                    }
+                }
+            }
+        }
+        catch(ServiceException e)
+        {
+            e.printStackTrace();
+        }
+        catch(NotLoadedException e)
+        {
+            e.printStackTrace();
+        }
+        catch(java.lang.ClassCastException e)
+        {
+            e.printStackTrace();
+        }
+    }
+    
+    protected boolean ServiceDataError(final ServiceData data)
+    {
+        if(data.sizeOfPartialErrors() > 0)
+        {
+            for(int i = 0; i < data.sizeOfPartialErrors(); i++)
+            {
+                for(String msg : data.getPartialError(i).getMessages())
+                    System.out.println(msg);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+    
+    protected void setObjectPolicy()
+    {
+        SessionService session = SessionService.getService(AppXSession.getConnection());
+        ObjectPropertyPolicy policy = new ObjectPropertyPolicy();
+
+        policy.addType("Item", new String[]{ "bom_view_tags", "revision_list" });
+        policy.addType("BOMLine", new String[]{ "bl_line_name" });
+        policy.addType("BOMWindow", new String[]{ "is_packed_by_default" });
+
+        session.setObjectPropertyPolicy(policy);
+    }
+}
+
+///
+
+Sample SOA Java SOAP : AddBOMLineToParent
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+/* This example was tested with the java HelloTcSoap example provided in the soa_client.zip file.
+It assumes you have the HelloTcSoap example working correctly. 
+
+This example will demonstrate how to add a BOMline to the TopLine (BOMline).
+ 
+Add the following XML code to the HelloTcSoap Build.xml file (after other codegenwsdlfilename nodes) 
+to auto-generate the needed java stub classes.
+-----------------------------------------------------------------------------------------------
+ 
+ <codegen wsdlfilename="${soa.home}/wsdls/Bom0806StructureManagementService.wsdl"
+                        output="${axis.out}" serverSide="false" unpackClasses="true" />
+  <codegen wsdlfilename="${soa.home}/wsdls/Query0706FinderService.wsdl"
+                        output="${axis.out}" serverSide="false" unpackClasses="true" />
+  <codegen wsdlfilename="${soa.home}/wsdls/Cad0806StructureManagementService.wsdl"
+                        output="${axis.out}" serverSide="false" unpackClasses="true" />
+ 
+Add the following code the the Hello.java to call/use the custom java code.
+---------------------------------------------------------------------------
+ 
+    AddBOMLineToParent bom = new AddBOMLineToParent();
+        
+    if(bom.loadObjects())
+        bom.updateStructure();
+
+    
+Add the following class to package com.teamcenter.hellosoap.
+------------------------------------------------------------ */
+
+package com.teamcenter.hellosoap;
+
+import java.util.Calendar;
+import java.util.Vector;
+import java.math.BigInteger;
+import java.rmi.RemoteException;
+
+import com.teamcenter.schemas.bom._2008_06.structuremanagement.AddOrUpdateChildrenToParentLineInfo;
+import com.teamcenter.schemas.bom._2008_06.structuremanagement.AddOrUpdateChildrenToParentLineInput;
+import com.teamcenter.schemas.bom._2008_06.structuremanagement.AddOrUpdateChildrenToParentLineResponse;
+import com.teamcenter.schemas.bom._2008_06.structuremanagement.ItemLineInfo;
+import com.teamcenter.schemas.cad._2007_01.structuremanagement.CreateBOMWindowsInfo;
+import com.teamcenter.schemas.cad._2007_01.structuremanagement.CreateBOMWindowsInput;
+import com.teamcenter.schemas.cad._2007_01.structuremanagement.CreateBOMWindowsOutput;
+import com.teamcenter.schemas.cad._2007_01.structuremanagement.CreateBOMWindowsResponse;
+import com.teamcenter.schemas.cad._2007_01.structuremanagement.RevisionRuleConfigInfo;
+import com.teamcenter.schemas.cad._2007_01.structuremanagement.RevisionRuleEntryProps;
+import com.teamcenter.schemas.cad._2008_06.structuremanagement.SaveBOMWindowsInput;
+import com.teamcenter.schemas.cad._2008_06.structuremanagement.SaveBOMWindowsResponse;
+import com.teamcenter.schemas.core._2007_09.datamanagement.LoadObjectsInput;
+import com.teamcenter.schemas.core._2008_06.session.SetObjectPropertyPolicyInput;
+import com.teamcenter.schemas.query._2007_06.finder.FindWorkspaceObjectsInput;
+import com.teamcenter.schemas.query._2007_06.finder.FindWorkspaceObjectsResponse;
+import com.teamcenter.schemas.query._2007_06.finder.WSOFindCriteria;
+import com.teamcenter.schemas.query._2007_06.finder.WSOFindSet;
+import com.teamcenter.schemas.query._2007_06.finder.WSOscopeType;
+import com.teamcenter.schemas.soa._2006_03.base.ErrorStack;
+import com.teamcenter.schemas.soa._2006_03.base.ErrorValue;
+import com.teamcenter.schemas.soa._2006_03.base.ModelObject;
+import com.teamcenter.schemas.soa._2006_03.base.Modifiers;
+import com.teamcenter.schemas.soa._2006_03.base.ObjectPropertyPolicy_type0;
+import com.teamcenter.schemas.soa._2006_03.base.PolicyProperty;
+import com.teamcenter.schemas.soa._2006_03.base.PolicyType;
+import com.teamcenter.schemas.soa._2006_03.base.RefId;
+import com.teamcenter.schemas.soa._2006_03.base.ServiceData;
+import com.teamcenter.services.bom._2008_06.Bom0806StructureManagementService;
+import com.teamcenter.services.cad._2007_01.Cad0701StructureManagementService;
+import com.teamcenter.services.cad._2008_06.Cad0806StructureManagementService;
+import com.teamcenter.services.core._2007_09.Core0709DataManagementService;
+import com.teamcenter.services.core._2007_09.InternalServerFaultFault;
+import com.teamcenter.services.core._2007_09.InvalidUserFaultFault;
+import com.teamcenter.services.core._2008_06.Core0806SessionService;
+import com.teamcenter.services.query._2007_06.Query0706FinderService;
+
+
+public class AddBOMLineToParent
+{
+    private Core0709DataManagementService dmService;
+    private Bom0806StructureManagementService bomService;
+    private Cad0701StructureManagementService structService701;
+    private Cad0806StructureManagementService structService806;
+    private Query0706FinderService finderService706;
+    
+    private ModelObject parentItem = null;
+    private ModelObject parentRev = null;
+    private ModelObject childItem = null;
+    private ModelObject childRev = null;
+    private ModelObject revisionRule = null;
+    
+    static final String parentItemUID = "QGUhUOOl4aTB3C"; /*** You will need to update these UIDs to match your environment ***/
+    static final String parentRevUID = "QGchUOOl4aTB3C";
+    static final String childItemUID = "AqbtEtU34aTB3C";
+    static final String childRevUID = "AuStEtU34aTB3C";
+        
+    static final ModelObject NULL_OBJECT = new ModelObject();
+    static final Calendar NULL_DATE = Calendar.getInstance();
+    static
+    {
+        NULL_OBJECT.setUid("AAAAAAAAAAAAAA");
+        NULL_DATE.set(1, 0, 1, 0, 0, 0);
+    }
+    
+    public AddBOMLineToParent()
+    {
+        dmService = (Core0709DataManagementService)Session.createServiceStub(Core0709DataManagementService.class);
+        bomService = (Bom0806StructureManagementService) Session.createServiceStub(Bom0806StructureManagementService.class);
+        structService701 = (Cad0701StructureManagementService) Session.createServiceStub(Cad0701StructureManagementService.class);
+        structService806 = (Cad0806StructureManagementService) Session.createServiceStub(Cad0806StructureManagementService.class);
+        finderService706 = (Query0706FinderService) Session.createServiceStub(Query0706FinderService.class);
+
+        setObjectPolicy();
+    }
+    
+    public boolean loadObjects()
+    {
+        Vector<Boolean> successList = new Vector<Boolean>();
+        
+        revisionRule = getWorkspaceObject("Latest Working", "RevisionRule");
+        
+        if(revisionRule == null)
+            return false;
+        
+        try
+        {   
+            LoadObjectsInput input = new LoadObjectsInput();
+            
+            input.addUids(parentItemUID);
+            input.addUids(parentRevUID);
+                        
+            ServiceData sData = dmService.loadObjects(input);
+            RefId[] ids = sData.getPlainObjs();
+            
+            if(ids != null && ids.length > 0)
+            {
+                ClientDataModel.addObjects(sData);
+                ModelObject[] objs = ClientDataModel.getObjects(ids);
+                
+                for(ModelObject mObj : objs)
+                {
+                    if(mObj.getClassName().equals("Item"))
+                    {
+                        parentItem =  mObj;
+                        successList.add(true);
+                    }
+                    else if(mObj.getClassName().equals("ItemRevision"))
+                    {
+                        parentRev =  mObj;
+                        successList.add(true);
+                    }
+                    else 
+                        return false;
+                }
+            }
+            
+            input = new LoadObjectsInput();
+            input.addUids(childItemUID);
+            input.addUids(childRevUID);
+            sData = dmService.loadObjects(input);
+            ids = sData.getPlainObjs();
+            
+            if(ids != null && ids.length > 0)
+            {
+                ClientDataModel.addObjects(sData);
+                ModelObject[] objs = ClientDataModel.getObjects(ids);
+                
+                for(ModelObject mObj : objs)
+                {
+                    if(mObj.getClassName().equals("Item"))
+                    {
+                        childItem =  mObj;
+                        successList.add(true);
+                    }
+                    else if(mObj.getClassName().equals("ItemRevision"))
+                    {
+                        childRev =  mObj;
+                        successList.add(true);
+                    }
+                    else
+                        return false;
+                }
+            }
+        }
+        catch (RemoteException e)
+        {
+            e.printStackTrace();
+        }
+        catch (InternalServerFaultFault e)
+        {
+            e.printStackTrace();
+        }
+        catch (InvalidUserFaultFault e)
+        {
+            e.printStackTrace();
+        }
+
+        return successList.size() == 4;
+    }
+    
+    protected ModelObject getWorkspaceObject(final String name, final String typeName)
+    {
+        try
+        {
+            WSOFindCriteria criteria = new WSOFindCriteria();
+            WSOFindSet set = new WSOFindSet();
+            FindWorkspaceObjectsInput input = new FindWorkspaceObjectsInput();
+
+            criteria.setObjectName(name);
+            criteria.setObjectType(typeName);
+            criteria.setScope(WSOscopeType.WSO_scope_All);
+            criteria.setOwner(NULL_OBJECT);
+            criteria.setGroup(NULL_OBJECT);
+            criteria.setCreatedBefore(NULL_DATE);
+            criteria.setCreatedAfter(NULL_DATE);
+            criteria.setModifiedAfter(NULL_DATE);
+            criteria.setModifiedBefore(NULL_DATE);
+            criteria.setReleasedAfter(NULL_DATE);
+            criteria.setReleasedBefore(NULL_DATE);
+            
+            set.setCriterias(new WSOFindCriteria[]{ criteria });
+            input.setFindList(new WSOFindSet[]{ set });
+
+            FindWorkspaceObjectsResponse resp = finderService706.findWorkspaceObjects(input);
+
+            if(!ServiceDataError(resp.getServiceData()) && resp.getOutputList().length > 0)
+            {
+                return resp.getOutputList()[0].getFoundObjects()[0];
+            }
+        }
+        catch(RemoteException e)
+        {
+            e.printStackTrace();
+        }
+        catch(com.teamcenter.services.query._2007_06.InvalidUserFaultFault e)
+        {
+            e.printStackTrace();
+        }
+        catch(com.teamcenter.services.query._2007_06.ServiceFaultFault e)
+        {
+            e.printStackTrace();
+        }
+        catch(com.teamcenter.services.query._2007_06.InternalServerFaultFault e)
+        {
+            e.printStackTrace();
+        }
+        
+        return null;
+    }
+    
+    public boolean updateStructure() 
+    {
+        RevisionRuleConfigInfo ruleConfig = new RevisionRuleConfigInfo();
+        RevisionRuleEntryProps ruleProp = new RevisionRuleEntryProps();
+        CreateBOMWindowsInfo bomWinInfo = new CreateBOMWindowsInfo();
+        CreateBOMWindowsInput createBOMWindowsInput = new CreateBOMWindowsInput();
+        
+        ruleProp.setUnitNo(new BigInteger("-1"));
+        ruleProp.setToday(true);
+        ruleProp.setDate(Calendar.getInstance());
+        ruleProp.setEndItem(parentItem);                                                  
+        ruleProp.setEndItemRevision(parentRev);
+        
+        ruleConfig.setClientId(ruleConfig.toString());
+        ruleConfig.setRevRule(revisionRule);
+        ruleConfig.setProps(ruleProp);
+       
+        bomWinInfo.setClientId(bomWinInfo.toString());
+        bomWinInfo.setItem(parentItem);
+        bomWinInfo.setItemRev(parentRev);
+        bomWinInfo.setRevRuleConfigInfo(ruleConfig);                                                           
+        bomWinInfo.setObjectForConfigure(revisionRule);   
+        bomWinInfo.setActiveAssemblyArrangement(parentRev);
+        bomWinInfo.setBomView(NULL_OBJECT);
+        
+        createBOMWindowsInput.addInfo(bomWinInfo);
+        
+        try 
+        {
+            CreateBOMWindowsResponse resp = structService701.createBOMWindows(createBOMWindowsInput);
+                       
+            if(!ServiceDataError(resp.getServiceData()) && resp.getOutput().length > 0)
+            {
+                AddOrUpdateChildrenToParentLineInfo parentLineInfo = new AddOrUpdateChildrenToParentLineInfo();
+                AddOrUpdateChildrenToParentLineInput parentLineInput = new AddOrUpdateChildrenToParentLineInput();
+                ItemLineInfo lineInfo = new ItemLineInfo();
+                
+                ClientDataModel.addObjects(resp.getServiceData());
+                CreateBOMWindowsOutput[] output = resp.getOutput();
+                ModelObject bomWindow = output[0].getBomWindow();
+                ModelObject bomLine = output[0].getBomLine(); // Topline
+
+                lineInfo.setClientId(bomWinInfo.toString());
+                lineInfo.setItem(NULL_OBJECT);
+                lineInfo.setItemRev(childRev);
+                lineInfo.setOccType("MEOther");
+                lineInfo.setBomline(NULL_OBJECT);
+               
+                parentLineInfo.setItems(new ItemLineInfo[]{ lineInfo });
+                parentLineInfo.setParentLine(bomLine);
+                parentLineInfo.setViewType("view");
+                
+                parentLineInput.addInputs(parentLineInfo);
+                
+                AddOrUpdateChildrenToParentLineResponse resp2 = bomService.addOrUpdateChildrenToParentLine(parentLineInput);
+                
+                if(!ServiceDataError(resp2.getServiceData()))
+                {
+                    SaveBOMWindowsInput input = new SaveBOMWindowsInput();
+                    
+                    input.setBomWindows(new ModelObject[]{ bomWindow });
+                    SaveBOMWindowsResponse resp3 = structService806.saveBOMWindows(input);
+                    
+                    if(!ServiceDataError(resp3.getServiceData()))
+                        return true;
+                }
+            }
+        }
+        catch(com.teamcenter.services.cad._2007_01.InvalidUserFaultFault e) 
+        {
+            e.printStackTrace();
+        }
+        catch(com.teamcenter.services.cad._2007_01.InternalServerFaultFault e) 
+        {
+            e.printStackTrace();
+        }
+        catch(com.teamcenter.services.bom._2008_06.InvalidUserFaultFault e) 
+        {
+            e.printStackTrace();
+        }
+        catch(com.teamcenter.services.bom._2008_06.InternalServerFaultFault e) 
+        {
+            e.printStackTrace();
+        }
+        catch(RemoteException e) 
+        {
+            e.printStackTrace();
+        }
+        catch(com.teamcenter.services.cad._2008_06.InvalidUserFaultFault e)
+        {   
+            e.printStackTrace();
+        }
+        catch(com.teamcenter.services.cad._2008_06.InternalServerFaultFault e)
+        {
+            e.printStackTrace();
+        }  
+        
+        return false;
+    }
+    
+    protected boolean ServiceDataError(final ServiceData data)
+    {
+        if (data.isPartialErrorsSpecified())
+        {
+            for(ErrorStack error : data.getPartialErrors())
+            {
+                for (ErrorValue value : error.getErrorValues())
+                    System.out.println(value.getMessage());
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+    
+    protected void setObjectPolicy()
+    {
+        try
+        {
+            Core0806SessionService session = (Core0806SessionService)Session.createServiceStub(Core0806SessionService.class);
+            SetObjectPropertyPolicyInput input = new SetObjectPropertyPolicyInput();
+            ObjectPropertyPolicy_type0 policy = new ObjectPropertyPolicy_type0();
+            PolicyType ptype;
+            PolicyProperty property;
+            Modifiers modifier = new Modifiers();
+            
+            modifier.setName("withProperties");
+            modifier.setValue("true");
+
+            ptype = new PolicyType();
+            ptype.setName("Item");
+            property = new PolicyProperty();
+            property.setName("bom_view_tags");
+            property.addModifiers(modifier);
+            ptype.addProperties(property);
+            property = new PolicyProperty();
+            property.setName("revision_list");
+            property.addModifiers(modifier);
+            ptype.addProperties(property);
+            policy.addTypes(ptype);
+            
+            ptype = new PolicyType();
+            ptype.setName("BOMLine");
+            property = new PolicyProperty();
+            property.setName("bl_line_name");
+            ptype.addProperties(property);
+            policy.addTypes(ptype);
+            
+            ptype = new PolicyType();
+            ptype.setName("BOMWindow");
+            property = new PolicyProperty();
+            property.setName("is_packed_by_default");
+            ptype.addProperties(property);
+            policy.addTypes(ptype);
+            
+            ptype = new PolicyType();
+            ptype.setName("RevisionRule");
+            property = new PolicyProperty();
+            property.setName("object_name");
+            ptype.addProperties(property);
+            policy.addTypes(ptype);
+            
+            input.setObjectPropertyPolicy(policy);
+            session.setObjectPropertyPolicy(input);
+        }
+        catch (com.teamcenter.services.core._2008_06.InternalServerFaultFault e)
+        {
+            e.printStackTrace();
+        }
+        catch (com.teamcenter.services.core._2008_06.InvalidUserFaultFault e)
+        {
+            e.printStackTrace();
+        }
+        catch (RemoteException e)
+        {
+            e.printStackTrace();
+        }
+    }
+}
+
+///
+
+Sample ITK function : create saved variant rule
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+
+#include <tccore/grm.h>
+#include <tccore/grmtype.h>
+#include <bom/bom.h>
+#include <ps/vrule.h>
+
+static void create_saved_variant_rule(tag_t window, tag_t rev_tag, char *target_value)
+{      
+    int ifail = ITK_ok;
+    tag_t vrule_tag = NULLTAG;
+    ifail = BOM_window_ask_variant_rule(window, &vrule_tag);  
+    if (ifail != ITK_ok) { /* your error logic here */ }
+
+    int n_options = 0;
+    tag_t *options = NULL;
+    tag_t *option_revs = NULL;
+    ifail = BOM_variant_rule_ask_options(vrule_tag, &n_options, &options , &option_revs);
+    if (ifail != ITK_ok) { /* your error logic here */ }
+    
+    /* assuming only one */
+    tag_t opt_tag = options[0];
+    tag_t opt_rev_tag = option_revs[0];
+    
+    if(options) MEM_free(options);
+    if(option_revs) MEM_free(option_revs);
+  
+    int n_values = 0; 
+    int *index = NULL;
+    ifail = BOM_list_option_rev_values(opt_rev_tag, &n_values, &index);
+    if (ifail != ITK_ok) { /* your error logic here */ }
+    for(int ii = 0; ii < n_values; ii++)
+    {                             
+        char *value = NULL;
+        ifail = BOM_ask_option_rev_value(opt_rev_tag, index[ii], &value); 
+        if (ifail != ITK_ok) { /* your error logic here */ }
+        if(strcmp(target_value, value) == 0)      
+        {
+            ifail = BOM_variant_rule_set_option_values(vrule_tag , opt_tag, 1, &index[ii]);
+            if (ifail != ITK_ok) { /* your error logic here */ }
+                       
+            tag_t saved_vrule_tag = NULLTAG;
+            ifail = VRULE_create_from_variant_rule("MyVarRule", "", vrule_tag, 1, &opt_tag,  &saved_vrule_tag);
+            if (ifail != ITK_ok) { /* your error logic here */ }
+            
+            tag_t relation_type_tag = NULLTAG;
+            ifail = GRM_find_relation_type( "IMAN_specification", &relation_type_tag);
+            if (ifail != ITK_ok) { /* your error logic here */ }
+            
+            tag_t relation_tag = NULLTAG;
+            ifail = GRM_create_relation(rev_tag, saved_vrule_tag , relation_type_tag, NULLTAG, &relation_tag);
+            if (ifail != ITK_ok) { /* your error logic here */ }
+            
+            ifail = GRM_save_relation(relation_tag);
+            if (ifail != ITK_ok) { /* your error logic here */ }
+        }
+        if(value) MEM_free(value);
+    }
+    if(index) MEM_free(index);
+}
+
+///
+
+Sample ITK program : bmide register workflow handlers
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+
+/*
+    Define and assign an extension rule to 
+    Session - BMF_SESSION_register_epm_handlers - BaseAction
+*/
+#include <A5wf/A5RegisterEPMHandlers.hxx>
+
+int A5RegisterEPMHandlers( METHOD_message_t * /*msg*/, va_list /*args*/ )
+{
+    int ifail = ITK_ok;
+    EPM_register_rule_handler("-Custom Rule handler", "", custom_rule_handler);
+    EPM_register_action_handler("-Custom Action Handler", "", custom_action_handler);
+    return ifail;
+}
+
+int custom_action_handler(EPM_action_message_t msg)
+{
+    int ifail = ITK_ok;
+
+    /* your code here */
+
+    return ifail;
+}
+
+EPM_decision_t custom_rule_handler(EPM_rule_message_t msg)
+{
+    EPM_decision_t decision = EPM_go;
+
+    /* your code here */
+
+    return decision;
+}
+
+///
+
+Sample ITK function : get parent bomline in fnd0assignChildLine extension rule
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+
+#include <tccore/aom_prop.h>
+
+int A3BOMLine_fnd0assignChildLine( METHOD_message_t * msg, va_list args )
+{
+    int ifail = ITK_ok;
+    
+    /* va_list for fnd0assignChildLine */
+    va_list largs;
+    va_copy (largs, args)    ;
+    tag_t sourceBOMLineTag = va_arg(largs, tag_t);
+    char *occTypeName = va_arg(largs, char*);
+    tag_t *newChildBOMLineTag =  va_arg(largs, tag_t *);
+    va_end(largs);
+
+    tag_t parentBOMLineTag = msg->object_tag;
+    char *item_id = NULL;
+    IFERR_REPORT(AOM_ask_value_string(parentBOMLineTag, "bl_item_item_id", 
+        &item_id ));
+    ECHO("\n\n parentBOMLineTag bl_item_item_id: %s \n", item_id);
+
+    if (item_id) MEM_free(item_id);
+    return ifail;
+}
+
+///
+
+Sample ITK program : report configuration rule
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+#include <stdlib.h>
+#include <tc/tc.h>
+#include <sa/tcfile.h>
+#include <tccore/workspaceobject.h>
+#include <ae/ae.h>
+#include <user_exits/user_exits.h>
+#include <ss/ss_const.h>
+#include <tccore/item.h>
+#include <pom/pom/pom.h>
+#include <ae/dataset.h>
+#include <tccore/tctype.h>
+#include <tccore/tc_msg.h>
+
+#define ITK_CALL(x) {           \
+    int stat;                     \
+    char *err_string;             \
+    if( (stat = (x)) != ITK_ok)   \
+    {                             \
+    EMH_get_error_string (NULLTAG, stat, &err_string);                 \
+    printf ("ERROR: %d ERROR MSG: %s.\n", stat, err_string);           \
+    printf ("FUNCTION: %s\nFILE: %s LINE: %d\n",#x, __FILE__, __LINE__); \
+    if(err_string) MEM_free(err_string);                                \
+    exit (EXIT_FAILURE);                                                   \
+    }                                                                    \
+}
+#define EXIT_FAILURE 1 
+        
+static void do_it(void)
+{
+    char
+        *rule_name;
+    tag_t
+        rule,
+        window;
+        
+    ITK_CALL(BOM_create_window (&window));
+    ITK_CALL(BOM_ask_window_config_rule(window, &rule));
+    ITK_CALL(CFM_ask_rule_text(rule, &rule_name));
+    printf("---%s\n", rule_name);
+    if (rule_name) MEM_free(rule_name); 
+}
+
+int ITK_user_main(int argc, char* argv[])
+{
+    int
+        status = 0; 
+    char
+        *message;
+    
+    ITK_initialize_text_services( 0 );
+    status = ITK_auto_login();
+   
+    if (  (status != ITK_ok)) printf("iMAN login NOT successful.\n");
+    else
+    {
+        printf("iMAN login successful.\n");
+        ITK_set_journalling(TRUE);
+        do_it();
+    }
+    ITK_exit_module(TRUE);
+    return status;
+}
+
+///
+
+Sample ITK program : property set value string extension rules
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+/*HEAD PROPERTY_SET_VALUE_STRING_EXTENSION_RULES CCC ITK */
+#include <tc/tc.h>
+#include <tccore/aom.h>
+#include <sa/user.h>
+#include <tccore/grm.h>
+#include <sa/group.h>
+#include <user_exits/user_exits.h>
+#include <tccore/tctype.h>
+#include <ict/ict_userservice.h>
+#include <tccore/method.h>
+#include <tccore/item_msg.h>
+#include <tccore/item_errors.h>
+#include <itk/bmf.h>
+
+#define EXIT_FAILURE 1 
+#define ERROR_CHECK(X) (report_error( __FILE__, __LINE__, #X, (X)))
+static void report_error( char *file, int line, char *function, int return_code)
+{
+    if (return_code != ITK_ok)
+    {
+        char *error_message_string;
+        EMH_get_error_string (NULLTAG, return_code, &error_message_string);
+        printf ("ERROR: %d ERROR MSG: %s.\n", return_code, error_message_string);
+        printf ("FUNCTION: %s\nFILE: %s LINE: %d\n", function, file, line);
+        if(error_message_string) MEM_free(error_message_string);
+    }
+}
+
+extern DLLAPI int prop_set_value_string_precondition(METHOD_message_t *m, va_list args)
+{
+    /** va_list for PROP_set_value_string_msg **/
+    tag_t  prop = va_arg(args, tag_t );
+    char*  value = va_arg(args, char* );
+
+    tag_t  object = NULLTAG;
+    tag_t  object_type = NULLTAG;
+    char   type_name[TCTYPE_name_size_c+1] = "";
+
+    METHOD_PROP_MESSAGE_OBJECT(m, object); 
+    ERROR_CHECK(TCTYPE_ask_object_type(object, &object_type));
+    ERROR_CHECK(TCTYPE_ask_name(object_type, type_name));
+
+    printf("\n- prop_set_value_string_precondition - object type: %s - value: %s\n", 
+        type_name, value);
+
+    return ITK_ok;
+}
+
+extern DLLAPI int prop_set_value_string_preaction(METHOD_message_t *m, va_list args)
+{
+    /** va_list for PROP_set_value_string_msg **/
+    tag_t  prop = va_arg(args, tag_t );
+    char*  value = va_arg(args, char* );
+
+    tag_t  object = NULLTAG;
+    tag_t  object_type = NULLTAG;
+    char   type_name[TCTYPE_name_size_c+1] = "";
+
+    METHOD_PROP_MESSAGE_OBJECT(m, object); 
+    ERROR_CHECK(TCTYPE_ask_object_type(object, &object_type));
+    ERROR_CHECK(TCTYPE_ask_name(object_type, type_name));
+
+    printf("\n- prop_set_value_string_preaction - object type: %s - value: %s\n", 
+        type_name, value);
+
+    return ITK_ok;
+}
+
+extern DLLAPI int prop_set_value_string_postaction(METHOD_message_t *m, va_list args)
+{
+    /** va_list for PROP_set_value_string_msg **/
+    tag_t  prop = va_arg(args, tag_t );
+    char*  value = va_arg(args, char* );
+
+    tag_t  object = NULLTAG;
+    tag_t  object_type = NULLTAG;
+    char   type_name[TCTYPE_name_size_c+1] = "";
+
+    METHOD_PROP_MESSAGE_OBJECT(m, object); 
+    ERROR_CHECK(TCTYPE_ask_object_type(object, &object_type));
+    ERROR_CHECK(TCTYPE_ask_name(object_type, type_name));
+
+    printf("\n- prop_set_value_string_postaction - object type: %s - value: %s\n", 
+        type_name, value);
+
+    return ITK_ok;
+}
+
+///
+
+Teamcenter Table Business Object from SOA/SOAP
+Hi Experts,
+
+
+I have create a Table Object on a Workspace Object in TC. If we want to use any of the below operations we have to traverse to a table object which is attached on the Workspace object.
+
+
+we have few method operations defiened in OOTB SOA calls as in DM Service:
+
+
+createOrUpdateStaticTableData
+
+setTableProperties
+
+getTableProperties
+
+
+All the above operations requires a table object from Teamcenter. Please suggest how to get the Table Object from the Input Workspace Object.
+I have tried to populate the attribute by setting it in Policy, getProperties Method on the ModelObject but not getting the Table Object.
+
+
+any help/directions are welcomed !!
+
+TC Version : 11.4
+
+///
+
+@Ash_​  I think this can be achieved by using NXopen libraries. You can develop a custom utility that would help you in converting the .prt file to PDF format and then you can integrate this utility within your SOA application.
+
+///
+
+Interactively in NX2312 user can export the PDF through File->Export->PDF
+
+ Refer below mentioned test code to export the drawing file to PDF
+
+using System;
+
+using NXOpen;
+
+ 
+
+public class NXJournal
+
+{
+
+ public static void Main(string[] args)
+
+ {
+
+   NXOpen.Session theSession = NXOpen.Session.GetSession();
+
+   NXOpen.Part workPart = theSession.Parts.Work;
+
+   NXOpen.Part displayPart = theSession.Parts.Display;
+
+   NXOpen.Session.UndoMarkId markId1;
+
+   markId1 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Invisible, "Start");
+
+   
+
+   NXOpen.PrintPDFBuilder printPDFBuilder1;
+
+   printPDFBuilder1 = workPart.PlotManager.CreatePrintPdfbuilder();
+
+   
+
+   printPDFBuilder1.Scale = 1.0;
+
+   
+
+   printPDFBuilder1.Append = true;
+
+   
+
+   printPDFBuilder1.Size = NXOpen.PrintPDFBuilder.SizeOption.ScaleFactor;
+
+   
+
+   printPDFBuilder1.Units = NXOpen.PrintPDFBuilder.UnitsOption.English;
+
+   
+
+   printPDFBuilder1.XDimension = 8.5;
+
+   
+
+   printPDFBuilder1.YDimension = 11.0;
+
+   
+
+   printPDFBuilder1.OutputText = NXOpen.PrintPDFBuilder.OutputTextOption.Polylines;
+
+   
+
+   printPDFBuilder1.RasterImages = true;
+
+   
+
+   theSession.SetUndoMarkName(markId1, "Export PDF Dialog");
+
+   
+
+   NXOpen.Session.UndoMarkId markId2;
+
+   markId2 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Invisible, "Export PDF");
+
+   
+
+   theSession.DeleteUndoMark(markId2, null);
+
+   
+
+   NXOpen.Session.UndoMarkId markId3;
+
+   markId3 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Invisible, "Export PDF");
+
+   
+
+   printPDFBuilder1.Watermark = "";
+
+   
+
+   NXOpen.NXObject[] sheets1 = new NXOpen.NXObject[1];
+
+   NXOpen.Drawings.DraftingDrawingSheet draftingDrawingSheet1 = ((NXOpen.Drawings.DraftingDrawingSheet)workPart.DraftingDrawingSheets.FindObject("Sheet 1"));
+
+   sheets1[0] = draftingDrawingSheet1;
+
+   printPDFBuilder1.SourceBuilder.SetSheets(sheets1);
+
+   
+
+   printPDFBuilder1.CreateNewFromUi = false;
+
+   
+
+   printPDFBuilder1.Filename = "C:\\Temp\\Test.pdf";
+
+   
+
+   NXOpen.NXObject nXObject1;
+
+   nXObject1 = printPDFBuilder1.Commit();
+
+   
+
+   theSession.DeleteUndoMark(markId3, null);
+
+   
+
+   theSession.SetUndoMarkName(markId1, "Export PDF");
+
+   
+
+   printPDFBuilder1.Destroy();
+
+   
+
+   theSession.DeleteUndoMark(markId1, null);   
+
+ 
+
+   
+
+ }
+
+ public static int GetUnloadOption(string dummy) { return (int)NXOpen.Session.LibraryUnloadOption.Immediately; }
+
+}
+
+ 
+
+Then user can integrate this utility within your SOA application. 
+
+
+///
+
+/*!
+	 * \brief Get a Volume ModelObject
+	 * \param[in]  iConnection TC Connection object
+	 * \param[in]  iVolume Name of the volume
+	 * \return volume object
+	 */
+	public static ModelObject Get_Volume(Connection iConnection, String iVolume) throws Exception
+	{
+		Map<String, String> searchCriteria = Map.of( "volume_name", iVolume);
+		SearchInput2 searchInput = new SearchInput2();
+		searchInput.providerName = "Fnd0BaseProvider";
+		searchInput.searchCriteria = searchCriteria;
+		searchInput.startIndex = 0;
+		searchInput.maxToReturn = 1;
+		searchInput.maxToLoad = 1;
+		searchInput.searchFilterFieldSortType = "Alphabetical";
+		searchInput.internalPropertyName = "volume_name";
+		
+		FinderService finderService = FinderService.getService(iConnection);
+		SearchResponse2 response = finderService.performSearch(searchInput);
+ 
+		if (response.serviceData.sizeOfPartialErrors() > 0)
+		{
+			String ErrorMsg = "";
+			for (int i = 0; i < response.serviceData.sizeOfPartialErrors(); i++)
+			{
+				ErrorStack errorStack = response.serviceData.getPartialError(i);
+				String[] messages = errorStack.getMessages();
+				for (String msg : messages)
+				{ ErrorMsg = ErrorMsg + msg + "\n"; }
+			}
+			throw new Exception(ErrorMsg);
+		}
+ 
+		if (response.searchResults.length != 1)
+		{ throw new Exception("Get_Volume: " + iVolume + " not found. " + response.searchResults.length); }
+	
+		return response.searchResults[0];
+
+///
+
+
+
