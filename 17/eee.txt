@@ -1,0 +1,392 @@
+////////////////////////////////////
+
+https://gist.github.com/conholdate-gists/335b0ec29e791a6df12fbe54ce4c93ff#file-exportdatatoexcel_java_exportdatawithmergedcells-java
+
+https://simplesolution.dev/java-create-excel-file-xlsx-using-apache-poi/
+
+https://www.baeldung.com/java-microsoft-excel
+
+https://www.geeksforgeeks.org/how-to-write-data-into-excel-sheet-using-java/
+
+///////////////////////////////////
+
+
+
+
+import com.aspose.cells.Cells;
+import com.aspose.cells.License;
+import com.aspose.cells.Workbook;
+import com.aspose.cells.Worksheet;
+
+///
+
+public class GenerateExcelFileInJava {
+
+	public static void main(String[] args) throws Exception {
+	// Instantiate Aspose.Cells license to avoid trial version watermark
+	License license = new License(); 
+	license.setLicense("Aspose.Cells.lic");
+
+        // Instantiate a new Excel workbook instance
+        Workbook ExcelWorkbook = new Workbook();
+
+        // Get reference to first worksheet in the workbook
+        Worksheet ExcelWorksheet = ExcelWorkbook.getWorksheets().get(0);
+
+        // Get reference to Cells collection in the first worksheet
+        Cells WorksheetCells = ExcelWorksheet.getCells();
+
+        // Insert data into the worksheet using the cells collection
+        WorksheetCells.get("A1").putValue("Customers Report");
+        WorksheetCells.get("A2").putValue("C_ID");
+        WorksheetCells.get("B2").putValue("C_Name");
+        WorksheetCells.get("A3").putValue("C001");
+        WorksheetCells.get("B3").putValue("Customer1");
+        WorksheetCells.get("A4").putValue("C002");
+        WorksheetCells.get("B4").putValue("Customer2");
+        WorksheetCells.get("A5").putValue("C003");
+        WorksheetCells.get("B5").putValue("Customer3");
+        WorksheetCells.get("A6").putValue("C004");
+        WorksheetCells.get("B6").putValue("Customer4");
+                    
+        // Save the workbook as XLSX
+        ExcelWorkbook.save("ExcelFile.xlsx");
+	}
+}
+
+///
+
+Export Array to Excel in Java
+You can easily export data from a one-dimensional array or a two-dimensional array to an Excel document. The array can be of a reference type or a value type. You can export data from an array to Excel by following the simple steps mentioned below:
+
+Create an instance of the Workbook class
+Get a worksheet in an instance of the Worksheet class
+Create an array containing string values
+Call the importArray() method with the array
+Save the output file by calling the save() method of the Workbook class
+The following code sample shows how to export an array of strings to Excel using Java.
+
+// Initialize a Workbook object
+Workbook workbook = new Workbook();
+
+// Obtaining the reference of the worksheet
+Worksheet worksheet = workbook.getWorksheets().get(0);
+
+// Creating an array containing names as string values
+String[] names = new String[] { "Laurence Chen", "Roman Korchagin", "Kyle Huang" };
+
+// Exporting the array of names to first row and first column vertically
+worksheet.getCells().importArray(names, 0, 0, true);
+
+// Saving the Excel file
+workbook.save("C:\\Files\\output.xlsx");
+
+The Workbook class of the API is the main class to create an Excel spreadsheet. It provides functionality to open and save native excel files. The save() method of this class is used to save the output file at the specified file path.
+
+The Worksheet class represents a single worksheet and provides functionality to work with cells and rows.
+
+The importArray() method of the Cells class exports an array of strings to a worksheet. It takes the following input parameters:
+
+stringArray: The array of String values
+firstRow: The row number of the first cell to export to
+firstColumn: The column number of the first cell to export to
+isVertical: It specifies whether to export data vertically or horizontally
+The API also provides the overloaded versions of the importArray() method to export an array of integer or double to a worksheet.
+
+///
+
+Export Two Dimensional Array to Excel
+Similarly, you can export a two-dimensional array to an Excel file. The following code sample shows how to export a two-dimensional array to an Excel file in Java.
+
+// Initialize a Workbook object
+Workbook workbook = new Workbook();
+
+// Obtaining the reference of the worksheet
+Worksheet worksheet = workbook.getWorksheets().get(0);
+
+// Creating a two-dimensional array of integers
+int[][] array2D = { 
+  { 1, 2 }, 
+  { 3, 4 }, 
+  { 5, 6 }, 
+  { 7, 8 } 
+};
+
+// Exporting the array of names to first row and first column vertically
+worksheet.getCells().importArray(array2D, 0, 0);
+
+// Saving the Excel file
+workbook.save("C:\\Files\\output.xlsx");
+
+The Cells class provides importArray() method to export a two-dimensional array of integers to a worksheet. The API also provides the overloaded versions of this method to export a two-dimensional array of strings or double into a worksheet.
+
+Export ArrayList to Excel in Java
+You can export data from an ArrayList to Excel by following the steps mentioned below:
+
+Create an instance of the Workbook class
+Get a worksheet in an instance of the Worksheet class
+Create an array list containing string values
+Call the importArrayList() method with the array list
+Save the output file by calling the save() method of the Workbook class
+The following code sample shows how to export an ArrayList to Excel in Java.
+
+// Initialize a Workbook object
+Workbook workbook = new Workbook();
+
+// Obtaining the reference of the worksheet
+Worksheet worksheet = workbook.getWorksheets().get(0);
+
+// Instantiating an ArrayList object
+ArrayList<String> list = new ArrayList<String>();
+
+// Add few names to the list as string values
+list.add("Laurence Chen");
+list.add("Roman Korchagin");
+list.add("Kyle Huang");
+list.add("Tommy Wang");
+
+// Exporting the contents of ArrayList vertically at the first row and first column of the worksheet. 
+worksheet.getCells().importArrayList(list, 0, 0, true);
+
+// Saving the Excel file
+workbook.save("C:\\Files\\Output.xlsx");
+
+///
+
+The importArrayList() method of the Cells class exports an ArrayList of data to a worksheet. It takes four parameters including the ArrayList of data. The other parameters are the firstRow, firstColumn, and isVertical.
+
+Export Collection of Custom Objects to Excel in Java
+You can export data from a collection of custom objects to Excel by following the steps mentioned below:
+
+Create an instance of the Workbook class
+Get a worksheet in an instance of the Worksheet class
+Create an array list of custom objects
+Call the importCustomObjects() method with the array list
+Save the output file by calling the save() method of the Workbook class
+The following code sample shows how to export a collection of custom objects to Excel in Java.
+
+// Initialize a new Workbook
+Workbook book = new Workbook();
+
+// Obtaining the reference of the worksheet
+Worksheet sheet = book.getWorksheets().get(0);
+
+// Define an ArrayList of Persons
+List<Person> list = new ArrayList<Person>();
+
+list.add(new Person("Mike", 25, "Software Engineer"));
+list.add(new Person("Steve", 30, "Doctor"));
+list.add(new Person("Billy", 35, "Teacher"));
+
+// We pick only Name and Age columns, not all, to export to the worksheet         
+sheet.getCells().importCustomObjects((Collection)list,
+    new String[] { "Name", "Age" }, // propertyNames
+    true, // isPropertyNameShown
+    0, // firstRow
+    0, // firstColumn
+    list.size(), // Number of objects to be exported
+    true, // insertRows
+    null, // dateFormatString
+    false); // convertStringToNumber
+
+// Save the Excel file
+book.save("C:\\Files\\Output.xlsx");
+
+The importCustomObjects() method of the Cells class exports a list of custom objects and takes the following parameters. The API also provides the overloaded version of this method that takes fewer parameters.
+
+list: The collection of custom objects
+propertName: Specify the name for a specific property to export. If it is null, it will export all properties of the object
+isPropertyNameShown: Indicates whether the property name will be exported to the first row
+firstRow: The row number of the first cell to export
+firstColumn: The column number of the first cell to export
+rowNumber: Number of rows to be exported
+insertRows: Indicates whether extra rows are added to fit data
+dataFormatString: Date format string for cells
+convertStringToNumber: Indicates if this method will try to convert string to a number.
+Export Data to Excel with Merged Cells in Java
+You can export data from a collection of objects to a worksheet containing merged cells by following the steps mentioned below:
+
+Create an instance of the Workbook class with template file path
+Get a worksheet in an instance of the Worksheet class
+Create an array list of objects
+Create an instance of the ImportTableOptions class
+Call the importCustomObjects() method with the array list
+Save the output file by calling the save() method of the Workbook class
+The following code sample shows how to export a collection of custom objects to an Excel worksheet with merged cells in Java.
+
+// Opening an existing Workbook.
+Workbook workbook = new Workbook("C:\\Files\\SampleMergedTemplate.xlsx");
+
+// Obtaining the reference of the worksheet
+Worksheet sheet = workbook.getWorksheets().get(0);
+
+// Instantiating an ArrayList object
+List<Product> productList = new ArrayList<Product>();
+
+// Creating a collection of Products
+for (int i = 0; i < 3; i++)
+{
+  Product product = new Product(i, "Product - " + i);
+    productList.add(product);
+}
+
+// Define Table import options
+ImportTableOptions tableOptions = new ImportTableOptions();
+
+// Set CheckMergedCells property to true
+tableOptions.setCheckMergedCells(true);
+tableOptions.setFieldNameShown(false);
+
+// Export data to excel template (in second row, first column)           
+sheet.getCells().importCustomObjects((Collection)productList, 1, 0, tableOptions);
+
+// Save the Excel file
+workbook.save("C:\\Files\\Output.xlsx", SaveFormat.XLSX);
+view rawExportDataToExcel_Java_ExportDataWithMergedCells.java hosted with ❤ by GitHub
+
+///
+
+The ImportTableOptions class provides several options for exporting data into cells. The setCheckMergedCells indicates whether checking merged cells. The setFieldNameShown property indicates whether the field name should be exported or not.
+
+Copy Rows and Columns from one Excel file to Another in Java
+You can easily copy rows and columns from one Excel file to another file programmatically by following the steps mentioned below:
+
+Create an instance of the Workbook class with the source workbook input file
+Create an instance of the Workbook class for the destination workbook
+Get source and destination worksheets in separate instances of the Worksheet class
+Call the copyRows() method of the destination worksheet with the source worksheet cells
+Save the destination workbook output file by calling the save() method of the Workbook class
+The following code sample shows how to copy rows and columns from one Excel file to another using Java.
+
+// Open the source excel file.
+Workbook srcWorkbook = new Workbook("C:\\Files\\Source_Workbook.xlsx");
+
+// Instantiate the destination excel file.
+Workbook destWorkbook = new Workbook();
+
+// Get the first worksheet of the source workbook.
+Worksheet srcWorksheet = srcWorkbook.getWorksheets().get(0);
+
+// Get the first worksheet of the destination workbook.
+Worksheet desWorksheet = destWorkbook.getWorksheets().get(0);
+
+// Copy all the rows of the first worksheet of source Workbook to
+// the first worksheet of destination Workbook.
+desWorksheet.getCells().copyRows(srcWorksheet.getCells(), 0, 0, srcWorksheet.getCells().getMaxDisplayRange().getRowCount());
+
+// Save the excel file.
+destWorkbook.save("C:\\Files\\Destination_Workbook.xlsx");	
+
+///
+
+You can copy specific rows from one Excel file to another. The following code sample shows how to copy specific rows from one Excel file to another using Java.
+
+// Open the source excel file.
+Workbook srcWorkbook = new Workbook("C:\\Files\\Source_Workbook.xlsx");
+
+// Instantiate the destination excel file.
+Workbook destWorkbook = new Workbook();
+
+// Get the first worksheet of the source workbook.
+Worksheet srcWorksheet = srcWorkbook.getWorksheets().get(0);
+
+// Get the first worksheet of the destination workbook.
+Worksheet desWorksheet = destWorkbook.getWorksheets().get(0);
+
+// Copy the second row of the source Workbook to the first row of destination Workbook.
+desWorksheet.getCells().copyRow(srcWorksheet.getCells(), 1, 0);
+
+// Copy the fourth row of the source Workbook to the second row of destination Workbook.
+desWorksheet.getCells().copyRow(srcWorksheet.getCells(), 3, 1);
+
+// Save the excel file.
+destWorkbook.save("C:\\Files\\Destination_Workbook.xlsx");
+
+
+///
+
+The copyRows() method copies data and formats of whole rows. It takes the source worksheet cells to copy as input parameters along with the source row index, destination row index, and the copied row number. The API also provides the overloaded versions of this method to copy rows with CopyOptions and PasteOptions.
+
+Similarly, You can copy column data from one Microsoft Excel document to another using the copyColumn() or copyColumns() methods.
+
+Export JSON Data to Excel in Java
+You can easily export data from a JSON file to Excel by following the steps mentioned below:
+
+Create an instance of the Workbook class
+Get a worksheet in an instance of the Worksheet class
+Read the JSON file
+Create an instance of the CellsFactory class
+Initiate style by calling the createStyle() method
+Set various style properties such as Horizontal Alignment, Font color, etc.
+Create an instance of the JsonLayoutOptions class
+Set title style with the style object
+Set array as table property to true
+Call the JsonUtility.importData() method with the JSON input and JsonLayoutOptions
+Save the output file by calling the save() method of the Workbook class
+The following code sample shows how to export data from a JSON file to Excel using Java.
+
+// Instantiating a Workbook object
+Workbook workbook = new Workbook();
+Worksheet worksheet = workbook.getWorksheets().get(0);
+
+// Read JSON file
+File file = new File("C:\\Files\\sample.json");
+BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+    String jsonInput = "";
+    String tempString;
+    while ((tempString = bufferedReader.readLine()) != null) {
+      jsonInput = jsonInput + tempString; 
+    }
+    bufferedReader.close();
+
+// Set Styles
+CellsFactory factory = new CellsFactory();
+Style style = factory.createStyle();
+style.setHorizontalAlignment(TextAlignmentType.CENTER);
+style.getFont().setColor(Color.getCyan());
+style.getFont().setBold(true);
+
+// Set JsonLayoutOptions
+JsonLayoutOptions options = new JsonLayoutOptions();
+options.setTitleStyle(style);
+options.setArrayAsTable(true);
+
+// Export JSON Data
+JsonUtility.importData(jsonInput, worksheet.getCells(), 0, 0, options);
+
+// Save Excel file
+workbook.save("C:\\Files\\Output.xlsx");
+
+///
+
+The CellsFactory class instantiates classes of the Cells model. The createStyle() method of this class creates a new style object of the Style class. The Style class allows setting the display style of Excel documents, such as font, color, alignment, border, etc.
+
+The JsonLayoutOptions class provides the options of JSON layout type. The setTitleStyle method of this class is used to set the defined style of the title. The setArrayAsTable method allows the processing Array as a table.
+
+The API provides JsonUtility class to process the JSON. The importData() method of this class exports the JSON string and takes the following parameters:
+
+json: The JSON string
+cells: The Cells
+row: The row index
+column: The column index
+option: The options to export JSON string
+Get CSV Data in Excel using Java
+You can export data from a CSV file to Excel by following the simple steps mentioned below:
+
+Create an instance of the LoadOptions class with LoadFormat
+Create an instance of the Workbook class with CSV file path and LoadOptions object
+Call the save() method of the Workbook class and save the output file
+The following code sample shows how to export data from a CSV file to Excel using Java.
+
+// Initialize LoadOptions with CSV LoadFormat.
+LoadOptions loadOptions = new LoadOptions(LoadFormat.CSV);
+
+// Open CSV file as a Workbook object
+Workbook workbook = new Workbook("C:\\Files\\Sample.csv", loadOptions);
+
+// Save the file as an Excel Documnt
+workbook.save("C:\\Files\\Output.xlsx");
+
+///
+
+
