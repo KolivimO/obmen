@@ -1,0 +1,5498 @@
+///
+
+com.mdl0.services.strong.modelcore.DataManagementService service = com.mdl0.services.strong.modelcore.DataManagementService.getService(AppXSession.getConnection());
+ 
+RelatedObjectInput[] arg0 = new RelatedObjectInput[] {new RelatedObjectInput()};
+ 
+arg0[0].sourceObjects=foundObjs;
+ 
+arg0[0].queryPrimaries=true;
+ 
+arg0[0].returnRelations=false;
+ 
+RelatedObjectFilter[] relatedObjectFilters = new RelatedObjectFilter[] {new RelatedObjectFilter()};
+ 
+        
+relatedObjectFilters[0].relationTypeName="IMAN_reference";
+ 
+arg0[0].filters=relatedObjectFilters;
+ 
+RelatedObjectsResponse queryRelatedObjects = service.queryRelatedObjects(arg0 );
+
+///
+
+Teamcenter.Services.Strong.Core._2007_06.DataManagement.RelationAndTypesFilter filter = new Teamcenter.Services.Strong.Core._2007_06.DataManagement.RelationAndTypesFilter();
+            filter.RelationTypeName = "Fnd0EPMReference";
+            Teamcenter.Services.Strong.Core._2007_06.DataManagement.RelationAndTypesFilter filter2 = new Teamcenter.Services.Strong.Core._2007_06.DataManagement.RelationAndTypesFilter();
+            filter2.RelationTypeName = "Fnd0EPMTarget";
+            Teamcenter.Services.Strong.Core._2007_09.DataManagement.ExpandGRMRelationsPref2 pref = new Teamcenter.Services.Strong.Core._2007_09.DataManagement.ExpandGRMRelationsPref2();
+            pref.Info = new Teamcenter.Services.Strong.Core._2007_06.DataManagement.RelationAndTypesFilter[] { filter, filter2 };
+            List<Teamcenter.Services.Strong.Core._2006_03.DataManagement.Relationship> rels = new List<Teamcenter.Services.Strong.Core._2006_03.DataManagement.Relationship>();
+            Teamcenter.Services.Strong.Core._2007_09.DataManagement.ExpandGRMRelationsResponse2 expandResponse = dmService.ExpandGRMRelationsForSecondary(objs.ToArray(), pref);
+            foreach (Teamcenter.Services.Strong.Core._2007_09.DataManagement.ExpandGRMRelationsOutput2 o in expandResponse.Output)
+                foreach (Teamcenter.Services.Strong.Core._2007_09.DataManagement.ExpandGRMRelationsData2 r in o.RelationshipData)
+                    foreach (Teamcenter.Services.Strong.Core._2007_09.DataManagement.ExpandGRMRelationship d in r.RelationshipObjects)
+                        if (d.OtherSideObject.SoaType.ClassName == "EPMTask")
+                        {
+                            Teamcenter.Services.Strong.Core._2006_03.DataManagement.Relationship rel = new Teamcenter.Services.Strong.Core._2006_03.DataManagement.Relationship();
+                            rel.PrimaryObject = d.OtherSideObject;
+                            rel.SecondaryObject = o.InputObject;
+                            rel.RelationType = r.RelationName;
+                            rels.Add(rel);
+                        }
+            ServiceData sd = dmService.DeleteRelations(rels.ToArray());
+            if (sd.sizeOfPartialErrors() > 0)
+                throw new CustomException("Error(s) deleting relations to EPMTasks: " + getErrorsFromServiceData(sd));
+///
+
+SOA_FRAMEWORK Function : JAVA_CLIENT Subfunction : ALL Release : V2007.1.3. Solution. The developer can easily use the HelloTeamcenter SOA example (soa_client\java\samples\HelloTeamcenter) to run this example code. In the Hello.java after User object is retrieved make the following calls ... explicitly inflate the IMAN_reference property for get_IMAN_reference() call. try {. objs = itemRev.get_IMAN_reference(); // get the dataset, already have it, just and exercise in how. if(objs[0] instanceof Text) {. dservice.getProperties(objs, new String[] { "ref_list" }
+
+///
+
+применяемость ставится на статус,а не на ревизию как свойство
+
+   TCComponentEffectivityType eff_type = (TCComponentEffectivityType)session.getTypeComponent("Effectivity");
+
+   TCComponentEffectivity effectivity = eff_type.createFromUnits(status,end_item,unit_range);
+                                   
+
+здесь status - собственно статус,
+
+TCComponent related[] = revision.getRelatedComponents("release_statuses");
+
+ 
+
+end_item - конечное изделие если есть
+
+unit_range - строка применяемость (1-UP напр)
+
+///
+
+Хай,
+курите в сторону Dynamic Participants .... вот слова для поиска:
+WRKFLW_task_assignee_dynamic_participant_sync   ,    Participant , ParticipantHandlerKeyword ,
+
+ParticipantAllowMultipleAssignee      ,  
+
+как-то так, конфигурируется через BMIDE
+
+ 
+
+а потом будут вам хендлеры типа
+EPM-assign-signoff-dynamic-participant
+
+///
+
+OpenCommand(AIFDesktop Pai Desktop, Window pWindow, InterfaceAIFComponent pInterfaceAIFComponent)
+
+///
+
+AbstractAIFUIApplication localAbstractAIFUIApplication = AIFUtility.getCurrentApplication();
+              try
+              {
+                OpenCommand localOpenCommand = (OpenCommand)AifrcpPlugin.getSessionService().getDefaultSession().getOpenCommand(new Object[] { localAbstractAIFUIApplication.getDesktop(), comp });
+                localOpenCommand.executeModal();
+              }
+              catch (Exception localException)
+              {
+              
+              }
+
+///
+
+OpenCommand лежит в двух разных пакетах. Попробуйте другой пакет подключить
+
+у вас com.teamcenter.rac.commands
+
+а есть еще типа com.teamcenter.rac.aif.....
+
+///
+
+Object localObject;
+
+   
+
+	  int i;
+
+	  IMANComponentTaskTemplate[] arrayOfIMANComponentTaskTemplate = null;
+
+	  localObject = (IMANComponentTaskTemplateType)this.session.getTypeComponent("EPMTaskTemplate");
+
+	  if (localObject != null)
+
+		arrayOfIMANComponentTaskTemplate = ((IMANComponentTaskTemplateType)localObject).extentTaskTemplates(2, 0);
+
+	  if (arrayOfIMANComponentTaskTemplate != null)
+
+		if ((i = arrayOfIMANComponentTaskTemplate.length) >= 1)
+
+		  break label39;
+
+	  return;
+
+	  label39: 
+
+	  String[] arrayOfString = new String[i];
+
+	  for (int j = 0; j < i; ++j)
+
+	  {
+
+		IMANComponentTaskTemplate localIMANComponentTaskTemplate2 = (IMANComponentTaskTemplate)arrayOfIMANComponentTaskTemplate[j];
+
+		IMANComponentTaskTemplate localIMANComponentTaskTemplate1 = localIMANComponentTaskTemplate2.getRoot();
+
+		arrayOfString[j] = localIMANComponentTaskTemplate1.toString();
+
+	  }
+
+///
+
+IMANComponentItemRevision target_item_rev = (IMANComponentItemRevision)target_comp;
+
+IMANComponentTaskTemplateType task_type = (IMANComponentTaskTemplateType)session.getTypeComponent("EPMTaskTemplate");
+
+IMANComponentTaskTemplate task = task_type.find("task_template",0);
+
+
+
+int attachmentTypes[] = {1};
+
+IMANComponent process_attachements[] = {target_item_rev};
+
+IMANComponentProcessType process_type = (IMANComponentProcessType)session.getTypeComponent("Job");
+
+IMANComponentProcess process = (IMANComponentProcess)process_type.create(target_item_rev.toString(),"",task,process_attachements,attachmentTypes);
+
+///
+
+
+import com.teamcenter.rac.kernel.TCComponentProcess;
+
+import com.teamcenter.rac.kernel.TCComponentProcessType;
+
+import com.teamcenter.rac.kernel.TCComponentTaskTemplate;
+
+import com.teamcenter.rac.kernel.TCComponentTaskTemplateType;
+
+import com.teamcenter.services.rac.workflow.WorkflowService;
+
+import com.teamcenter.services.rac.workflow._2008_06.Workflow.AttachmentInfo;
+
+private static TCComponentProcess newProcess;
+
+private static Vector<TCComponentItemRevision> occuranceQty;
+
+private static boolean createWorkflow(){
+
+boolean status = false;
+
+newProcess = null;
+
+AbstractAIFApplication app = AIFDesktop.getActiveDesktop().getCurrentApplication();
+
+TCSession session = (TCSession)app.getSession();
+
+try {
+
+TCComponentProcessType processType = (TCComponentProcessType)session.getTypeComponent("Job");
+
+TCComponentTaskTemplateType taskTemplateType = (TCComponentTaskTemplateType)session.getTypeComponent("EPMTaskTemplate");
+
+TCComponent[] itemRevs = (TCComponentItemRevision[]) occuranceQty.toArray(new TCComponentItemRevision[occuranceQty.size()]);
+
+TCComponentTaskTemplate[] tasksTemplate = taskTemplateType.extentReadyTemplates(true);
+
+TCComponentTaskTemplate taskTemplate = null;
+
+for(TCComponentTaskTemplate template : tasksTemplate){
+
+if(template.getStringProperty("object_name").equalsIgnoreCase("TASK TEMPLATE NAME")){
+
+taskTemplate = template;
+
+break;
+
+}
+
+}
+
+if(taskTemplate != null){
+
+int[] paramArrayOfInt = new int [itemRevs.length];
+
+Arrays.fill(paramArrayOfInt, 1);
+
+newProcess = (TCComponentProcess)processType.create("PROCESS NAME", "PROCESS DESC", taskTemplate, itemRevs, paramArrayOfInt);
+
+//добавление объектов в цели
+
+WorkflowService serviceWF = WorkflowService.getService(session);
+
+int count = occuranceQty.size();
+
+int countBomView = 0;
+
+for(TableItem row : table_0.getItems()){
+
+if(row.getText(5).equalsIgnoreCase("<Assy_item_type>")){
+
+countBomView++;
+
+}
+
+}
+
+TCComponent[] items = new TCComponent[count];
+
+TCComponent[] itemMasters = new TCComponent[count];
+
+TCComponent[] itemBomViews = new TCComponent[countBomView];
+
+int[] attachmentType = new int[count];
+
+int[] attachmentTypeBomViews = new int[countBomView];
+
+Arrays.fill(attachmentType, 1);
+
+Arrays.fill(attachmentTypeBomViews, 1);
+
+//не все объекты имеют BOMView (состав)
+
+int j = 0;
+
+for(int i = 0; i < count; i++){
+
+items = occuranceQty.get(i).getItem();
+
+itemMasters = occuranceQty.get(i).getItem().getRelatedComponent("IMAN_master_form");
+
+TCComponent bomView = null;
+
+bomView = occuranceQty.get(i).getItem().getRelatedComponent("bom_view_tags");
+
+if(bomView != null){
+
+itemBomViews[j] = bomView; j++;
+
+}
+
+}
+
+AttachmentInfo attachInfo = new AttachmentInfo();
+
+attachInfo.attachmentType = attachmentType;
+
+attachInfo.attachment = items;
+
+serviceWF.addAttachments(newProcess.getRootTask(), attachInfo); attachInfo.attachment = itemMasters;
+
+serviceWF.addAttachments(newProcess.getRootTask(), attachInfo); attachInfo.attachment = itemBomViews;
+
+attachInfo.attachmentType = attachmentTypeBomViews; serviceWF.addAttachments(newProcess.getRootTask(), attachInfo);
+
+}
+
+} catch (TCException e1) {
+
+e1.printStackTrace();
+
+}
+
+status = (newProcess == null) ? false : true;
+
+return status;
+
+}
+
+///
+
+да играюсь.
+
+вот например у TCComponent есть свойство object_type и я хочу только для определенного типа показывать меню. В plugin.xml:
+
+<visibleWhen>
+
+<iterate ifEmpty="false">
+
+<adapt type="com.teamcenter.rac.kernel.TCComponent">
+
+<and>
+
+<test property="com.teamcenter.rac.kernel.TCComponent.object_type"
+
+value="ItemRevision" />
+
+</and>
+
+</adapt>
+
+</iterate>
+
+</visibleWhen>
+
+Меню теперь вообще не появляется. Наверное свойство не так называется, а вот где это посмотреть?
+
+///
+
+нет такого propertyTester в com.teamcenter.rac.common.testers . среди созданных и подключенных в этом plugin.xml есть подходящий <propertyTester class="com.teamcenter.rac.common.testers.TCComponentTypeClassTester" id="com.teamcenter.rac.kernel.TCComponentTypeClassTester" namespace="com.teamcenter.rac.kernel.TCComponent" properties="typeClass,resolvedType,underlyingComponentTypeClass" type="com.teamcenter.rac.kernel.TCComponent"/>
+
+поэтому в вашем плагин.хмл следует проверять
+
+<test property="com.teamcenter.rac.kernel.TCComponent.typeClass"
+
+value="ItemRevision" />
+
+или если попробовать другой тестер
+
+<propertyTester class="com.teamcenter.rac.common.testers.TCComponentTypeTester" id="com.teamcenter.rac.kernel.TCComponent.TypeTester" namespace="com.teamcenter.rac.kernel.TCComponent" properties="type" type="com.teamcenter.rac.kernel.TCComponent"/>
+
+то следует попробовать так
+
+<test property="com.teamcenter.rac.kernel.TCComponent.type"
+
+value="ItemRevision" />
+
+то есть смысл в том что если таргетом будет TCComponent с типом ItemRevision то выдается true и как бы условие visibleWhen или activeWhen, смотря что задали , должно отработать
+
+///
+
+<extension
+
+		point="org.eclipse.ui.handlers">
+
+		<handler
+
+			commandId="com.teamcenter.rac.open"
+
+			class="com.mycom.handlers.MyHandler">
+
+				<activeWhen>
+
+				<iterate
+
+					ifEmpty="false">
+
+					<and>
+
+					<adapt
+
+							type="com.teamcenter.rac.kernel.TCComponent">
+
+							<test 
+
+								property="com.teamcenter.rac.kernel.TCComponent.type"
+
+								value="Text">
+
+							</test>
+
+					</adapt>
+
+					</and>
+
+				</iterate>
+
+			</activeWhen>
+
+		</handler>
+
+	</extension>
+
+///
+
+<iterate ifEmpty="false">
+
+					<adapt type="com.teamcenter.rac.kernel.TCComponent">
+
+						<test property="com.teamcenter.rac.aif.AIFClipboard.isEmpty" value="false"/>
+
+					</adapt>
+
+				</iterate>
+
+///
+
+доброго дня,
+много раз юзал и через SOA и через RAC, все работает.
+TCComponentICO icos[] = item.getClassificationObjects(); - должно работать.
+может item у вас не тот, или ревизия нужна.
+даж не знаю что еще предложить, все правильно вродеб.
+ 
+
+может так надо:
+TCComponent[] ico_obj = (TCComponent) ico_response.icos.get(item);
+
+на C# SOA у меня так:
+ 
+
+        FindClassificationObjectsResponse resp2 = cl_service.FindClassificationObjects(new WSOBJ[] { (WSOBJ)rev });
+
+             ModelObject[] icos = (ModelObject[])resp2.Icos[(object)rev];
+
+///
+
+AIFDesktop adesktop = AIFUtility.getAIFPortal().getDesktopManager().getActiveDesktop();
+AbstractAIFCommand open = session.getOpenCommand(new Object[] { adesktop, item} );
+((OpenCommand)open).executeModeless();
+
+///
+
+PerspectiveDefService s = new PerspectiveDefService();
+s.activate();
+IPerspectiveDef findByPerspectiveId = s.findByPerspectiveId("com.teamcenter.rac.ui.perspectives.navigatorPerspective");
+findByPerspectiveId.openPerspective(new InterfaceAIFComponent[] { (InterfaceAIFComponent)comp });
+ 
+
+///
+
+IWorkbenchPart iWorkbenchPart = HandlerUtil.getActivePart(arg0);
+        
+         IStructuredViewerProvider iStructuredViewerProvider = (IStructuredViewerProvider)iWorkbenchPart;
+          StructuredViewer structuredViewer = iStructuredViewerProvider.getViewer();
+          final Display display = HandlerUtil.getActiveShellChecked(arg0).getDisplay();
+            final ISelection paramISelection = HandlerUtil.getCurrentSelection(arg0);
+            final TreeViewer treeViewer = (TreeViewer)structuredViewer;
+
+          
+          
+          if (treeViewer != null) {
+              TreeSelection treeSelection = (TreeSelection)AdapterUtil.getAdapter(paramISelection, TreeSelection.class);
+              final TreePath[] selectedTreePaths = (treeSelection == null) ? null : treeSelection.getPaths();
+              if (selectedTreePaths != null && selectedTreePaths.length > 0) {
+
+                      ITreeContentProvider iTreeContentProvider = (ITreeContentProvider)treeViewer.getContentProvider();
+                      WorkspaceCommonContentProvider workspaceCommonContentProvider = (iTreeContentProvider instanceof WorkspaceCommonContentProvider) ? (WorkspaceCommonContentProvider)iTreeContentProvider : null;
+                      byte b1 = 0;
+                      int i = selectedTreePaths.length;
+                      TreePath[] arrayOfTreePath;
+                      int j = (arrayOfTreePath = selectedTreePaths).length;
+                      for (byte b2 = 0; b2 < j; b2++) {
+                        TreePath treePath1 = arrayOfTreePath[b2];
+                        TreePath treePath2 = treePath1;
+                        Object object = treePath1.getLastSegment();
+                        if (object != null) {
+                          String str = object.toString();
+                         TCComponentContentProvider tCComponentContentProvider = null;
+                         if (workspaceCommonContentProvider != null) {
+                            ITreeContentProvider iTreeContentProvider1 = workspaceCommonContentProvider.getDelegateContentProvider(object);
+                            if (iTreeContentProvider1 instanceof TCComponentContentProvider)
+                              tCComponentContentProvider = (TCComponentContentProvider)iTreeContentProvider1; 
+                          } else if (iTreeContentProvider instanceof TCComponentContentProvider) {
+                            tCComponentContentProvider = (TCComponentContentProvider)iTreeContentProvider;
+                          } 
+                          if (tCComponentContentProvider != null)
+                            tCComponentContentProvider.setSyncLoadSwitch(true); 
+                          try {
+                            LinkedList<TreePath> linkedList = new LinkedList();
+                            linkedList.addFirst(treePath2);
+                            byte b = -1;
+                            byte b3 = 0;
+                            byte b4 = 0;
+                           
+                            while (!linkedList.isEmpty()) {
+                              if (b != -1 && ++b3 >= b)
+                                break; 
+                              int k = linkedList.size();
+                              Object[] arrayOfObject = { str, Integer.valueOf(b3), Integer.valueOf(b4) };
+
+                              byte b5 = 50;
+                              final ArrayList<TreePath> arrayList = new ArrayList();
+                              for (int m = 0; m < k; m += b5) {
+                                arrayList.clear();
+                                for (byte b6 = 0; b6 < b5; b6++) {
+                                  int n = m + b6;
+                                  if (n >= k)
+                                    break; 
+                                  arrayList.add(linkedList.get(n));
+                                  
+                                } 
+                                Runnable runnable = new Runnable() {
+                                    public void run() {
+                                      for (TreePath treePath : arrayList)
+                                        treeViewer.setExpandedState(treePath, true); 
+                                    }
+                                  };
+                                display.syncExec(runnable);
+                              } 
+                              String str2 = MessageFormat.format(Messages.ExpandCollapseHandler_AccessNthLevel, arrayOfObject);
+                              final LinkedList<TreePath> linkedList1 = new LinkedList();
+                              for (TreePath treePath : linkedList) {
+                                b4++;
+                                IStatus iStatus = expandByTreePath(treeViewer, iTreeContentProvider, treePath, -1, 1, linkedList1,display);
+
+                                Object object11 = treePath.getLastSegment();
+
+                                  Object[] arrayOfObject11 = iTreeContentProvider.getChildren(object);
+                                  byte b11 = (byte) ((arrayOfObject == null) ? 0 : arrayOfObject.length);
+                                  if (b!=-1)
+                                    for (byte b111 = 0; b111 < b; b111++) {
+                                      Object object111 = arrayOfObject[b1];
+                                      if (object111 != null) {
+                                        if (!cyclicReference(object111, treePath)) {
+                                          TreePath treePath11 = treePath.createChildPath(object111);
+                                          if(treePath11.getLastSegment().toString().indexOf("View")!=-1){
+                                              linkedList1.addLast(treePath);
+                                          Runnable runnable = new Runnable() {
+                                              public void run() {
+                                                for (TreePath treePath : linkedList1)
+                                                  treeViewer.setExpandedState(treePath, true); 
+                                              }
+                                            };
+                                          display.syncExec(runnable);
+                                          }
+                                        } 
+                                      } 
+                                    }  
+                                
+                              
+                              } 
+                              linkedList = linkedList1;
+                            } 
+                          } finally {
+                            if (tCComponentContentProvider != null)
+                              tCComponentContentProvider.setSyncLoadSwitch(false); 
+                          } 
+                          if (tCComponentContentProvider != null)
+                            tCComponentContentProvider.setSyncLoadSwitch(false); 
+                        } 
+                      } 
+
+
+              } 
+            } 
+
+///
+
+         TCComponentReleaseStatusType componentReleaseStatusType = (TCComponentReleaseStatusType)session.getTypeComponent("ReleaseStatus");
+                TCComponentReleaseStatus tcStatus = (TCComponentReleaseStatus)componentReleaseStatusType.create("Validation");
+                
+
+                java.util.Date date = new java.util.Date();
+                tcStatus.setDateProperty("date_released", date);
+
+ 
+
+                tcStatus.lock();
+                tcStatus.save();
+                tcStatus.unlock();
+
+///
+
+EPM 
+
+там хендлер сам поставит статус на целевые объекты
+
+ 
+
+public static void executeStatusOperation(List<TCComponent> comps, String processName) throws Exception
+         {
+           TCSession session = (TCSession)AIFUtility.getDefaultSession();
+           
+           int[] types = new int[comps.size()];
+            for (int i = 0; i < types.length; i++) {
+             types[i] = 1;
+            }
+           TCComponentTaskTemplateType t = (TCComponentTaskTemplateType)session.getTypeComponent("EPMAddStatusTaskTemplate");
+          TCComponentTaskTemplate find = t.find(processName, 0);
+          if (find == null) {
+             return;
+          }
+          NewProcessOperation op = null;
+           op = new NewProcessOperation(session, AIFUtility.getActiveDesktop(),     "Статус",  "Статус",  find, (TCComponent[])comps.toArray(new TCComponent[comps.size()]),  types);
+            op.executeOperation();
+       }
+
+///
+
+Спасибо, решил через сервисы:
+
+                WorkflowService wfs = WorkflowService.getService(session);
+                Workflow.ReleaseStatusInput input = new Workflow.ReleaseStatusInput();
+                input.objects = new TCComponent[] {component};
+                Workflow.ReleaseStatusOption oper = new Workflow.ReleaseStatusOption();
+                oper.newReleaseStatusTypeName = "Validation";
+                oper.operation = "Append";
+                input.operations = new Workflow.ReleaseStatusOption[] {oper};
+                SetReleaseStatusResponse resp = wfs.setReleaseStatus(new Workflow.ReleaseStatusInput[] {input});
+
+///
+
+<extension point="com.teamcenter.rac.common.tcLabelProviderDelegates">
+
+		<labelProviderDelegate>
+
+			<propertyDelegate 
+
+				class="com.mycom.LabelDelegate" 
+
+				priority="110" propertyName="object_string">
+
+			</propertyDelegate>
+
+	   </labelProviderDelegate>
+
+	</extension>
+
+///
+
+import org.eclipse.jface.resource.JFaceResources;
+
+import org.eclipse.swt.SWT;
+
+import org.eclipse.swt.graphics.Font;
+
+import org.eclipse.swt.graphics.FontData;
+
+import org.eclipse.swt.graphics.Image;
+
+import org.eclipse.swt.widgets.Display;
+
+import org.eclipse.ui.views.properties.IPropertySource;
+
+
+
+import com.teamcenter.rac.kernel.TCComponent;
+
+import com.teamcenter.rac.kernel.TCComponentDataset;
+
+import com.teamcenter.rac.providers.delegates.DefaultLabelProviderDelegate;
+
+import com.teamcenter.rac.util.AdapterUtil;
+
+
+
+public class LabelDelegate extends DefaultLabelProviderDelegate {
+
+	
+
+	private  Font m_boldFont;
+
+	private static final String[] PROPERTIES = { "object_string" };
+
+
+
+	public LabelDelegate(){
+
+		Font localFont = JFaceResources.getDefaultFont();
+
+		FontData[] arrayOfFontData = localFont.getFontData();
+
+		this.m_boldFont = new Font(Display.getDefault(), new FontData(arrayOfFontData[0].getName(), 14, SWT.ITALIC | SWT.BOLD));
+
+	}
+
+
+
+	public void setComponent(TCComponent paramTCComponent)
+
+	  {
+
+		if ((this.m_propertySource == null) || (!paramTCComponent.equals(AdapterUtil.getAdapter(this.m_propertySource, TCComponent.class))))
+
+		  this.m_propertySource = ((IPropertySource)AdapterUtil.getAdapter(paramTCComponent, IPropertySource.class));
+
+	  }
+
+	
+
+	public void dispose()
+
+	  {
+
+		if (this.m_boldFont != null)
+
+		  this.m_boldFont.dispose();
+
+	  }
+
+	 public Font getFont(Object paramObject)
+
+	  {
+
+		String str = getProperty();
+
+		if (("object_string".equals(str)))
+
+		{
+
+		  TCComponent localTCComponent = getTCComponent(paramObject);
+
+		  if (((localTCComponent instanceof TCComponentDataset)) && (localTCComponent.getType().equals("Text")) )
+
+			return this.m_boldFont;
+
+		}
+
+		return null;
+
+	  }
+
+	 protected boolean isPrimaryColumn()
+
+	  {
+
+		return true;
+
+	  }
+
+	 public Image getImage(Object paramObject)
+
+	  {
+
+		if (isPrimaryColumn())
+
+		{
+
+		  TCComponent localTCComponent = getTCComponent(paramObject);
+
+		  if (localTCComponent != null)
+
+			return getComponentImage(localTCComponent);
+
+		}
+
+		return null;
+
+	  }
+
+
+
+}
+
+///
+
+import com.teamcenter.rac.aifrcp.AIFUtility;
+import com.teamcenter.rac.aif.kernel.AIFComponentContext;
+import com.teamcenter.rac.aif.kernel.InterfaceAIFComponent;
+import com.teamcenter.rac.kernel.TCComponent;
+import com.teamcenter.rac.kernel.TCComponentItem;
+import com.teamcenter.rac.kernel.TCComponentItemRevision;
+
+...
+
+// если надо получить несколько выделенных
+InterfaceAIFComponent[] c_targets = AIFUtility.getTargetComponents();
+
+//если надо получить один (только первый) выделенный
+InterfaceAIFComponent c_target = AIFUtility.getTargetComponent();
+
+// ну и дальше проверяем тип выделенного и работаем с ним как с объектом этого типа
+if (c_target instanceof TCComponentItem) {
+    TCComponentItem item = (TCComponentItem)c_target;
+    TCComponentItemRevision revision = item.getLatestItemRevision();
+
+}
+
+///
+
+Для получения форм
+
+    TCComponentForm itemForm = (TCComponentForm) data.item.getRelatedComponent("IMAN_master_form");
+    TCComponentForm revisionForm = (TCComponentForm) data.item_rev.getRelatedComponent("IMAN_master_form_rev");
+
+ну и свойства есть у всех объектов, получать к ним доступ через getProperty и getTCProperty
+
+///
+
+TCComponentEffectivityType effType = (TCComponentEffectivityType)session.getTypeComponent("Effectivity");
+
+TCComponentEffectivity new_eff = null; 
+
+new_eff = effType.createFromDates(status, EndItem, range); // тут можно createFromUnits, на ошибку не влияет
+
+
+if (new_eff != null)
+{
+	new_eff.save();
+	status.save();
+}
+
+***
+
+new_eff = effType.createFromDates(status, new TCComponentItem(), range);
+
+///
+
+
+Пытался так:
+
+revRuleType = TcSession.getTypeComponent("RevisionRule");
+
+bomType = TcSession.getTypeComponent("BOMWindow");
+
+bom = bomType.create(revRuleType.getDefaultRule());
+
+ 
+
+copyItem = item.copyRecursively(bom, "ICBaseLineTemppate", "name", "desc"); //но ревизий в элементе нет...
+
+//Пробую сам добавить ревизии
+
+ItemRev = item.getReferenceListProperty("revision_list")[0];
+
+copyItemRev = itemRev.copyRecursively(bom,bom,"ICBaseLineTemppate", "name", "desc", "id" , "revId"); //тут исключение
+
+copyItem.add("revision_list", copyItemRev);
+
+///
+
+...\tc_root\portal\plugins\configuration_<version>\tclogger.properties:
+log4j.rootLogger=ERROR, TcLogContext
+log4j.logger.com.teamcenter.rac=WARN, TcLoggerConsoleAppender, 
+TcLoggerFileAppender
+log4j.logger.com.teamcenter.soa=WARN, TcLoggerConsoleAppender, 
+TcLoggerFileAppender
+ 
+
+Потом genregexml
+
+///
+
+com.teamcenter.services.rac.core.DataManagementService dataservice =   com.teamcenter.services.rac.core.DataManagementService.getService(session);
+ServiceData dataObj = dataservice.loadObjects(objectUIDS);		 
+TCComponent conponent = dataObj.getCreatedObject(0);
+
+///
+
+package com.mycom.forms;
+
+import java.awt.BorderLayout;
+
+import java.awt.GridBagConstraints;
+
+import java.awt.GridBagLayout;
+
+import java.awt.Insets;
+
+import java.awt.event.ActionEvent;
+
+import java.awt.event.ActionListener;
+
+import javax.swing.JButton;
+
+import javax.swing.JLabel;
+
+import javax.swing.JPanel;
+
+import javax.swing.JTabbedPane;
+
+import javax.swing.JTextField;
+
+import com.teamcenter.rac.kernel.TCComponentForm;
+
+import com.teamcenter.rac.kernel.TCComponentItem;
+
+import com.teamcenter.rac.util.MessageBox;
+
+public class Bolt2 extends javax.swing.JPanel {
+
+private JPanel jLabel1;
+
+private JPanel jPanel1;
+
+private JTextField oboznachenie;
+
+private JTextField jTextField2;
+
+private JButton jButton;
+
+private JLabel jLabel2;
+
+private JTabbedPane jTabbedPane1;
+
+public Bolt2(TCComponentForm form) {
+
+super();
+
+initGUI(form);
+
+}
+
+private void initGUI(TCComponentForm form) {
+
+try {
+
+TCComponentItem comp = (TCComponentItem) form.getReferenceProperty("item_for_form");
+
+BorderLayout thisLayout = new BorderLayout();
+
+this.setLayout(thisLayout);
+
+{
+
+jLabel1 = new JPanel();
+
+BorderLayout jLabel1Layout = new BorderLayout();
+
+jLabel1.setLayout(jLabel1Layout);
+
+this.add(jLabel1, BorderLayout.NORTH);
+
+jLabel1.setPreferredSize(new java.awt.Dimension(400, 21));
+
+{
+
+jLabel2 = new JLabel();
+
+jLabel1.add(jLabel2, BorderLayout.EAST);
+
+jLabel2.setText("\u041c\u0430\u0442\u0435\u0440\u0438\u0430\u043b");
+
+jLabel2.setPreferredSize(new java.awt.Dimension(94, 21));
+
+jLabel2.setFont(new java.awt.Font("Tahoma",1,11));
+
+}
+
+}
+
+{
+
+jTabbedPane1 = new JTabbedPane();
+
+this.add(jTabbedPane1, BorderLayout.CENTER);
+
+jTabbedPane1.setPreferredSize(new java.awt.Dimension(400, 282));
+
+{
+
+jPanel1 = new JPanel();
+
+jTabbedPane1.addTab("Общие данные", null, jPanel1, null);
+
+GridBagLayout jPanel1Layout = new GridBagLayout();
+
+jPanel1Layout.rowWeights = new double[] {0.06, 0.06, 0.15, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1};
+
+jPanel1Layout.rowHeights = new int[] {7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7};
+
+jPanel1Layout.columnWeights = new double[] {0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1};
+
+jPanel1Layout.columnWidths = new int[] {40, 20, 118, 24, 170, 29, 78, 37, 28, 7};
+
+jPanel1.setLayout(jPanel1Layout);
+
+jPanel1.setPreferredSize(new java.awt.Dimension(407, 279));
+
+jPanel1.add(getjButton(), new GridBagConstraints(7, 2, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 3, 0, 3), 0, 0));
+
+jPanel1.add(getOboznachenie(), new GridBagConstraints(4, 2, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+
+}
+
+}
+
+{
+
+jTextField2 = new JTextField();
+
+this.add(jTextField2, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+
+jTextField2.setText("Bolt");
+
+}
+
+} catch (Exception e) {
+
+e.printStackTrace();
+
+}
+
+}
+
+private JTextField getOboznachenie() {
+
+if(oboznachenie == null) {
+
+oboznachenie = new JTextField();
+
+oboznachenie.setPreferredSize(new java.awt.Dimension(300, 20));
+
+oboznachenie.setText("jTextField1");
+
+}
+
+return oboznachenie;
+
+}
+
+private JButton getjButton() {
+
+if(jButton == null) {
+
+jButton = new JButton();
+
+jButton.setText("М");
+
+jButton.setSize(30, 23);
+
+jButton.addActionListener(new ActionListener(){
+
+@Override
+
+public void actionPerformed(ActionEvent arg0) {
+
+MessageBox.post("Pressed", "", MessageBox.INFORMATION);
+
+}
+
+});
+
+}
+
+return jButton;
+
+}
+
+}
+
+///
+
+Using the SWT/AWT Bridge
+
+
+
+Minimally, embedding an AWT frame inside an SWT composite is just two simple lines of code
+
+	
+
+	Composite composite = new Composite(parent, SWT.EMBEDDED | SWT.NO_BACKGROUND);
+
+	Frame frame = SWT_AWT.new_Frame(composite);
+
+	  
+
+
+
+An instance of org.eclipse.swt.Composite is created with the SWT.EMBEDDED style. This style signals that an AWT frame is to be embedded inside the Composite. The call to the static new_Frame method creates and returns such a frame. The frame may then be populated with AWT and/or Swing components. 
+
+
+
+The returned frame is not a standard AWT frame. By default, it is a subclass of java.awt.Frame that is meant to be embedded within native applications. In fact, it is the same frame that is used to embed applets inside a browser window.
+т.е в SWT контейнер нужно встроить AWT компонент, в данном случае frame. А далее можно использовать привычный swing.
+Либо используйте новые библиотеки - например JFace или те же SWT.
+
+///
+
+form.setProperty("svoistvo", "znachenie");
+
+Не уверена конечно что именно из-за этого у вас не сохраняется, но всеж таки выскажу мнение:
+если form у вас это мастер форма TCComponentForm то лучше работать с ее свойствами FormTCProperty конкретно, а не со свойствами компонента вообще. Поэтому лучше было бы так:
+
+
+masterForm.getFormTCProperty("svoistvo").setStringValue("znachenie");
+Изменено 23 сентября 2011 пользователем Wise_Owl
+
+///
+
+public void setReleaseStatus(){
+		WorkflowService serviceWF = WorkflowService.getService(session);
+		// создаем одну строку массива тс элементов у которых хотим поменять статус  
+		 ReleaseStatusInput relStInput = new com.teamcenter.services.rac.workflow._2007_06.Workflow.ReleaseStatusInput();
+		 relStInput.objects = new TCComponent[]{subLine};
+		 
+		 // создаем одну строку массива операций с вышеупомянутым элементом тс
+		  ReleaseStatusOption relStOptions = new com.teamcenter.services.rac.workflow._2007_06.Workflow.ReleaseStatusOption();
+		 /* // хоти мудалить имеющийся статус TCReleased
+		  relStOptions.existingreleaseStatusTypeName = "TCReleased";
+		  relStOptions.newReleaseStatusTypeName = "";
+		  relStOptions.operation = "Delete"; // может быть еще Append Replace
+*/		  
+		  //  или добавить статус
+		  relStOptions.existingreleaseStatusTypeName = "";
+		  relStOptions.newReleaseStatusTypeName = "TCReleased";
+		  relStOptions.operation = "Append";
+		   
+		  relStInput.operations = new Workflow.ReleaseStatusOption[]{relStOptions};
+		  
+		  try {
+			serviceWF.setReleaseStatus(new Workflow.ReleaseStatusInput[]{relStInput});
+		} catch (ServiceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+
+///
+
+TCComponentBOMWindowType bomWindowsType=session.getTypeComponent("BOMWindow");
+    TCComponentBOMWindow   window=bomWindowsType.create(null);
+    TCComponentBOMLine topBomLine=window.setWindowTopLine(null, itemRev, null, null);
+    TCComponentBOMLine childBomLine=topBomLine.add(null,ChildItemRev,null,false);
+    window.save()
+    window.close();
+
+///
+
+TCComponentBOMWindowType bomWindowsType=session.getTypeComponent("BOMWindow");
+    TCComponentBOMWindow   window=bomWindowsType.create(null);
+    TCComponentBOMLine topBomLine=window.setWindowTopLine(null, itemRev, null, null);
+    TCComponentBOMLine childBomLine=topBomLine.add(null,ChildItemRev,null,false);
+    window.save()
+    window.close();
+
+ChildItemRev -  это как вы говорите - созданный объект (его ревизия) - про это я понял.
+
+itemRev - Это ревизия какого объекта и где она должна быть определена?
+itemRev - это Голова вашего состава, куда вы будете пхать новый объект.
+ 
+///
+
+How do I update BOMLine properties using a SOA client?
+Show more
+Hardware/Software Configuration
+Family: TEAMCENTER
+Application: STRUCTURE_MGR
+Function: BOM_EXPAND
+Subfunction: ALL
+Release: V10.1.1.2
+Show more
+Solution
+Here is an java example that successfully updates a list of BOMLine objects 
+associated with a TopBOMLine. The BOMWindow structure is assumed to be as 
+follows:
+
++- TopBOMLine
+	|- child BOMLine
+	|- child BOMLine
+	|- child BOMLine
+	+- n-number of BOMLines...
+
+This custom java class to be used as follows:
+
+	UpdateBOMLine updateBOM = new UpdateBOMLine();
+	
+	if(updateBOM.loadItem())
+	{
+		if(updateBOM.getTopLineAndChildLines())
+		{
+			updateBOM.updateBOMLine();
+		}
+	}
+
+Update the ItemUID with an Item UID that has a BOMView you wish to update.
+
+The HelloTeamcenter example was used to test this code.
+
+
+---------------------------------------------------
+
+package com.teamcenter.hello;
+
+
+import java.util.Hashtable;
+import java.util.Map;
+import java.util.Vector;
+
+import com.teamcenter.clientx.AppXSession;
+
+import 
+com.teamcenter.services.strong.bom._2008_06.StructureManagement.AddOrUpdateChil
+drenToParentLineInfo;
+import 
+com.teamcenter.services.strong.bom._2008_06.StructureManagement.AddOrUpdateChil
+drenToParentLineResponse;
+import 
+com.teamcenter.services.strong.bom._2008_06.StructureManagement.ItemLineInfo;
+import 
+com.teamcenter.services.strong.cad._2007_01.StructureManagement.CreateBOMWindow
+sInfo;
+import 
+com.teamcenter.services.strong.cad._2007_01.StructureManagement.CreateBOMWindow
+sResponse;
+import 
+com.teamcenter.services.strong.cad._2007_01.StructureManagement.ExpandPSData;
+import com.teamcenter.services.strong.core.DataManagementService;
+import com.teamcenter.services.strong.core.SessionService;
+import com.teamcenter.soa.client.model.ModelObject;
+import com.teamcenter.soa.client.model.ServiceData;
+import com.teamcenter.soa.client.model.strong.BOMLine;
+import com.teamcenter.soa.client.model.strong.BOMWindow;
+import com.teamcenter.soa.client.model.strong.Item;
+import com.teamcenter.soa.client.model.strong.ItemRevision;
+import com.teamcenter.soa.client.model.strong.PSBOMView;
+import com.teamcenter.soa.common.ObjectPropertyPolicy;
+import com.teamcenter.soa.exceptions.NotLoadedException;
+
+public class UpdateBOMLine 
+{
+	private String ItemUID = "QlaJsbLj4Zi2AB";
+	
+	private DataManagementService dmService;
+	private com.teamcenter.services.strong.bom.StructureManagementService 
+bomService;
+	private com.teamcenter.services.strong.cad.StructureManagementService 
+structureService;
+	
+	private BOMWindow bomWindow = null;
+	
+	private Item item = null;
+	private BOMLine[] childLines = null;
+	private BOMLine topLine = null;
+	
+	
+	public UpdateBOMLine()
+	{
+		dmService =
+DataManagementService.getService(AppXSession.getConnection());
+		structureService = 
+com.teamcenter.services.strong.cad.StructureManagementService.getService(AppXSe
+ssion.getConnection());
+		bomService =  
+com.teamcenter.services.strong.bom.StructureManagementService.getService(AppXSe
+ssion.getConnection());
+		
+		setObjectPolicy();
+	}
+	
+	public boolean loadItem()
+	{
+		ServiceData sData = dmService.loadObjects(new String[]{ ItemUID
+});
+
+		if(sData.sizeOfPlainObjects() > 0)
+		{
+			ModelObject mObj = sData.getPlainObject(0);
+
+			if(mObj instanceof Item)
+			{
+				item = (Item) mObj;
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+	
+	public void updateBOMLine()
+	{
+		AddOrUpdateChildrenToParentLineInfo parentLineInfo = new 
+AddOrUpdateChildrenToParentLineInfo();
+		Vector<ItemLineInfo> lineInfoVec = new Vector<ItemLineInfo>();
+		int count = 0;
+				
+		for(BOMLine childLine : childLines)
+		{
+			ItemLineInfo lineInfo = new ItemLineInfo();
+			Map<String, String> propMap = new Hashtable<String,
+String>();
+			
+			propMap.put("bl_sequence_no", Integer.toString(5 +
+count++));
+			lineInfo.bomline = childLine;
+			lineInfo.itemLineProperties = propMap;
+			lineInfoVec.add(lineInfo);
+		}
+		
+		parentLineInfo.parentLine = topLine;
+		parentLineInfo.items = lineInfoVec.toArray(new
+ItemLineInfo[0]);
+		
+		AddOrUpdateChildrenToParentLineResponse resp = 
+bomService.addOrUpdateChildrenToParentLine(new 
+AddOrUpdateChildrenToParentLineInfo[]{ parentLineInfo } );
+		
+		if(!ServiceDataError(resp.serviceData))
+		{
+			try 
+			{
+				for(int i = 0; i <
+resp.serviceData.sizeOfUpdatedObjects(); i++)
+				{
+					ModelObject obj =
+resp.serviceData.getUpdatedObject(i);
+					
+					if(obj instanceof BOMLine)
+					{
+						BOMLine line = (BOMLine)obj;
+						System.out.println("\tChild: "
++ line.get_bl_line_name() + ", Sequence: 
+" + line.get_bl_sequence_no());
+					}
+				}
+			}
+			catch (NotLoadedException e) 
+			{
+				e.printStackTrace();
+			}
+		}
+		
+		if(bomWindow != null)
+			structureService.closeBOMWindows(new BOMWindow[]{
+bomWindow });
+	}
+	
+	public boolean getTopLineAndChildLines()
+	{
+		try
+		{
+			ModelObject[] itemRevs = item.get_revision_list();
+			ModelObject[] bomViews = item.get_bom_view_tags();
+
+			for(ModelObject bomView : bomViews)
+			{
+				for(ModelObject itemRev : itemRevs)
+				{
+					CreateBOMWindowsInfo bomWinInfo = new
+CreateBOMWindowsInfo();
+
+					bomWinInfo.item = item;
+					bomWinInfo.itemRev = (ItemRevision)
+itemRev;
+					bomWinInfo.bomView = (PSBOMView)
+bomView;
+
+					CreateBOMWindowsResponse bomResp =
+structureService.createBOMWindows(new 
+CreateBOMWindowsInfo[]{ bomWinInfo });
+
+					if(bomResp.output.length > 0)
+					{
+						topLine =
+bomResp.output[0].bomLine;
+						bomWindow =
+bomResp.output[0].bomWindow;
+						
+						expandBOMOneLevel(topLine);
+						
+						return true;
+					}
+				}
+			}
+		}
+		catch(NotLoadedException e)
+		{
+			e.printStackTrace();
+		}	
+		
+		return false;
+	}
+	
+	private void expandBOMOneLevel(final BOMLine topLine)
+	{
+	       
+com.teamcenter.services.strong.cad._2007_01.StructureManagement.ExpandPSOneLe
+velInfo info = new 
+com.teamcenter.services.strong.cad._2007_01.StructureManagement.ExpandPSOneLeve
+lInfo();
+	       
+com.teamcenter.services.strong.cad._2007_01.StructureManagement.ExpandPSOneLe
+velPref pref = new 
+com.teamcenter.services.strong.cad._2007_01.StructureManagement.ExpandPSOneLeve
+lPref();
+
+		info.parentBomLines = new BOMLine[]{ topLine };
+		info.excludeFilter = "None";
+		pref.expItemRev = false;
+
+	       
+com.teamcenter.services.strong.cad._2007_01.StructureManagement.ExpandPSOneLe
+velResponse resp = structureService.expandPSOneLevel(info, pref);
+
+		if(resp.output.length > 0)
+		{
+			if(resp.output[0].children.length > 0)
+			{
+				Vector<BOMLine> bomLines = new
+Vector<BOMLine>();
+								
+				for(ExpandPSData data :
+resp.output[0].children)
+					bomLines.add(data.bomLine);
+					
+				childLines = bomLines.toArray(new BOMLine[0]);
+			}
+		}
+	}
+	
+	protected boolean ServiceDataError(final ServiceData data)
+	{
+		if(data.sizeOfPartialErrors() > 0)
+		{
+			for(int i = 0; i < data.sizeOfPartialErrors(); i++)
+			{
+				for(String msg :
+data.getPartialError(i).getMessages())
+					System.out.println(msg);
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+	
+	protected void setObjectPolicy()
+	{
+		SessionService session = 
+SessionService.getService(AppXSession.getConnection());
+		ObjectPropertyPolicy policy = new ObjectPropertyPolicy();
+
+		policy.addType("Item", new String[]{ "bom_view_tags",
+"revision_list" });
+		policy.addType("BOMLine", new String[]{ "bl_line_name",
+"bl_sequence_no" });
+		policy.addType("BOMWindow", new String[]{
+"is_packed_by_default" });
+
+		session.setObjectPropertyPolicy(policy);
+	}
+}
+ 
+
+&&&&&&&&&&&&&&&&&&&&&&
+
+ 
+
+
+ 
+How do I use Services.Strong.Cad.StructureManagementService
+CreateOrUpdateAbsoluteStructure & CreateOrUpdateRelativeStructure
+to create my own BOM line structure?
+Show more
+Hardware/Software Configuration
+Family: TEAMCENTER
+Application: SOA_FRAMEWORK
+Function: .NET_CLIENT
+Subfunction: ALL
+Release: V2007.1.7.10
+Show more
+Solution
+First, it is important to understand how occurence are used in the in the 
+Structure Manager and a good starting point is to spend time reading the 
+"Structure Manager Guide", "Working with occurrences" section. For example, 
+this section explains the difference between Absolute and Relative Structures 
+and provides addtional insight into the property values used to initialize the
+structure's Associated Data.
+
+
+The following java code is provided to demonstrate how to use Absolute and 
+Relative methods.
+
+
+	CreateOrUpdateBOMStructure struc = new
+CreateOrUpdateBOMStructure(user);
+
+	if(struc.createParts())
+		struc.createStructure();
+
+
+/**************** CreateOrUpdateBOMStructure.java ****************/
+package com.teamcenter.hello;
+
+import java.util.Calendar;
+
+import com.teamcenter.clientx.Session;
+import com.teamcenter.schemas.soa._2006_03.exceptions.ServiceException;
+import com.teamcenter.services.strong.cad.StructureManagementService;
+import com.teamcenter.services.strong.core.ReservationService;
+import com.teamcenter.services.strong.cad._2008_03.DataManagement.PartInfo3;
+import 
+com.teamcenter.services.strong.cad._2007_01.DataManagement.CreateOrUpdatePartsO
+utput;
+import 
+com.teamcenter.services.strong.cad._2007_01.DataManagement.DatasetOutput;
+import com.teamcenter.services.strong.cad._2007_01.DataManagement.ItemInfo;
+import com.teamcenter.services.strong.cad._2007_01.DataManagement.ItemRevInfo;
+import
+com.teamcenter.services.strong.cad._2008_03.DataManagement.DatasetInfo3;import 
+com.teamcenter.services.strong.cad._2007_12.DataManagement.CreateOrUpdatePartsP
+ref;
+import 
+com.teamcenter.services.strong.cad._2007_01.DataManagement.CreateOrUpdatePartsR
+esponse;
+import com.teamcenter.soa.client.model.ModelObject;
+import com.teamcenter.soa.client.model.ServiceData;
+import com.teamcenter.soa.client.model.strong.Dataset;
+import com.teamcenter.soa.client.model.strong.Folder;
+import com.teamcenter.soa.client.model.strong.ItemRevision;
+import com.teamcenter.soa.client.model.strong.PSBOMViewRevision;
+import com.teamcenter.soa.client.model.strong.User;
+import com.teamcenter.soa.exceptions.NotLoadedException;
+
+public class CreateOrUpdateBOMStructure
+{
+	private com.teamcenter.services.strong.core.DataManagementService
+dmService;
+	private com.teamcenter.services.strong.cad.DataManagementService
+cadDmService;
+	private StructureManagementService structureService;
+	private ReservationService reservationService;
+
+	private Folder homeFolder;
+
+	private ItemRevision absOccAsmItemRev = null;
+	private ItemRevision plateAsmItemRev = null;
+	private ItemRevision plateItemRev = null;
+	private Dataset plateDataset = null;
+	private Dataset plateHoleDateset = null;
+
+	public CreateOrUpdateBOMStructure(User user)
+	{
+		dmService = 
+com.teamcenter.services.strong.core.DataManagementService.getService(Session.ge
+tConnection());
+		cadDmService = 
+com.teamcenter.services.strong.cad.DataManagementService.getService(Session.get
+Connection());
+
+		structureService = 
+StructureManagementService.getService(Session.getConnection());
+		reservationService =
+ReservationService.getService(Session.getConnection());
+
+		try
+		{
+			homeFolder = user.get_home_folder();
+		}
+		catch(NotLoadedException e)
+		{
+			e.printStackTrace();
+		}
+	}
+
+	public boolean createParts()
+	{
+		PartInfo3[] creInfos = new PartInfo3[3];
+
+		creInfos[0] = new PartInfo3();
+		creInfos[0].itemInput = new ItemInfo();
+		creInfos[0].clientId = "AbsOccAssembly";
+		creInfos[0].itemInput.name = "Abs Occ Assembly";
+		creInfos[0].itemInput.folder = homeFolder;
+		creInfos[0].itemRevInput = new ItemRevInfo();
+
+		creInfos[1] = new PartInfo3();
+		creInfos[1].itemInput = new ItemInfo();
+		creInfos[1].clientId = "PlateAssembly";
+		creInfos[1].itemInput.name = "Plate Assembly";
+		creInfos[1].itemInput.folder = homeFolder;
+		creInfos[1].itemRevInput = new ItemRevInfo();
+
+		creInfos[2] = new PartInfo3();
+		creInfos[2].itemInput = new ItemInfo();
+		creInfos[2].clientId  = "Plate";
+		creInfos[2].itemInput.name = "Plate";
+		creInfos[2].itemInput.folder = homeFolder;
+		creInfos[2].itemRevInput = new ItemRevInfo();
+
+		creInfos[2].datasetInput = new DatasetInfo3[2];
+		creInfos[2].datasetInput[0] = new DatasetInfo3();
+		creInfos[2].datasetInput[0].clientId = "PlateDataset";
+		creInfos[2].datasetInput[0].name = "Plate";
+		creInfos[2].datasetInput[0].type = "DirectModel";
+		creInfos[2].datasetInput[0].itemRevRelationName =
+"IMAN_Rendering";
+		creInfos[2].datasetInput[0].description = "Plate";
+		creInfos[2].datasetInput[0].mapAttributesWithoutDataset =
+false;
+		creInfos[2].datasetInput[0].lastModifiedOfDataset =
+Calendar.getInstance();
+
+		creInfos[2].datasetInput[1] = new DatasetInfo3();
+		creInfos[2].datasetInput[1].clientId = "PlateHoleDataset";
+		creInfos[2].datasetInput[1].name = "Plate with hole";
+		creInfos[2].datasetInput[1].type = "DirectModel";
+		creInfos[2].datasetInput[1].itemRevRelationName =
+"IMAN_reference";
+		creInfos[2].datasetInput[1].description = "Plate with hole";
+		creInfos[2].datasetInput[1].mapAttributesWithoutDataset =
+false;
+		creInfos[2].datasetInput[1].lastModifiedOfDataset =
+Calendar.getInstance();
+
+		CreateOrUpdatePartsResponse creResp = 
+cadDmService.createOrUpdateParts(creInfos, new CreateOrUpdatePartsPref());
+
+		if(creInfos.length == creResp.output.length)
+		{
+			for(CreateOrUpdatePartsOutput partsOut :
+creResp.output)
+			{
+				if(partsOut.clientId.equals("AbsOccAssembly"))
+					absOccAsmItemRev = partsOut.itemRev;
+				else
+if(partsOut.clientId.equals("PlateAssembly"))
+					plateAsmItemRev = partsOut.itemRev;
+				else if(partsOut.clientId.equals("Plate"))
+				{
+					plateItemRev = partsOut.itemRev;
+					
+					for(DatasetOutput datasetOut :
+partsOut.datasetOutput)
+					{
+					       
+if(datasetOut.clientId.equals("PlateDataset"))
+							plateDataset =
+datasetOut.dataset;
+						else
+if(datasetOut.clientId.equals("PlateHoleDataset"))
+							plateHoleDateset =
+datasetOut.dataset;
+						else
+							return false;
+					}
+				}
+				else
+					return false;
+			}
+			return true;
+		}
+
+		return false;
+	}
+
+	protected void createStructure()
+	{
+		if(absOccAsmItemRev == null  || plateAsmItemRev == null ||
+plateItemRev == 
+null || plateDataset == null || plateHoleDateset == null)
+			return;
+		
+		try
+		{
+		       
+StructureManagementService.CreateOrUpdateRelativeStructureInfo2[] 
+relStructInfos = new 
+StructureManagementService.CreateOrUpdateRelativeStructureInfo2[2];
+			relStructInfos[0] = new 
+StructureManagementService.CreateOrUpdateRelativeStructureInfo2();
+			relStructInfos[0].parent = plateAsmItemRev;
+			relStructInfos[0].precise = false;
+			relStructInfos[0].childInfo = new 
+StructureManagementService.RelativeStructureChildInfo[2];
+			relStructInfos[0].childInfo[0] = new 
+StructureManagementService.RelativeStructureChildInfo();
+			relStructInfos[0].childInfo[0].child = plateItemRev;
+			relStructInfos[0].childInfo[0].occInfo = new 
+StructureManagementService.RelOccInfo();
+			relStructInfos[0].childInfo[0].occInfo.attrsToSet = new
+
+StructureManagementService.AttributesInfo[1];
+			relStructInfos[0].childInfo[0].occInfo.attrsToSet[0] =
+new 
+StructureManagementService.AttributesInfo();
+		       
+relStructInfos[0].childInfo[0].occInfo.attrsToSet[0].name = 
+"bl_sequence_no";
+		       
+relStructInfos[0].childInfo[0].occInfo.attrsToSet[0].value = "10";
+			relStructInfos[0].childInfo[0].occInfo.occTransform =
+new double[] {1, 0, 
+0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 };
+			relStructInfos[0].childInfo[1] = new 
+StructureManagementService.RelativeStructureChildInfo();
+			relStructInfos[0].childInfo[1].child = plateItemRev;
+			relStructInfos[0].childInfo[1].occInfo = new 
+StructureManagementService.RelOccInfo();
+			relStructInfos[0].childInfo[1].occInfo.attrsToSet = new
+
+StructureManagementService.AttributesInfo[1];
+			relStructInfos[0].childInfo[1].occInfo.attrsToSet[0] =
+new 
+StructureManagementService.AttributesInfo();
+		       
+relStructInfos[0].childInfo[1].occInfo.attrsToSet[0].name = 
+"bl_sequence_no";
+		       
+relStructInfos[0].childInfo[1].occInfo.attrsToSet[0].value = "20";
+			relStructInfos[0].childInfo[1].occInfo.occTransform =
+new double[] {1, 0, 
+0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0.11, 0, 0, 1 };
+			
+			relStructInfos[1] = new 
+StructureManagementService.CreateOrUpdateRelativeStructureInfo2();
+			relStructInfos[1].parent = absOccAsmItemRev;
+			relStructInfos[1].precise = false;
+			relStructInfos[1].childInfo = new 
+StructureManagementService.RelativeStructureChildInfo[1];
+			relStructInfos[1].childInfo[0] = new 
+StructureManagementService.RelativeStructureChildInfo();
+			relStructInfos[1].childInfo[0].child = plateAsmItemRev;
+			relStructInfos[1].childInfo[0].occInfo = new 
+StructureManagementService.RelOccInfo();
+			relStructInfos[1].childInfo[0].occInfo.attrsToSet = new
+
+StructureManagementService.AttributesInfo[1];
+			relStructInfos[1].childInfo[0].occInfo.attrsToSet[0] =
+new 
+StructureManagementService.AttributesInfo();
+		       
+relStructInfos[1].childInfo[0].occInfo.attrsToSet[0].name = 
+"bl_sequence_no";
+		       
+relStructInfos[1].childInfo[0].occInfo.attrsToSet[0].value = "10";
+			relStructInfos[1].childInfo[0].occInfo.occTransform =
+new double[] {1, 0, 
+0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 };
+		       
+StructureManagementService.CreateOrUpdateRelativeStructurePref2 
+relStructPref = new 
+StructureManagementService.CreateOrUpdateRelativeStructurePref2();
+		       
+com.teamcenter.services.strong.cad._2007_01.StructureManagement.CreateOrUpdateR
+elativeStructureResponse relStructResp2 = 
+structureService.createOrUpdateRelativeStructure(relStructInfos, "", true, 
+relStructPref);
+			
+			if(checkOutAsmBVR())
+			{
+			       
+StructureManagementService.CreateOrUpdateAbsoluteStructurePref2 
+absStructPref = new 
+StructureManagementService.CreateOrUpdateAbsoluteStructurePref2();
+				absStructPref.cadOccIdAttrName =
+"bl_sequence_no";
+				
+			       
+StructureManagementService.CreateOrUpdateAbsoluteStructureInfo2[] 
+absStructInfos = new 
+StructureManagementService.CreateOrUpdateAbsoluteStructureInfo2[1];
+				absStructInfos[0] = new 
+StructureManagementService.CreateOrUpdateAbsoluteStructureInfo2();
+				absStructInfos[0].contextItemRev =
+absOccAsmItemRev;
+				absStructInfos[0].bvrAbsOccInfo = new 
+StructureManagementService.AbsOccInfo[1];
+				absStructInfos[0].bvrAbsOccInfo[0] = new 
+StructureManagementService.AbsOccInfo();
+				absStructInfos[0].bvrAbsOccInfo[0].cadOccIdPath
+= new String[] {"10", "10" };
+				absStructInfos[0].bvrAbsOccInfo[0].absOccData =
+new 
+StructureManagementService.AbsOccDataInfo();
+			       
+absStructInfos[0].bvrAbsOccInfo[0].absOccData.attachments = new 
+StructureManagementService.AbsOccAttachment[1];
+			       
+absStructInfos[0].bvrAbsOccInfo[0].absOccData.attachments[0] = new 
+StructureManagementService.AbsOccAttachment();
+			       
+absStructInfos[0].bvrAbsOccInfo[0].absOccData.attachments[0].dataset = 
+plateDataset;
+			       
+absStructInfos[0].bvrAbsOccInfo[0].absOccData.attachments[0].relationTypeName =
+"IMAN_Rendering";
+			       
+absStructInfos[0].bvrAbsOccInfo[0].absOccData.occTransform = new double[] 
+{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0.11, 0, 1 };
+			       
+StructureManagementService.CreateOrUpdateAbsoluteStructureResponse 
+absStructResp = 
+structureService.createOrUpdateAbsoluteStructure(absStructInfos, "", true, 
+absStructPref);
+	
+			       
+StructureManagementService.CreateOrUpdateAbsoluteStructureInfo2[] 
+absStructInfos2 = new 
+StructureManagementService.CreateOrUpdateAbsoluteStructureInfo2[1];
+				absStructInfos2[0] = new 
+StructureManagementService.CreateOrUpdateAbsoluteStructureInfo2();
+				absStructInfos2[0].contextItemRev =
+absOccAsmItemRev;
+				absStructInfos2[0].bvrAbsOccInfo = new 
+StructureManagementService.AbsOccInfo[1];
+				absStructInfos2[0].bvrAbsOccInfo[0] = new 
+StructureManagementService.AbsOccInfo();
+			       
+absStructInfos2[0].bvrAbsOccInfo[0].cadOccIdPath = new String[] {"10", 
+"20" };
+				absStructInfos2[0].bvrAbsOccInfo[0].absOccData
+= new 
+StructureManagementService.AbsOccDataInfo();
+			       
+absStructInfos2[0].bvrAbsOccInfo[0].absOccData.attachments = new 
+StructureManagementService.AbsOccAttachment[1];
+			       
+absStructInfos2[0].bvrAbsOccInfo[0].absOccData.attachments[0] = new 
+StructureManagementService.AbsOccAttachment();
+			       
+absStructInfos2[0].bvrAbsOccInfo[0].absOccData.attachments[0].dataset = 
+plateHoleDateset;
+			       
+absStructInfos2[0].bvrAbsOccInfo[0].absOccData.attachments[0].relationTypeName
+= "IMAN_reference";
+			       
+absStructInfos2[0].bvrAbsOccInfo[0].absOccData.occTransform = new double[] {1,
+0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0.11, 0, 0, 1 };
+			       
+StructureManagementService.CreateOrUpdateAbsoluteStructureResponse 
+absStructResp2 = 
+structureService.createOrUpdateAbsoluteStructure(absStructInfos2, "", true, 
+absStructPref);
+				
+				checkInAsmBVR();
+			}
+			else
+				System.out.println("Error: Unable to check out
+absOccAsmItemRev");
+		}
+		catch(ServiceException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	protected boolean checkOutAsmBVR()
+	{
+		dmService.getProperties(new ModelObject[] { absOccAsmItemRev },
+new String[] { "structure_revisions" });
+
+		try
+		{
+			PSBOMViewRevision[] absOccAsmBVRs = 
+absOccAsmItemRev.get_structure_revisions();
+			
+			if(absOccAsmBVRs.length > 0)
+			{
+				ServiceData sd =
+reservationService.checkout(absOccAsmBVRs, "CheckOut for 
+createOrUpdateAbsoluteStructure", "");
+				
+				if(sd.sizeOfUpdatedObjects() > 0)
+					return true;
+			}
+		}
+		catch(NotLoadedException e)
+		{
+			e.printStackTrace();
+		}
+		
+		return false;
+	}
+	
+	protected void checkInAsmBVR()
+	{
+		try
+		{
+			PSBOMViewRevision[] absOccAsmBVRs = 
+absOccAsmItemRev.get_structure_revisions();
+			
+			if(absOccAsmBVRs.length > 0)
+			{
+				ServiceData sd =
+reservationService.checkin(absOccAsmBVRs);
+			}
+		}
+		catch(NotLoadedException e)
+		{
+			e.printStackTrace();
+		}
+	}
+}
+ 
+
+///
+
+EditResourceDialog eg = new EditResourceDialog(aifUIApplication, aifDesktop, line);
+ eg.setVisible(true);
+
+///
+
+Еще раз здравствуйте! Сейчас разбираюсь как работает буфер обмена. Копировать в него получилось так:
+
+ InterfaceAIFComponent target_item = AIFUtility.getTargetComponent();
+
+ localAIFClipboard = AIFUtility.getAIFPortal().getClipboard();
+              AIFTransferable localAIFTransferable = new AIFTransferable(target_item);
+              localAIFClipboard.setContents(localAIFTransferable, null);
+
+Но как взять из него и вставить куда-то еще не знаю. Можете помочь?
+
+///
+
+//получить ревизию из буфера обмена
+
+AIFClipboard clipboard = AIFPortal.getClipboard();
+Transferable content = clipboard.getContents(this);
+		 
+Vector aifComponent = null;
+if(content != null)
+{
+		try
+		{
+				
+			try 
+			{
+				aifComponent = (Vector)content.getTransferData(new DataFlavor(Vector.class,"AIF Vector"));
+			} 
+			catch (IOException e) 
+			{
+
+				e.printStackTrace();
+			}
+			if(aifComponent.elementAt(0) instanceof TCComponentItemRevision)
+			{
+				pasteRevision = (TCComponentItemRevision)aifCBComponent.elementAt(0);
+			}
+				
+			//............
+				
+		} 
+		catch (Exception e) 
+		{
+			e.printStackTrace();
+		} 
+			 
+}
+
+///
+
+У меня такая конструкция работает:
+
+ 
+
+<menuContribution locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
+             <toolbar id="customToolbar">
+            <command
+                  commandId="SampleCommand"
+                  icon="icons/sample.gif"
+                  id="customToolbar.SampleCommand" 
+                  tooltip="tooltip">
+                      <visibleWhen>
+                        <reference definitionId="com.teamcenter.rac.pse.inMainView" />
+                      </visibleWhen>  
+                </command>
+         </toolbar>
+      </menuContribution>
+
+///
+
+удалите C:\Users\юзер\Teamcenter\RAC\
+и запустите genregxml.bat
+рекомендуется в genregxml.bat закоментировать не нужные локолизации (для скорости)
+
+///
+
+В разделе справки Run the rich client from Eclipse указаны настройки
+ 
+In Eclipse, choose Run →Debug Configurations .
+ 
+In the tree on the left of the Create, manage, and run configurations dialog box, double-click Eclipse Application , then select the New_configuration node.
+
+In the Name box, type RichClient .
+
+In the Main tab, perform the following:
+
+Select the Clear check box to clear the workspace before running the application.
+
+Ensure that Run a product is selected and that the product is com.teamcenter.rac.aifrcp.product .
+
+Ensure the correct JRE appears in the Runtime JRE box.
+
+Установите Clear и чистить RAC не придется
+
+///
+
+Итак, отвечу сама себе, ну и для истории, кому нибудь обязательно пригодится.....
+
+И модели списка JList имеем:
+
+TCComponentDataset data = (TCComponentDataset) listModel.getElementAt(list.getSelectedIndex());
+
+Надо удалить выбранный набор данных с запросом на удаление из ТС.
+
+Для того чтоб создать com.teamcenter.rac.commands.delete.DeleteDialog ему надо дать в конструктор AIFComponentContext, чего у нас ну никак нет.
+
+Оказывается у класса AIFComponentContext есть статик методы для создания контекстов:
+
+public static AIFComponentContext[] getContexts(InterfaceAIFComponent[] primaryComponents, InterfaceAIFComponent myComponent, Object typerelation)
+
+а дальше дело техники, находим первого родителя данному набору данных, и знаем каким отношение они связаны и получаем:
+
+AIFComponentContext[] wrefs = data.getPrimary();
+
+new DeleteDialog(AIFComponentContext.getContexts(new InterfaceAIFComponent[]{wrefs[0].getComponent()} ,data, "IMAN_specification"));
+
+...... ну и далее по смыслу....
+
+хотя в случае если надо удалять действительно лучше создать com.teamcenter.rac.commands.delete.DeleteCommand по тому же принципу:
+
+delete = new DeleteCommand(AIFComponentContext.getContexts(new InterfaceAIFComponent[]{wrefs[0].getComponent()} ,data, typeRel));
+
+delete.executeModal();
+
+Если набор данных просто созданный и никуда не вставлен, не имеет отношений ни с каким ТСкомпонентом, то удалить так его не получится, потому что он еще не может быть контекстом, то есть удаляем с запросом ConfirmationDialog
+
+if (ConfirmationDialog.YES == ConfirmationDialog.post(owner,"Внимание!", "Удалить выбранный набор данных?")) data.delete()
+
+///
+
+Необходимо добавить popup меню "Отправить в Мой Teamcenter" к компоненту.
+
+Ипользую следующее:
+
+constructSendToMenuItem() - Method in class com.ugsolutions.iman.popupmenu.AbstractIMANComponentPopupMenu
+
+Ну и добавляю таким вот образом:
+
+JMenu sendTo=menu.constructSendToMenuItem();
+
+При этом появляется меню "Отправить в", но как мне далее отправить в "Мой Teamcenter"?
+
+///
+
+я для отправки выбранных объектов в другое приложение пользую
+
+desktop.postApplication("com.my.package.MyApplicationClass", selectedComponent)
+
+///
+
+В общем, получаю приложение и десктоп:
+
+AbstractAIFUIApplication app = AIFUtility.getCurrentApplication();
+
+if (app!=null)
+
+try {
+
+app.getDesktop().loadApplication("com.teamcenter.rac.explorer.AbstractExplorerApplication");
+
+...
+
+выдается ошибка, что не найден конструктор приложения
+
+///
+
+Делаю так(пытаюсь отправить в Мой Тимцентр):
+
+desktop.postApplication("com.teamcenter.rac.aifrcp.Application", interfaceAIFComponent);
+
+пишет, что не найден конструктор класса. Какой нужно указать класс?
+
+///
+
+А если таким вариантом?
+
+ 
+
+TCComponent item;
+
+AIFDesktop desktop = AIFUtility.getAIFPortal().getDesktopManager().
+
+AbstractAIFCommand open = session.getOpenCommand(new Object[] { desktop, item} );
+ open.executeModeless();
+ 
+
+Изменено 23 марта 2017 пользователем lexx174
+
+///
+
+ISessionService iss = AifrcpPlugin.getSessionService();
+session = (TCSession)iss.getSession("com.teamcenter.rac.kernel.TCSession");
+
+///
+
+можно и по другому.по старинке так скзать
+
+AbstractAIFUIApplication app = AIFUtility.getCurrentApplication();
+
+TCSession session = (TCSession)app.getSession();
+
+///
+
+Кто-нибудь пользовал тимцентр из питона посредством WSDL?
+
+был бы рад увидеть какой-нибудь hello world на эту тему
+
+https://github.com/pawanit17/teamcenter_python_interface/blob/master/tc_interface.py
+
+
+///
+
+<page title = "Made From" visibleWhen = "n4_part_category==DETAIL"> 
+ <section title = "Materials or Parts"> 
+<objectSet source = 
+"SM0MadeFrom.N4_CommPart,SM0MadeFrom.N4_DesignPart,SM0MadeFrom.N4_DsgnMaterial" 
+ sortdirection = "ascending" sortby = "object_string" defaultdisplay = 
+ 
+ "tableDisplay"> 
+ <command commandId="com.teamcenter.rac.makeFrom" 
+renderingHint="commandbutton" defaultTitle="Made From" icon="N4_MadeFrom"/> 
+ <command actionKey = "cutAction" commandId = 
+"org.eclipse.ui.edit.cut" renderingHint = "commandbutton"> 
+ <parameter name = "localSelection" value = "true"/> 
+ </command> 
+ <command 
+commandId="com.northgrum.ngc.madefrom.propertiesOnRelation" 
+renderingHint="commandbutton" defaultTitle="Properties On Relation..."> 
+<parameter name="localSelection" value="true"/> 
+</command>
+
+///
+
+Currently there is no RAC API available to set the "Properties on Relation" BUT user can use the SOA API to set\create the "Properties on Relation" in Rich Client.
+
+ 
+createOrUpdateRelations() SOA API of DataManagementService can be used to set\create the "Properties on Relation" in Rich Client.
+
+///
+
+чтобы убрать эту кнопку - вам нужно привязать для атрибута item_id нужного типа  правило именования в BMIDE. Тогда должна исчезнуть. У нас это работает.
+
+ 
+
+В правиле именования определяете через регулярное выражение какие символы, по какой маске итд допустимы для обозначения
+
+ 
+
+напр: %^[^а-яА-Я /,;*]{1,128}$
+
+ 
+
+выражение устанавливает запрет на использование русских символов в обозначении, пробелов. запятых итд, 1,128  - допустимая длина строки(соответствует ITEM_id_size_с - максимальной длине строки согласно модели данных)
+
+Изменено 9 апреля 2021 пользователем lexx174
+
+///
+
+Для установки эфективитей  на голый статус необходимо
+
+1. Эфективити сначала создать WSOM_effectivity_create_empty
+
+2. Сохранить статус и созданую эфективити с помощью AOM_save
+
+3. Ввести в применимость то что нам надо, например для ввода дат в применимость использовать WSOM_eff_set_date_range или WSOM_eff_set_dates
+
+4. Сохранить статус и созданую эфективити с помощью AOM_save
+
+5. Перекреститься 3 раза и плюнуть через плечо
+
+///
+
+остался еще вопрос по применяемости. Нужно на джаве создать применяемость на статус. есть функция
+
+TcEffectivityService.createReleaseStatusEffectivity(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8).
+
+У меня в джава-доке ее нет. Кто-то может сказать, какие ей нужно передавать параметры?
+
+///
+
+TCComponentItem end_item = null;
+TCComponentEffectivity effectivity = null;
+	                 
+TCComponentEffectivityType eff_type = (TCComponentEffectivityType)session.getTypeComponent("Effectivity");
+
+	                  
+rel_status.lock();
+	                  
+TCComponentEffectivity effectivities[] = rel_status.getEffectivities();
+	                  
+    if (effectivities.length > 0)
+    {
+             effectivity = effectivities[0];
+
+             end_item = effectivity.askEndItem();
+             if (eff_type.isProtected(rel_status, effectivity) == true)
+                    eff_type.setProtection(rel_status, effectivity, false);
+
+             eff_type.removeFromReleaseStatus(rel_status, effectivity);
+
+              eff_type.createFromUnits(rel_status, end_item, unit_range);
+              eff_type.setProtection(rel_status,rel_status.getEffectivities()[0], true);
+
+                rel_status.save();
+                rel_status.unlock();
+     }
+     else if(effectivities.length == 0)
+     {
+        TCComponentItemType item_type = (TCComponentItemType)session.getTypeComponent("Item");
+        TCComponentItem the_end_item = (TCComponentItem)item_type.find("end_item");
+
+        eff_type.createFromUnits(rel_status, the_end_item, unit_range);
+        eff_type.setProtection(rel_status,rel_status.getEffectivities()[0], true);
+
+        rel_status.save();
+        rel_status.unlock();
+     }
+
+///
+
+применяемость ITK:
+
+ 
+
+WSOM_effectivity_create(release_status_tag,end_item,&effectivity);
+
+AOM_save(effectivity);
+AOM_unlock(effectivity);
+
+AOM_lock(release_status_tag);
+AOM_lock(effectivity);
+
+WSOM_eff_set_unit_range(release_status_tag,effectivity,"10-50",false);
+
+AOM_save(effectivity);
+AOM_save(release_status_tag);
+AOM_unlock(effectivity);
+AOM_unlock(release_status_tag);
+
+///
+
+Вопрос по ITK,
+
+ 
+
+для того чтобы создать применяемость пользуюсь
+
+WSOM_effectivity_create(release_status_tag,end_item,&effectivity);
+
+как получить end_item
+
+на сколько я понимаю
+
+WSOM_eff_ask_end_item - считать существующий
+
+WSOM_eff_set_end_item здесь уже нужно иметь  end_item
+
+на данный момент сделал следующим образом, 
+
+ITK__convert_uid_to_tag("R6ed8jVA4ChQJC", &endItem);
+
+указал UID определенного конечного объекта
+
+все получилось
+
+не хотелось бы на вход подавать UID обработчика или прямо в код писать UID
+
+///
+
+если еще интересно, вот небольшой пример по получению содержимого папки
+
+ 
+
+select w.pobject_name, w.pobject_type from pworkspaceobject w
+               inner join pcontents pc
+                 on w.puid = pc.pvalu_0
+              where pc.puid='AbcdfdfiejfQeC'
+где pc.puid - puid конкретной папки
+
+///
+
+Customizing the delete command.
+Symptom
+---------------
+In customization of the delete command within RAC programming framework, how 
+to:
+
+ - Remove an ItemRevision from a folder so that it is not referenced?
+ - Remove release status?
+ - Delete the ItemRevision?
+Hardware/Software Configuration
+Platform    : INTL64
+OS    : 764SP1
+OS Version  : 764SP1
+
+Family    : TEAMCENTER
+Application : RAC_FRAMEWORK
+Function    : KERNEL
+Subfunction : ALL
+Release     : V9.1.2.2
+Solution
+- To remove an ItemRevision from a folder so that it is not referenced--- use 
+parentComponent(TCComponent).cutOperation ( String relation, TCComponent[] 
+ChildComponents)
+
+- To remove release status --- use removeAllStatus()
+
+- To delete the ItemRevision --  use childCmp(TCComponent).delete()
+
+///
+
+Drag/Drop a named reference to a custom object with a custom relation
+Symptom
+---------------
+How to drag and drop a named reference to a custom revision using a custom 
+relation as default.
+Hardware/Software Configuration
+Platform    : INTEL
+OS    : 764
+OS Version  : 764
+
+Family    : TEAMCENTER
+Application : CORE_FUNCTIONS
+Function    : DATASETS
+Subfunction : ALL
+Release     : V9.1.2.3
+Solution
+BMIDE:
+  1. Create a custom relation (ex. Relation1)
+  2. Create a custom Item    (ex. Item1)
+  3. In this custom ItemRevision (Item1Revision), add a relation property, 
+     using this custom relation.  (Relation1)
+  4. Save and deploy.
+
+In RAC, create the following preference:
+  <custom_revision>_default_relation = <custom_relation>
+
+For this example, the following preference would be created:
+  Item1Revision_default_relation = Relation1
+
+///
+
+Add a relation property column to Structure Manager.
+Symptom
+---------------
+How to display the column for the Component Item Revision IMAN_reference 
+(References) property in Structure Manager.
+Hardware/Software Configuration
+Platform    : INTL64
+OS    : 764SP1
+OS Version  : 764SP1
+
+Family    : TEAMCENTER
+Application : STRUCTURE_MGR
+Function    : BOMWINDOW
+Subfunction : COL_CONFIG
+Release     : V9.1.2.4
+Solution
+A compound property must be created on the BOMLine business object, for the 
+Item Revision IMAN_reference property.
+
+BMIDE:
+ 1. Create a new compound property on business object "BOMLine"
+ 2. Specify the Name, Display Name and Description for the Compound property
+ 3. For the Compound Property Path:
+      BOMLine.bl_revision
+	|- ItemRevision.IMAN_reference.
+ 4. Save and deploy 
+
+RAC:
+ 1. In Structure Manager, add the Compound Property column.
+
+///
+
+Programatically add properties to a relation
+A business object is derived from ImanRelation, and has required
+properties.
+Being derived from ImanRelation, this object is a relation. 
+
+One would normally create a relation between two item revisions, by
+adding one item revision to the other, and specifying the relation type,
+eg;
+
+PARENTITEMREV.ADD(\"IMAN_SPECIFICATION\", ITEMREV);
+However, creating the relation in this way provides no method to specify
+the values of the properties on the relation. So the line;
+*
+parentItemRev.add(MyRelationTypeString, itemRev);*
+fails with the exception message "The value of the property must be
+greater than 0."
+
+Is there another way to specify a relation between two item revisions,
+that allows setting a value of a required property on relation?
+
+I've tried creating the relation separately, with
+DataManagementService.CreateObjects, but I get nothing back.
+
+Thanks for any help!
+
+PS. I'm programming the Rich Client, using the rac client binding.
+
+
+-- 
+
+///
+
+How to get relation objects for a business object.
+Symptom
+---------------
+How do I use method DataManagementService.expandGRMRelationsForPrimary to get 
+a list of relation objects related to a Business object.
+Hardware/Software Configuration
+Family    : TEAMCENTER
+Application : RAC_FRAMEWORK
+Function    : KERNEL
+Subfunction : ALL
+Release     : V9.1.2.1
+Solution
+This code assume you already have a eclipse development environment to develop
+RAC plugins. 
+
+To use this code correctly you will have to update the ItemRevUID with the UID
+of your ItemRevision or provide your own code to get the 
+TCComponentItemRevision.
+
+
+package gtac.plugin1.code;
+
+import com.teamcenter.rac.aif.AIFDesktop;
+import com.teamcenter.rac.kernel.ServiceData;
+import com.teamcenter.rac.kernel.TCComponent;
+import com.teamcenter.rac.kernel.TCComponentItemRevision;
+import com.teamcenter.rac.kernel.TCSession;
+import com.teamcenter.services.rac.core.DataManagementService;
+import 
+com.teamcenter.services.rac.core._2007_06.DataManagement.RelationAndTypesFilter
+;
+import 
+com.teamcenter.services.rac.core._2007_09.DataManagement.ExpandGRMRelationsData
+2;
+import 
+com.teamcenter.services.rac.core._2007_09.DataManagement.ExpandGRMRelationsOutp
+ut2;
+import 
+com.teamcenter.services.rac.core._2007_09.DataManagement.ExpandGRMRelationsPref
+2;
+import 
+com.teamcenter.services.rac.core._2007_09.DataManagement.ExpandGRMRelationsResp
+onse2;
+import 
+com.teamcenter.services.rac.core._2007_09.DataManagement.ExpandGRMRelationship;
+public class GRMRelation 
+{
+	private static final String ItemRevUID = "xOSBYSdkIJNDJD";
+	private DataManagementService dmService;
+	private TCComponentItemRevision itemRev;
+	
+	private TCSession tcSession;
+	
+	public GRMRelation()
+	{
+		tcSession = 
+(TCSession)AIFDesktop.getActiveDesktop().getCurrentApplication().getSession();
+		
+		dmService = DataManagementService.getService(tcSession);
+	}
+	
+	
+	public boolean loadItem()
+	{
+		ServiceData sData = dmService.loadObjects(new String[]{
+ItemRevUID });
+
+		if(sData.sizeOfPlainObjects() > 0)
+		{
+			TCComponent mObj = sData.getPlainObject(0);
+
+			if(mObj instanceof TCComponentItemRevision)
+			{
+				itemRev = (TCComponentItemRevision)mObj;
+
+				return true;
+			}
+		}
+
+		return false;
+	} 
+	
+	public void showRelations()
+	{
+		RelationAndTypesFilter typeFilter = new
+RelationAndTypesFilter();
+		ExpandGRMRelationsPref2 relPref = new
+ExpandGRMRelationsPref2();
+		
+		typeFilter.relationTypeName = "CMReferences";
+		relPref.info = new RelationAndTypesFilter[] { typeFilter };
+		relPref.returnRelations = true;
+		relPref.expItemRev = false;
+		
+		ExpandGRMRelationsResponse2 relationResp = 
+dmService.expandGRMRelationsForPrimary(new TCComponent[]{ itemRev }, relPref);
+		
+		if(!ServiceDataError(relationResp.serviceData))
+		{
+			for( ExpandGRMRelationsOutput2 out :
+relationResp.output)
+			{
+				for(ExpandGRMRelationsData2 data :
+out.relationshipData)
+				{
+					for(ExpandGRMRelationship rel :
+data.relationshipObjects)
+					{
+					       
+System.out.println("RelationName: " + rel.relation.getType());
+					}
+				}
+			}
+		}
+	}
+	
+	protected boolean ServiceDataError(final ServiceData data)
+	{
+		if(data.sizeOfPartialErrors() > 0)
+		{
+			for(int i = 0; i < data.sizeOfPartialErrors(); i++)
+			{
+				for(String msg :
+data.getPartialError(i).getMessages())
+					System.out.println(msg);
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+}
+
+///
+
+How to select an Item, and have the ItemRevs and datasets as targets.
+Symptom
+---------------
+When selecting an Item to create a new WF process, how can the Item, Item 
+Revisions and datasets using IMAN_specification relation be added as targets?
+Hardware/Software Configuration
+Platform    : INTL64
+OS    : 764
+OS Version  : 764
+
+Family    : TEAMCENTER
+Application : WORKFLOW
+Function    : UNDETERMINED
+Subfunction : ALL
+Release     : V9.1.0
+Solution
+In BMIDE:
+
+1. Create a new LOV, of type: ListOfValuesString, with the values:
+	$TARGET.(Item).Revisions.*.IMAN_specification.(*)
+	$TARGET.(Item).Revisions.(*)
+
+   To attach:
+   BVR:  $TARGET.(Item).Revisions.*.PSBOMViewRevision.(*)
+   Datasets using other relations:
+	 $TARGET.(Item).Revisions.*.<<relation_name>>.(*)
+
+2, Save and deploy. 
+
+In RAC:
+   In WF Designer, use the EPM-attach-related-objects handler in the Start 
+   section of the root task with the following	arguments:
+	-att_type = target
+	-LOV = <LOV_name>
+
+///
+
+Object name should be at top instead of object id in Relation Browser
+Symptom
+---------------
+The customer required is to have the object appear at the top instead of the
+object id in relation browser.
+Hardware/Software Configuration
+TC 9.1
+Solution
+Modify the “graph_config.xml” file in
+TC_ROOT\portal\plugins\tcgrb_configuration_9000.1.0.
+-Enter the object name in "labelTextLine1" and object id in "labelTextLine2"
+for <presentation adapter="com.teamcenter.rac.kernel.TCComponentItem"> and  
+<presentation adapter="com.teamcenter.rac.kernel.TCComponentItemRevision">
+With this modification relation browser in My Teamcenter should change as per
+requirement. Note that the color of the components should be green in this case
+in Relation Browser.
+-Make the same changes for TCComponentBOMLine parameter when you are selecting
+a component from BOMLine. When you select a BOMLine element note that the color
+of the component is blue.
+Reference
+IR#2216523
+
+///
+
+Change management - Propagate relation is missing on Custom type
+Symptom
+---------------
+Customer has added a custom change type to their Teamcenter Installation.  
+When they do a "Derive Change", there is no "Propagate Relations" on the 
+Derive Change form.   This does appear on OOTB Change types but not custom 
+change types.
+Hardware/Software Configuration
+Family: TEAMCENTER
+Application: CHANGE_MGMT
+Function: 
+Subfunction: 
+Release: All
+Solution
+The following steps need to be done so that the Propagate Changes toggle 
+appears on the Derive change for for custom change types:
+
+
+1 - Add a Preference:	  Name = <yourSubClass>.CREATE_REGISTEREDTO
+			  Protection Scope = Site
+			  Category - your template name
+			  Value = <yourSubClass Name>
+
+2 - Add a Preference:	  Name = <yourSubClass>Revision.REGISTEREDTO
+			  Protection Scope = Site
+			  Category - your template name
+			  Value = <yourSubClass Name>Revision
+
+
+3 - Add a Preference:	  Name =< yourSubclass>.CREATERENDERING
+			  Protection Scope = Site
+			  Category - your template name
+			  Value = <YourSubclass>Create ( is the xml name of 
+				   your Sub Class create rendering xml file )
+
+
+4 - Go to advanced search 'General'
+
+    On the Search Form: a) Remove Owning User
+			b) Remove Owning dba
+			c) Type =  XMLRenderingStylesheet
+			d) Name = ChangeRequestCreate 
+
+    Search and look at results
+
+	     Select the XML file, go to File ' Save as 
+	     Save with the name you add to item 3 preference Value
+
+After doing this restart the RAC client and follow the steps for a Derive 
+Change. The Propagate Relations button should now be available.
+
+///
+
+'Unable to create CMM Attributes. Unable to find a property with name' error.
+Symptom
+---------------
+Receiving the following errors when trying to run a migration with 
+CMMAttributes active:
+
+** Unable to create CMM Attributes. Unable to find a property with name .
+	   Unable to find a property with name .
+	at com.teamcenter.rac.kernel.TCComponent.handleException(Unknown
+Source)
+	at com.teamcenter.rac.kernel.TCComponentType.insertRelated(Unknown
+Source)
+	at com.teamcenter.rac.kernel.TCComponentType.add(Unknown Source)
+	at com.teamcenter.rac.kernel.TCComponent.add(Unknown Source)
+	at com.teamcenter.rac.kernel.TCComponent.add(Unknown Source)
+	at 
+com.ugsolutions.ideasnxmigration.migrationmanager.server.pdm.tc.ImanDatasetAcce
+ss.createCMMAttribute(ImanDatasetAccess.java:609)
+	at 
+com.ugsolutions.ideasnxmigration.migrationmanager.server.pdm.tc.tc8.PdmServiceT
+CEng.createCMMAttribute(PdmServiceTCEng.java:1965)
+	at 
+com.ugsolutions.ideasnxmigration.migrationmanager.framework.migrationcontrol.Re
+portCreator.createCMMAttributeForm(ReportCreator.java:480)
+	at 
+com.ugsolutions.ideasnxmigration.migrationmanager.framework.migrationcontrol.Mi
+grationControl.createReport(MigrationControl.java:3220)
+	at 
+com.ugsolutions.ideasnxmigration.migrationmanager.framework.migrationcontrol.Mi
+grationControl.processElement(MigrationControl.java:2653)
+	at 
+com.ugsolutions.ideasnxmigration.migrationmanager.framework.migrationcontrol.Mi
+grationControl.execute(MigrationControl.java:797)
+	at 
+com.ugsolutions.ideasnxmigration.migrationmanager.framework.migrationcontrol.Th
+readedMigrationControl.run(ThreadedMigrationControl.java:32)
+	at java.lang.Thread.run(Thread.java:619)
+Caused by: com.teamcenter.tc.kernel.icctstubs.ICCTException
+	at com.teamcenter.tc.kernel.icctstubs.ICCT.insertRelated(Unknown
+Source)
+	... 12 more
+Hardware/Software Configuration
+Platform: INTEL
+OS: WINDOW
+OS Version: 764
+
+Family: NX
+Application: CMM
+Function: IDEAS
+Subfunction: ALL
+Release: V7.5.5
+Solution
+The customer had customization that was preventing the CMMAttributes form from 
+attaching to the item revision.  The same error was seen when he created a new 
+CMMAttribute form and tried to attach it to the item revision interactively.  
+Check GRM Rules on the Item, Item Revision, and any customer Item types to see 
+if there is something preventing the form with the specification relationship 
+from being attached in the BMIDE.
+
+///
+
+How to prevent NX from creating PDF under a released Item Revision
+Symptom
+---------------
+After releasing an Item Revision in Teamcenter, the Item Revision does not 
+allow writing or modifying the Item Revision.  
+
+However, in NX, you can select File --> Export --> PDF and create a new PDF 
+dataset under this released Item Revision.  
+(Note:	Teamcenter RAC does not allow the creation of a PDF dataset under a 
+released Item Revision)
+Hardware/Software Configuration
+Platform: INTL64
+OS: WINDOW
+OS Version: XP64_SP2
+
+Family: NX
+Application: UGMANAGER
+Function: FILE_SAVE
+Subfunction: ALL
+Release: V8.0
+Solution
+In NX, you can specify the relation type used when Exporting a PDF to 
+Teamcenter in Customer Defaults. By default the relation type is set to 
+Manifestation, which  allows the creation of datasets under a released Item 
+Revision.
+
+   Gateway --> PDF Export --> TC integration tab.
+
+To prevent the creation of a PDF dataset under a released Item Revision, 
+select 'Specification' relation.  Restart NX to set this preference.
+
+Note:
+
+The following relation types determines whether an object can be added or 
+removed from an Item Revision with write/modify privileges. 
+
+manifestation relation
+----------------------
+The manifestation relation associates other related data to an item or item 
+revision. This data may, however, be necessary for information, such as 
+analysis of the competing ideas from which a part was originally conceived. 
+The manifestation relation also associates data to the item revision that 
+contains data derived from the specification data (such as tool paths). Rules 
+for this relation are as follows: 
+
+An item or item revision does not need to have write access to add or remove a 
+manifestation relation to an object. A manifestation relation can be added or 
+removed from a released item or item revision. 
+
+A form can have a manifestation relation to an item or item revision. 
+
+Only version 0 (zero) of a dataset can have a manifestation relation to an 
+item or item revision. 
+
+A folder, envelope, BOM view, or BOM view revision cannot have a manifestation 
+relation to an item or item revision. 
+
+An item cannot have a manifestation relation to another item or item revision. 
+An item revision can have a manifestation relation to another item or item 
+revision. 
+
+An item revision cannot have a manifestation relation to another item revision 
+if they are both revisions of the same item. 
+
+specification relation
+----------------------
+The specification relation associates data which defines the item revision. 
+Examples are CAD models for parts or word processor files for documents. Rules 
+for this relation are as follows: 
+
+An item revision must have write access to add or remove a specification 
+relation to an object. 
+
+A form can have a specification relation to an item or item revision. 
+
+Only version 0 (zero) of a dataset can have a specification relation to an 
+item or item revision. 
+
+A folder, envelope, BOM view, or BOM view revision cannot have a specification 
+relation to an item or item revision. 
+
+An item cannot have a specification relation to another item or item revision. 
+An item revision can have a specification relation to another item or item 
+revision. 
+
+An item revision cannot have a specification relation to another item revision 
+if they are both revisions of the same item. 
+
+reference relation 
+------------------
+The reference relation associates any data to an item or item revision. Rules 
+for this relation are as follows: 
+
+An item or item revision does not need to have write access to add or remove a 
+reference relation to an object. A reference relation can be added or removed 
+from a released item or item revision. 
+
+Any object can have a reference relation to an item or item revision. 
+
+Only version 0 (zero) of a dataset can have a reference relation to an item or 
+item revision. 
+
+A reference object cannot reference itself. 
+
+revision relation
+-----------------
+The revision relation associates item revisions to the appropriate item. Rules 
+for this relation are as follows: 
+
+An item must have write access to add or remove an item revision from the 
+item. 
+
+Only an item revision can have a revision relation to an item. 
+
+The revision relation in an item is established by creating a new revision of 
+an item using the provided functionality. An item revision cannot be cut or 
+pasted into an item.
+Document Information
+Document ID:001-6801050
+Date:Nov-16-2012
+Product:Teamcenter,NX
+Submitted by:Claire Kanda
+IR Number:6801050
+Platform:INTL64
+OS:WINDOW
+OS Version:XP64_SP2
+Product Version:V8.0
+ 
+///
+
+Getting BOM in Java plugin
+I am trying to recursively get all ItemRevisions for all open projects
+in the current session, from within a Java plugin. 
+
+Were I in a standalone Java application, rather than a plugin, I could
+get a com.teamcenter.soa.client.Connection. Then I could get a
+com.teamcenter.soa.client.model.ModelManager, and call
+getObjectsFromStore(). Sorting this returned Vector of ModelObjects for
+projects only (object.getType().getClassName().equals("TC_Project"))
+gives me all projects. Then for each project, I could use the
+com.teamcenter.services.strong.core.DataManagementService to load up the
+properties using getProperties, to get its name and id. Now using the
+com.teamcenter.services.strong.query.SavedQueryService, I could execute
+an "Objects in Projects" query, with filters for "Project ID" =
+myProjectId, and "Type" = "Item". This gives me the uids for all top
+level items in a project. I can load them as before using
+dmService.getProperties, get the Item and Revision from each uid using
+getItemAndRelatedObjects and then, using the
+com.teamcenter.services.strong.cad.StructureManagementService
+createBOMWindows function, recursively walk the bom for all sub-level
+Items.
+
+BUT.... the above only works in a standalone java application. In a java
+plugin, I have a TCSession, and can therefore get only a
+com.teamcenter.services.rac.core.DataManagementService, and a
+com.teamcenter.services.rac.core.StructureManagementService. I can get
+the projects' uids using the ModelManager as before, (getting the
+necessary Connection from the TCSession.getSoaConnection.) Except now
+the dmService.loadObjects returns a TCComponent type. This is where my
+problems start, because, given a project as a TCComponent type, I can't
+find out what to do with it. Queries just throw, the
+DataManagementService I was using before just throws, and my previous
+approach won't work.
+
+I had hoped to use the TCComponentManager. It has a dumpComponents
+function that gives me a tantalising glimpse of everything I'm after.
+But the class is un-published, and guessing values for the String
+arguments, for example of its getComponents function, has worn me down.
+
+
+Can someone put me on the right path?
+
+Thanks,
+Jackie
+
+///
+
+TCComponent.getChildren(String relationType)
+What are the possible valid string values for the relationType argument
+to the getChildren function on the com.teamcenter.rac.kernel.TCComponent
+object?
+Thanks,
+Jackie
+
+
+-- 
+granta
+
+///
+
+Would like to see style sheet rather than geometry at the item revision level.
+Symptom
+---------------
+When selecting one Item Revision, the user sees a style sheet correctly in the 
+Viewer tab.
+When the user selects a different Item Revision, he sees the 2D geometry in 
+the Viewer tab.
+Is there a way to get it to use the style sheet instead of showing the 
+geometry associated to it?
+
+The relation on the working Item Revision is "Is DRAW". The relation on the 
+non-working is "IMAN_Specification."
+Hardware/Software Configuration
+Platform    : INTEL
+OS    : XP32_S
+OS Version  : XP32_SP2
+
+Family    : TEAMCENTER
+Application : PORTALVIEWER
+Function    : 2D_VIEWER
+Subfunction : ALL
+Release     : V8.3.2
+Solution
+The property that we need to look at is DatasetViewer.RELATIONSEARCHORDER.
+If you REMOVE IMAN_Specification from this property, you should no longer see 
+the geometry. After making the change, you'll need to run the 
+TC9\portal\registry\genregxml.bat and restart RAC.
+
+///
+
+UGMASTER and UGPART datasets not displayed under ItemRevision
+Symptom
+---------------
+A user creates UGMASTER and/or UGPART datasets.  When expanding the
+ItemRevision, those datasets are not displayed.
+Hardware/Software Configuration
+TEAMCENTER
+CORE_FUNCTIONS
+DATASETS
+
+All Supported Configurations
+Solution
+Both UGPART and UGMASTER datasets have an ootb 'Specification' Relation back to
+the ItemRevision.  Therefore, Specification must be defined as a 'Shown
+Relation' for itemRevision.
+
+From Teamcenter:
+
+'Edit -> Options -> under the 'General' folder, select Item Revision'.
+Under the 'Available Relations' list, find 'Specifications' and move this over
+to the 'Shown Relations' list.	OK the change and perform a Refresh in
+RAC....Now, the datasets will appear.
+Reference
+IR 6729801
+
+///
+
+Change mgmt - a new form created is not visible
+Symptom
+---------------
+After adding a form to a ChangeRequest Revision using the IMAN_specification 
+relation, the form is not visible in RAC.  But, the form does exist, because 
+you can search for it.
+How do you make this form visible?
+Hardware/Software Configuration
+Platform    : INTEL
+OS    : 2003_S
+OS Version  : 2003_SP2
+
+Family    : TEAMCENTER
+Application : CHANGE_MGMT
+Function    : ALL
+Subfunction : ALL
+Release     : V8.3.2
+Solution
+Add the following preference:
+
+ChangeRequestRevision_DefaultChildProperties to the relation value used.
+
+In this case, the value = IMAN_specification
+
+Note:  It is case-sensitive.  IMAN_Specification does NOT work.
+
+///
+
+What do the Office Integration selections in TEM really mean?
+Symptom
+---------------
+What are the use cases for the three different types of Office Integration 
+in TEM?
+Hardware/Software Configuration
+TC8.3.0.1
+Windows 7
+Office 2010
+Solution
+MS Office for Rich Client
+Gives the ability the same as the Office Client for Microsoft Office but is 
+the older version. It will be obsolete in Teamcenter 9.X version. Big 
+difference between this and Office Client for MS Office is that this uses 
+WEBDAV. This feature requires RAC to be installed.
+
+Office Client for Microsoft Office
+Give the ability to have Teamcenter tab added to Office so that you can 
+connect to Teamcenter directly from Office and browse your home folder for 
+data to work with and not require RAC be installed. In another word, MS Office
+applications (Word, Excel, Outlook and PowerPoint) are like the Teamcenter 
+client applications after this feature is installed. This solution uses the 
+middle tier connection to render data to Office.  This feature can be 
+installed by itself and will work with Office. There is a standalone installer
+to install this feature too. 
+(<BASE_KIT>\additional_applications\OfficeClient\setup.exe)
+
+Teamcenter Extensions for Microsoft Office
+MS Office for Rich Client
+Gives the ability the same as the Office Client for Microsoft Office but is 
+the older version. It will be obsolete in Teamcenter 9.X version. Big 
+difference between this and Office Client for MS Office is that this uses 
+WEBDAV. This feature requires RAC to be installed.
+
+Office Client for Microsoft Office
+Give the ability to have Teamcenter tab added to Office so that you can 
+connect to Teamcenter directly from Office and browse your home folder for 
+data to work with and not require RAC be installed. In another word, MS Office
+applications (Word, Excel, Outlook and PowerPoint) are like the Teamcenter 
+client applications after this feature is installed. This solution uses the 
+middle tier connection to render data to Office.  This feature can be 
+installed by itself and will work with Office. There is a standalone installer
+to install this feature too. 
+(<BASE_KIT>\additional_applications\OfficeClient\setup.exe)
+
+Teamcenter Extensions for Microsoft Office
+Teamcenter's Extensions for Microsoft Office provides synchronous access to 
+Teamcenter workspace objects through Microsoft Office Excel and Word. With the
+live Excel and live Word features, Extensions for Office gives Excel and Word 
+direct connectivity to the Teamcenter server. 
+
+To generate a file in live Excel or live Word, you choose the related option 
+when exporting data for selected objects in the Teamcenter rich client. 
+-The data exported to the output file consists of property values for the 
+objects. 
+-The exported property values are synchronized with the corresponding values 
+in Teamcenter. 
+-Values that you edit in the output file are changed interactively in 
+Teamcenter. 
+You can export data to live Excel and live Word from the following Teamcenter 
+rich client applications: 
+-Requirements Manager
+-Structure Manager
+-Multi-Structure Manager
+-My Teamcenter from (the Details view and the navigation pane) 
+Note:
+Extensions for Office is available for the two-tier and four-tier Teamcenter 
+rich client.
+
+User can access this links for more detailed information:
+
+http://support.ugs.com/docs/teamcenter/8.3/help/plm00056/book.html
+
+///
+
+Upload and download files from a TCComponentDataset with RAC
+Symptom
+---------------
+How to upload and download a text file attached to a TCComponentDataset using 
+the RAC java interface.
+Hardware/Software Configuration
+Family: TEAMCENTER
+Application: PORTAL_CORE
+Function: CLIENT_FRAMEWRK
+Subfunction: ALL
+Release: V8.1.0
+Solution
+Following is a RAC example that shows how to upload/download a text file using
+a TCComponentDataset.
+
+You will want to call the methods as follows:
+
+
+	UploadDownloadFile2 uploaddownload = new 
+UploadDownloadFile2(session.getTCSession());
+			
+	uploaddownload.CreateItemItemRevDataset();
+	uploaddownload.UploadFileToDataset("First line is text file");
+	uploaddownload.DownloadAttachedFile();			
+
+
+/**************** UploadDownloadFile2.java *******************/
+package com.gtac.headless.tasks;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
+import com.teamcenter.rac.kernel.TCComponent;
+import com.teamcenter.rac.kernel.TCComponentDataset;
+import com.teamcenter.rac.kernel.TCComponentFolder;
+import com.teamcenter.rac.kernel.TCComponentItem;
+import com.teamcenter.rac.kernel.TCComponentItemRevision;
+import com.teamcenter.rac.kernel.TCException;
+import com.teamcenter.rac.kernel.TCSession;
+import com.teamcenter.services.rac.core.DataManagementService;
+
+public class UploadDownloadFile2 
+{
+	private TCSession tcSession = null;
+	private DataManagementService dservice = null; 
+	private TCComponentFolder homeFolder;
+	private TCComponentItem item;
+	private TCComponentItemRevision itemRev;
+	private TCComponentDataset dataset;
+	
+	private final String path = "C:\\temp\\tcfiles";
+	private final String desPath = System.getenv("HOMEDRIVE") + 
+System.getenv("HOMEPATH") + "\\Desktop";
+	private final String fileName = "ReadMe.txt";
+	private final char[] newline = new char[]{'\r', '\n'};
+	
+	public UploadDownloadFile2(TCSession session)
+	{
+		this.tcSession = session;
+		this.dservice = DataManagementService.getService(session);
+		
+		try 
+		{
+			homeFolder = session.getUser().getHomeFolder();
+		}
+		catch (TCException e) 
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void CreateItemItemRevDataset()
+	{
+		DataManagementService.ItemProperties[] properties = new 
+DataManagementService.ItemProperties[]{ new 
+DataManagementService.ItemProperties() };
+		
+		properties[0].name = "myItem1";
+		properties[0].description = "My first item";
+		
+		DataManagementService.CreateItemsResponse itemResp = 
+dservice.createItems(properties, homeFolder, "");
+		
+		if(itemResp.output.length > 0)
+		{
+			item = itemResp.output[0].item;
+			itemRev = itemResp.output[0].itemRev;
+			
+			DataManagementService.DatasetProperties[] dataProps =
+new 
+DataManagementService.DatasetProperties[] { new 
+DataManagementService.DatasetProperties()};
+			
+			dataProps[0].clientId = "MyID123456789";
+			dataProps[0].name = "myDataSet1";
+			dataProps[0].description = "First Dataset";
+			dataProps[0].relationType = "IMAN_reference";
+			dataProps[0].type = "Text";
+			dataProps[0].toolUsed = "TextEditor";
+			dataProps[0].container = itemRev; 
+			
+			DataManagementService.CreateDatasetsResponse dataResp =
+
+dservice.createDatasets(dataProps);
+			
+			if(dataResp.output.length > 0)
+				dataset = dataResp.output[0].dataset;
+		}
+	}
+	
+	public void DownloadAttachedFile()
+	{
+		try
+		{
+			File[] files = dataset.getFiles("Text", desPath);
+			
+			if(files.length > 0)
+			{
+				System.out.println("The following files have
+been save from Teamcenter:");
+				
+				for(File file : files)
+					System.out.println(file.getPath());
+			}
+		}
+		catch(TCException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void UploadFileToDataset(final String msg)
+	{
+		File dir = new File(path);
+		File file = new File(path + "\\" + fileName);
+		
+		if(!dir.exists())
+		{
+			if(!dir.mkdirs())
+			{
+				System.out.println("Fail to create
+directory.");
+				return;
+			}
+		}
+		
+		try
+		{
+			boolean append = (file.exists()) ? true : false;
+			FileWriter writer = new FileWriter(file, append);
+
+			if (append)
+				writer.write(newline);
+
+			writer.write(msg);
+			writer.flush();
+			writer.close();
+			
+			dataset.setFiles(new String[] { path + "\\" + fileName
+}, new String[]{ 
+"Text" });
+		} 
+		catch (IOException e) 
+		{
+			e.printStackTrace();
+		}
+		catch (TCException e) 
+		{
+			e.printStackTrace();
+		}
+	}
+}
+
+/**************** UploadDownloadFile2.java *******************/
+
+///
+
+Upload and download files from a TCComponentDataset with RAC
+Symptom
+---------------
+How to upload and download a text file attached to a TCComponentDataset using 
+the RAC java interface.
+Hardware/Software Configuration
+Family: TEAMCENTER
+Application: PORTAL_CORE
+Function: CLIENT_FRAMEWRK
+Subfunction: ALL
+Release: V8.1.0
+Solution
+Following is a RAC example that shows how to upload/download a text file using
+a TCComponentDataset.
+
+You will want to call the methods as follows:
+
+
+	UploadDownloadFile2 uploaddownload = new 
+UploadDownloadFile2(session.getTCSession());
+			
+	uploaddownload.CreateItemItemRevDataset();
+	uploaddownload.UploadFileToDataset("First line is text file");
+	uploaddownload.DownloadAttachedFile();			
+
+
+/**************** UploadDownloadFile2.java *******************/
+package com.gtac.headless.tasks;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
+import com.teamcenter.rac.kernel.TCComponent;
+import com.teamcenter.rac.kernel.TCComponentDataset;
+import com.teamcenter.rac.kernel.TCComponentFolder;
+import com.teamcenter.rac.kernel.TCComponentItem;
+import com.teamcenter.rac.kernel.TCComponentItemRevision;
+import com.teamcenter.rac.kernel.TCException;
+import com.teamcenter.rac.kernel.TCSession;
+import com.teamcenter.services.rac.core.DataManagementService;
+
+public class UploadDownloadFile2 
+{
+	private TCSession tcSession = null;
+	private DataManagementService dservice = null; 
+	private TCComponentFolder homeFolder;
+	private TCComponentItem item;
+	private TCComponentItemRevision itemRev;
+	private TCComponentDataset dataset;
+	
+	private final String path = "C:\\temp\\tcfiles";
+	private final String desPath = System.getenv("HOMEDRIVE") + 
+System.getenv("HOMEPATH") + "\\Desktop";
+	private final String fileName = "ReadMe.txt";
+	private final char[] newline = new char[]{'\r', '\n'};
+	
+	public UploadDownloadFile2(TCSession session)
+	{
+		this.tcSession = session;
+		this.dservice = DataManagementService.getService(session);
+		
+		try 
+		{
+			homeFolder = session.getUser().getHomeFolder();
+		}
+		catch (TCException e) 
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void CreateItemItemRevDataset()
+	{
+		DataManagementService.ItemProperties[] properties = new 
+DataManagementService.ItemProperties[]{ new 
+DataManagementService.ItemProperties() };
+		
+		properties[0].name = "myItem1";
+		properties[0].description = "My first item";
+		
+		DataManagementService.CreateItemsResponse itemResp = 
+dservice.createItems(properties, homeFolder, "");
+		
+		if(itemResp.output.length > 0)
+		{
+			item = itemResp.output[0].item;
+			itemRev = itemResp.output[0].itemRev;
+			
+			DataManagementService.DatasetProperties[] dataProps =
+new 
+DataManagementService.DatasetProperties[] { new 
+DataManagementService.DatasetProperties()};
+			
+			dataProps[0].clientId = "MyID123456789";
+			dataProps[0].name = "myDataSet1";
+			dataProps[0].description = "First Dataset";
+			dataProps[0].relationType = "IMAN_reference";
+			dataProps[0].type = "Text";
+			dataProps[0].toolUsed = "TextEditor";
+			dataProps[0].container = itemRev; 
+			
+			DataManagementService.CreateDatasetsResponse dataResp =
+
+dservice.createDatasets(dataProps);
+			
+			if(dataResp.output.length > 0)
+				dataset = dataResp.output[0].dataset;
+		}
+	}
+	
+	public void DownloadAttachedFile()
+	{
+		try
+		{
+			File[] files = dataset.getFiles("Text", desPath);
+			
+			if(files.length > 0)
+			{
+				System.out.println("The following files have
+been save from Teamcenter:");
+				
+				for(File file : files)
+					System.out.println(file.getPath());
+			}
+		}
+		catch(TCException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void UploadFileToDataset(final String msg)
+	{
+		File dir = new File(path);
+		File file = new File(path + "\\" + fileName);
+		
+		if(!dir.exists())
+		{
+			if(!dir.mkdirs())
+			{
+				System.out.println("Fail to create
+directory.");
+				return;
+			}
+		}
+		
+		try
+		{
+			boolean append = (file.exists()) ? true : false;
+			FileWriter writer = new FileWriter(file, append);
+
+			if (append)
+				writer.write(newline);
+
+			writer.write(msg);
+			writer.flush();
+			writer.close();
+			
+			dataset.setFiles(new String[] { path + "\\" + fileName
+}, new String[]{ 
+"Text" });
+		} 
+		catch (IOException e) 
+		{
+			e.printStackTrace();
+		}
+		catch (TCException e) 
+		{
+			e.printStackTrace();
+		}
+	}
+}
+
+/**************** UploadDownloadFile2.java *******************/
+
+///
+
+Upload and download files from a TCComponentDataset with RAC
+Symptom
+---------------
+How to upload and download a text file attached to a TCComponentDataset using 
+the RAC java interface.
+Hardware/Software Configuration
+Family: TEAMCENTER
+Application: PORTAL_CORE
+Function: CLIENT_FRAMEWRK
+Subfunction: ALL
+Release: V8.1.0
+Solution
+Following is a RAC example that shows how to upload/download a text file using
+a TCComponentDataset.
+
+You will want to call the methods as follows:
+
+
+	UploadDownloadFile2 uploaddownload = new 
+UploadDownloadFile2(session.getTCSession());
+			
+	uploaddownload.CreateItemItemRevDataset();
+	uploaddownload.UploadFileToDataset("First line is text file");
+	uploaddownload.DownloadAttachedFile();			
+
+
+/**************** UploadDownloadFile2.java *******************/
+package com.gtac.headless.tasks;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
+import com.teamcenter.rac.kernel.TCComponent;
+import com.teamcenter.rac.kernel.TCComponentDataset;
+import com.teamcenter.rac.kernel.TCComponentFolder;
+import com.teamcenter.rac.kernel.TCComponentItem;
+import com.teamcenter.rac.kernel.TCComponentItemRevision;
+import com.teamcenter.rac.kernel.TCException;
+import com.teamcenter.rac.kernel.TCSession;
+import com.teamcenter.services.rac.core.DataManagementService;
+
+public class UploadDownloadFile2 
+{
+	private TCSession tcSession = null;
+	private DataManagementService dservice = null; 
+	private TCComponentFolder homeFolder;
+	private TCComponentItem item;
+	private TCComponentItemRevision itemRev;
+	private TCComponentDataset dataset;
+	
+	private final String path = "C:\\temp\\tcfiles";
+	private final String desPath = System.getenv("HOMEDRIVE") + 
+System.getenv("HOMEPATH") + "\\Desktop";
+	private final String fileName = "ReadMe.txt";
+	private final char[] newline = new char[]{'\r', '\n'};
+	
+	public UploadDownloadFile2(TCSession session)
+	{
+		this.tcSession = session;
+		this.dservice = DataManagementService.getService(session);
+		
+		try 
+		{
+			homeFolder = session.getUser().getHomeFolder();
+		}
+		catch (TCException e) 
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void CreateItemItemRevDataset()
+	{
+		DataManagementService.ItemProperties[] properties = new 
+DataManagementService.ItemProperties[]{ new 
+DataManagementService.ItemProperties() };
+		
+		properties[0].name = "myItem1";
+		properties[0].description = "My first item";
+		
+		DataManagementService.CreateItemsResponse itemResp = 
+dservice.createItems(properties, homeFolder, "");
+		
+		if(itemResp.output.length > 0)
+		{
+			item = itemResp.output[0].item;
+			itemRev = itemResp.output[0].itemRev;
+			
+			DataManagementService.DatasetProperties[] dataProps =
+new 
+DataManagementService.DatasetProperties[] { new 
+DataManagementService.DatasetProperties()};
+			
+			dataProps[0].clientId = "MyID123456789";
+			dataProps[0].name = "myDataSet1";
+			dataProps[0].description = "First Dataset";
+			dataProps[0].relationType = "IMAN_reference";
+			dataProps[0].type = "Text";
+			dataProps[0].toolUsed = "TextEditor";
+			dataProps[0].container = itemRev; 
+			
+			DataManagementService.CreateDatasetsResponse dataResp =
+
+dservice.createDatasets(dataProps);
+			
+			if(dataResp.output.length > 0)
+				dataset = dataResp.output[0].dataset;
+		}
+	}
+	
+	public void DownloadAttachedFile()
+	{
+		try
+		{
+			File[] files = dataset.getFiles("Text", desPath);
+			
+			if(files.length > 0)
+			{
+				System.out.println("The following files have
+been save from Teamcenter:");
+				
+				for(File file : files)
+					System.out.println(file.getPath());
+			}
+		}
+		catch(TCException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void UploadFileToDataset(final String msg)
+	{
+		File dir = new File(path);
+		File file = new File(path + "\\" + fileName);
+		
+		if(!dir.exists())
+		{
+			if(!dir.mkdirs())
+			{
+				System.out.println("Fail to create
+directory.");
+				return;
+			}
+		}
+		
+		try
+		{
+			boolean append = (file.exists()) ? true : false;
+			FileWriter writer = new FileWriter(file, append);
+
+			if (append)
+				writer.write(newline);
+
+			writer.write(msg);
+			writer.flush();
+			writer.close();
+			
+			dataset.setFiles(new String[] { path + "\\" + fileName
+}, new String[]{ 
+"Text" });
+		} 
+		catch (IOException e) 
+		{
+			e.printStackTrace();
+		}
+		catch (TCException e) 
+		{
+			e.printStackTrace();
+		}
+	}
+}
+
+/**************** UploadDownloadFile2.java *******************/
+
+///
+
+We do not encourage users to poke into the Tc database. Objects and rows are intertwined - and while we use RDBMS, tables are created on-the-fly.
+
+ 
+
+Use the Tc Report Builder to create reports in RAC/AWC and traverse relationships to retrieve informatino from objects and datasets.
+
+ 
+
+Regards,
+
+ 
+
+Paul
+
+///
+
+Check this out: https://github.com/pawanit17/Exploring-Teamcenter-The-SQL-Way/wiki/BOM-World and https://github.com/pawanit17/Exploring-Teamcenter-The-SQL-Way for some sample queries.
+
+ 
+
+pImanType is the table that holds the Type information. Every object gets stored in ppom_object. If you are dealing with workspace object, it would also get stored in ppom_application_object and pworkspaceobject. If it is an Item, then pItem as well. If it is a Revision, pItemRevision as well. If it is a relation, pImanRelation as well. An Item for instance, has its information stored in ppom_object, ppom_application_object, pworkspaceobject, pitem. If you check in BMIDE, properties like Object Name, Description, Type are defined at Workspace object level. So if you want that information for an Item, you would join pItem and pWorkspaceObject tables with puid - as this would be the primary key onto the database tables and they would be equal in this case.
+
+ 
+
+Item types, as mentioned are on pImanType and pWorkspaceObject. Join them to get your needed data. Ex: https://github.com/pawanit17/Exploring-Teamcenter-The-SQL-Way/blob/master/List_All_ECN_SolutionItems.sql
+
+ 
+
+Documents/Datasets gets associated with a certain relationship in most cases. This information is in pImanRelation holding primary and secondaries and once again, pImanType has to be consulted too. Ex: https://github.com/pawanit17/Exploring-Teamcenter-The-SQL-Way/blob/master/List_All_Specification_Datasets.sql
+
+ 
+
+NOTE: Before starting BMIDE deployments, operations usually run clearlocks to kill Tc sessions. If you have a live database connection, it will not get detected during clearlocks. This will prevent DB deployment. So you have to be more aware of this. Also an unintentional update to db will result in data inconsistencies. If you want to go in this direction, try getting a READ-ONLY account onto your database to prevent unintentional updates.
+
+///
+
+EWI: Operation doesn't load, display Product assigned to it
+Symptom
+---------------
+1- An operation will not display with product assigned to it unless it is
+loaded via a CC.
+2- Cannot load an operation into EWI, when selected to open.
+Hardware/Software Configuration
+TC 10.1.2.1 / 9.1.2.10
+EWI 2.2
+Solution
+Regarding issue #1
+------------------
+You need to link/associate the BOM to the BOP in TC RAC.  This function causes
+TC RAC as well as EWI to load the targeted structure along with the first one,
+this way the consumed parts will be seen as well as the BOP lines.
+
+Regarding issue #2
+------------------
+Currently, the loading of MEOP derived structures to be loaded as EWI is not
+supported on EWI 2.2.  This is the current design.
+
+///
+
+Solution
+Here is a simple example to download all NamedReferences (ImanFile) associated 
+with a Dataset.
+
+
+The code is to be used in a plugin as follows:
+
+	    FileDownload fd = new FileDownload();
+	    
+	    if(fd.loadObject())
+		  fd.DownloadNamedReference();
+
+
+
+package gtac.plugin1.code;
+
+import java.io.File;
+import java.util.Map;
+
+import com.teamcenter.rac.aif.AIFDesktop;
+import com.teamcenter.rac.kernel.ServiceData;
+import com.teamcenter.rac.kernel.TCComponent;
+import com.teamcenter.rac.kernel.TCComponentDataset;
+import com.teamcenter.rac.kernel.TCComponentTcFile;
+import com.teamcenter.rac.kernel.TCException;
+import com.teamcenter.rac.kernel.TCSession;
+import com.teamcenter.services.rac.core.DataManagementService;
+import com.teamcenter.services.rac.core.FileManagementService;
+import 
+com.teamcenter.services.rac.core._2006_03.FileManagement.FileTicketsResponse;
+import com.teamcenter.soa.client.FileManagementUtility;
+
+public class FileDownload 
+{
+      private TCSession tcSession;
+      private DataManagementService dmService;
+      private FileManagementService fmService;
+      private FileManagementUtility fileUtility;
+      
+      private TCComponentDataset dataset; 
+      
+      private static final String datasetUID = "QlUVEo45YiHmdD";
+      
+      public FileDownload()
+      {
+	    tcSession = 
+(TCSession)AIFDesktop.getActiveDesktop().getCurrentApplication().getSession();
+	    
+	    dmService = DataManagementService.getService(tcSession);
+	    fmService = FileManagementService.getService(tcSession);
+	    fileUtility = new 
+FileManagementUtility(tcSession.getSoaConnection());
+      }
+      
+      public boolean loadObject()
+      {
+	    ServiceData sData = dmService.loadObjects(new String[]{ datasetUID 
+});
+
+	    if(sData.sizeOfPlainObjects() > 0)
+	    {
+		  TCComponent mObj = sData.getPlainObject(0);
+
+		  if(mObj instanceof TCComponentDataset)
+		  {
+			dataset = (TCComponentDataset) mObj;
+			return true;
+		  }
+	    }
+	    
+	    return false;
+      }
+      
+      public void DownloadNamedReference()
+      {
+	    String outputfolder = "C:/Temp/1/";
+	    
+	    try
+	    {
+		  TCComponent[] nameRefs = dataset.getNamedReferences();
+		  TCComponentTcFile[] files = dataset.getTcFiles();
+		  FileTicketsResponse ticketResp = 
+fmService.getFileReadTickets(files);
+		  
+		  if(!ServiceDataError(ticketResp.serviceData))
+		  {
+			Map<TCComponentTcFile, String> map = 
+ticketResp.tickets;
+		  
+			for(TCComponentTcFile tcFile : map.keySet())
+			{
+			      String fileName = 
+tcFile.getProperty("original_file_name");		    
+			      String ticket = map.get(tcFile);
+			      
+			      File file = fileUtility.getTransientFile(ticket, 
+outputfolder + fileName);
+			      
+			      System.out.println(file.getAbsolutePath());
+			}
+		  }
+	    }
+	    catch (TCException e) {
+		  // TODO Auto-generated catch block
+		  e.printStackTrace();
+	    }
+      }
+      
+      protected boolean ServiceDataError(final ServiceData data)
+      {
+	    if (data.sizeOfPartialErrors() > 0)
+	    {
+		  for (int i = 0; i < data.sizeOfPartialErrors(); i++)
+		  {
+			for (String msg : 
+data.getPartialError(i).getMessages())
+			      System.out.println(msg);
+		  }
+		  return true;
+	    }
+	    return false;
+      }
+      
+}
+
+///
+
+Download Dataset NamedReference (ImanFile) in RAC java code
+Symptom
+---------------
+How do I download a NamedReference file in java RAC code?
+Hardware/Software Configuration
+Family: TEAMCENTER
+Application: RAC_FRAMEWORK
+Function: KERNEL
+Subfunction: ALL
+Release: V9.1.3
+Solution
+Here is a simple example to download all NamedReferences (ImanFile) associated 
+with a Dataset.
+
+
+The code is to be used in a plugin as follows:
+
+	    FileDownload fd = new FileDownload();
+	    
+	    if(fd.loadObject())
+		  fd.DownloadNamedReference();
+
+
+
+package gtac.plugin1.code;
+
+import java.io.File;
+import java.util.Map;
+
+import com.teamcenter.rac.aif.AIFDesktop;
+import com.teamcenter.rac.kernel.ServiceData;
+import com.teamcenter.rac.kernel.TCComponent;
+import com.teamcenter.rac.kernel.TCComponentDataset;
+import com.teamcenter.rac.kernel.TCComponentTcFile;
+import com.teamcenter.rac.kernel.TCException;
+import com.teamcenter.rac.kernel.TCSession;
+import com.teamcenter.services.rac.core.DataManagementService;
+import com.teamcenter.services.rac.core.FileManagementService;
+import 
+com.teamcenter.services.rac.core._2006_03.FileManagement.FileTicketsResponse;
+import com.teamcenter.soa.client.FileManagementUtility;
+
+public class FileDownload 
+{
+      private TCSession tcSession;
+      private DataManagementService dmService;
+      private FileManagementService fmService;
+      private FileManagementUtility fileUtility;
+      
+      private TCComponentDataset dataset; 
+      
+      private static final String datasetUID = "QlUVEo45YiHmdD";
+      
+      public FileDownload()
+      {
+	    tcSession = 
+(TCSession)AIFDesktop.getActiveDesktop().getCurrentApplication().getSession();
+	    
+	    dmService = DataManagementService.getService(tcSession);
+	    fmService = FileManagementService.getService(tcSession);
+	    fileUtility = new 
+FileManagementUtility(tcSession.getSoaConnection());
+      }
+      
+      public boolean loadObject()
+      {
+	    ServiceData sData = dmService.loadObjects(new String[]{ datasetUID 
+});
+
+	    if(sData.sizeOfPlainObjects() > 0)
+	    {
+		  TCComponent mObj = sData.getPlainObject(0);
+
+		  if(mObj instanceof TCComponentDataset)
+		  {
+			dataset = (TCComponentDataset) mObj;
+			return true;
+		  }
+	    }
+	    
+	    return false;
+      }
+      
+      public void DownloadNamedReference()
+      {
+	    String outputfolder = "C:/Temp/1/";
+	    
+	    try
+	    {
+		  TCComponent[] nameRefs = dataset.getNamedReferences();
+		  TCComponentTcFile[] files = dataset.getTcFiles();
+		  FileTicketsResponse ticketResp = 
+fmService.getFileReadTickets(files);
+		  
+		  if(!ServiceDataError(ticketResp.serviceData))
+		  {
+			Map<TCComponentTcFile, String> map = 
+ticketResp.tickets;
+		  
+			for(TCComponentTcFile tcFile : map.keySet())
+			{
+			      String fileName = 
+tcFile.getProperty("original_file_name");		    
+			      String ticket = map.get(tcFile);
+			      
+			      File file = fileUtility.getTransientFile(ticket, 
+outputfolder + fileName);
+			      
+			      System.out.println(file.getAbsolutePath());
+			}
+		  }
+	    }
+	    catch (TCException e) {
+		  // TODO Auto-generated catch block
+		  e.printStackTrace();
+	    }
+      }
+      
+      protected boolean ServiceDataError(final ServiceData data)
+      {
+	    if (data.sizeOfPartialErrors() > 0)
+	    {
+		  for (int i = 0; i < data.sizeOfPartialErrors(); i++)
+		  {
+			for (String msg : 
+data.getPartialError(i).getMessages())
+			      System.out.println(msg);
+		  }
+		  return true;
+	    }
+	    return false;
+      }
+      
+}
+
+///
+
+[Help]How can I find the Entity-Relationship of teamcenter, specially about the Bill of process(BOP) ?
+Try to find the Entity-Relationship of BOP, and Learn the relationship during Operation, Workstation, Equips, Production Line, Kits, fixtures, auxiliary materials,Process parameters, and so on.
+
+So Where can I find the Entity-Relationship of BOP（or Teamcenter）？
+
+Thanks
+
+///
+
+Only few occtypes available in BOP
+Symptom
+How can you enable custom Occurrence types to be available in MEProcess (BOP)
+
+
+Hardware/Software Configuration
+Platform: INTL64
+OS: windows
+OS Version: 1064
+Product: TEAMCENTER
+Application: MPP
+Version: V11.6.0.0
+Function: PROCESS_AUTH
+Solution
+You need to create a custom preference for each of your custom Occurrence types, like the following 
+Name: 
+MERelationTypePart<CUSTON NAME>Category: ManufacturingDescription: 
+Preference description Value: <Custom occurrence Type> 
+
+Then once the preferences are created, you can add them to the MEDisplayOccurrenceType preference, which controls which occurrence types are displayed for specified object types. 
+
+
+Reference
+
+///
+
+Sample ITK function : create bop window
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+
+#include <bom/bom.h>
+#include <cfm/cfm.h>    
+#include <me/me.h>
+#include <ps/ps.h>
+#include <tccore/aom.h>
+#include <tccore/item.h>
+
+static void create_bop_window(tag_t tProcess, tag_t tProcessRevision, tag_t tOperation, tag_t tOperationRevision)
+{
+    IFERR_REPORT(AOM_refresh(tProcess, TRUE));
+
+    tag_t tWindow = NULLTAG;
+    IFERR_REPORT(ME_create_bop_window(&tWindow));
+
+    tag_t tRule = NULLTAG; 
+    IFERR_REPORT(CFM_find("Latest Working", &tRule));    
+    IFERR_REPORT(BOM_set_window_config_rule(tWindow, tRule));
+
+    tag_t tTopLine = NULLTAG;
+    IFERR_REPORT(BOM_set_window_top_line(tWindow, tProcess, NULLTAG, NULLTAG, &tTopLine));  
+    
+    int iNumBVs = 0;
+    tag_t *ptBVs = NULL;
+    IFERR_REPORT(ITEM_list_bom_views(tProcess, &iNumBVs, &ptBVs));
+    if (iNumBVs == 0)
+    {  
+        tag_t tBv = NULLTAG;
+        IFERR_REPORT(PS_create_bom_view (NULLTAG, "", "", tProcess, &tBv));
+        IFERR_REPORT(AOM_save(tBv));
+
+        tag_t tBvr = NULLTAG;
+        IFERR_REPORT(PS_create_bvr (tBv, "", "",  false, tProcessRevision, &tBvr));
+        IFERR_REPORT(AOM_save (tBvr));
+        IFERR_REPORT(AOM_save (tProcess));
+    }
+    if(ptBVs) MEM_free(ptBVs);
+    tag_t tChildLine = NULLTAG;
+    IFERR_REPORT(BOM_line_add(tTopLine, tOperation, tOperationRevision, NULLTAG, &tChildLine));
+
+    IFERR_REPORT(BOM_save_window(tWindow)); 
+    IFERR_REPORT(BOM_close_window(tWindow));
+
+    IFERR_REPORT(AOM_refresh(tProcess, FALSE));
+    IFERR_REPORT(AOM_unload(tProcess));
+}
+
+///
+
+How to export "Mfg0BvrProcessLine.Mfg0allocated_time" with bomwriter
+Symptom
+---------------
+While exporting property "Mfg0BvrProcessLine.Mfg0allocated_time" with
+bomwriter, it failed to export this attribute with error 38015 - 
+"Unable to find a property with name %1$".
+How to export "Mfg0BvrProcessLine.Mfg0allocated_time" with bomwriter utility ?
+Hardware/Software Configuration
+Teamcenter V10.1.2.2
+Solution
+The property "Mfg0allocated_time" is a property on Mfg0BvrProcess which is
+derived from BOMLine. However, bomwriter supports properties only directly on
+BOMLine and not on its children. In fact these properties can't be seen in
+Structure Manager Application in RAC.
+
+The Allocated_time property on Mfg0BvrProcess is a sub-class of BOMLine.
+Subclass properties will get those errors. The bomwriter on BOP is not
+supported. 
+
+There is  a cc_writer for bop  - that takes a CC object as input and converts
+that to a bom-writer like output.
+
+///
+
+Could not export "allocated_time" with bomwriter utility
+Symptom
+---------------
+Could not export "allocated_time" with bomwriter.
+
+Steps To duplicate:
+1. Create a BOP structure as below
+MEProcess
+  |_Assembly
+      |_PartA
+      |_PartB
+
+2. Add property column "Allocated Time"
+
+3. Run the bomwriter utility as below
+bomwriter -u=*** -p=*** -g=*** -item=XXXXXXX -rev=XXX 
+-format=psup+props=bl_item_item_id,bl_rev_item_revision_id,Mfg0allocated_time
+
+Error occurs in TC cmd prompt :
+
+Warn: AOM_UIF_ask_value( line, p, &value ) failed: ifail 38015
+0~ UTCM97T-20161117-PROCESS~ 000~ PROCESS~ ~ ~ MEProcess~ ~ [Error:
+Mfg0allocated_time]
+Hardware/Software Configuration
+Teamcenter V10.1.2.2
+Solution
+The Allocated_time property on Mfg0BvrProcess is a sub-class of BOMLine. For
+subclass properties, which are not registered on BOMLine - will get those
+errors. This is as designed behavior.
+
+The bomwriter on BOP is not supported. 
+
+There is  a cc_writer for bop  - that takes a CC object as input and converts
+that to a bom-writer like output.
+
+///
+
+BOM linked to BOP doesn't show latest revision 
+Symptom
+After you create a BOP, a Part structure and consume the part components under the BOP, link both structures: BOP and Part structure.
+Then release the EBOM (Part structure) and revise the same structure. Now you have rev "B" for the top part parent assembly which is linked to the BOP.
+If you send both structures to MPP, and make sure the revision rule for BOM is "Latest Working", it still shows rev A for the BOM.  It doesn't update with the latest revision for BOM but the one that was linked initially to the BOP.
+ 
+If using WhereReferencedPOM, it clearly shows only the link between the first revision of the EBOM to BOP and hence the question: do we have to link the BOP to the new revision of the EBOM every time the EBOM is revised?
+Hardware/Software Configuration
+Platform: INTL64
+OS: windows
+OS Version: 2012_R2
+Product: TEAMCENTER
+Application: MPP
+Version: V12.4
+Function: CONFIGURATION
+Solution
+This is as designed.
+There is no automatic update to the latest rev. It is a manual process.
+
+
+As a work-around, you can try to change the deep copy rule as follow:
+
+
+///
+
+MEAssignProperties disappear on BOP when the MBOM is unload in MPP
+Symptom
+When consuming an Item from the MBOM to the BOP, some property information gets copied from the MBOM to the BOP, but when the MBOM is not loaded in same session the values in the BOP are blank. 
+Hardware/Software Configuration
+Platform: all
+OS: n/a
+OS Version: n/a
+Product: TEAMCENTER
+Application: MPP
+Version: V12.1
+Function: ACTIVITY
+Solution
+Values for Properties listed in the MEassignProperties preference will get copied from the MBOM to the BOP, where as the values for Properties listed in the MEDelegatedOccurrenceProperties preference will not be copied, but the display of the values is delegated from the MBOM, hence if the MBOM is not loaded in same session those values will be blank. 
+
+
+Reference
+
+///
+
+How to export BOP with work area information to excel
+Symptom
+---------------
+By using Teamcenter excel template and custom closure rule we can successfully
+export BOP structure with Process, Operation, Resources and Consumed parts
+information.
+However, how to export work area or station information, also which object type
+needs to be defined to get the information display?
+Hardware/Software Configuration
+Software : TC MPP V9.1.2.7
+OS: Windows 2008 R2
+Solution
+The required values are as below -
+
+Default Item Type      Process Structure      Plant Structure
+
+-----------------      -----------------      ----------------
+MEWorkarea	       Mfg0BvrBOPWorkarea     Mfg0BvrWorkarea
+Reference
+IR 2243931
+
+///
+
+How to have BOP consumed parts also configured as in the MBOM
+Symptom
+---------------
+MBOM structure has been configured, for example, setting Occurrence 
+Effectivity Date for some parts, but when consuming these parts to the BOP
+structure, the consumed parts don't show the configuration as in the MBOM
+structure.
+Hardware/Software Configuration
+TC 10.1.x
+Solution
+ANSWER:
+=======
+In this case, add "bl_occ_effectivity" as a value for preference
+"MEAssignProperties".
+
+///
+
+private class del_btn_OnClick extends SelectionAdapter {
+		
+		@Override
+		public void widgetSelected(SelectionEvent e) {
+			try {
+				if (list.getSelectionIndex()==-1) return;
+				TCComponentSignoff signoff=signoffSet[list.getSelectionIndex()];
+				if (signoff == null)  return;
+				if (signoff.getDecision().getIntValue() != 0) return;
+				AIFComponentContext[] whereRef_pom = signoff.whereReferenced(false);
+				list.remove(list.getSelectionIndex());
+				for (AIFComponentContext pom : whereRef_pom) {
+					TCComponentTcRelation comp=(TCComponentTcRelation)pom.getComponent();
+					if (comp instanceof TCComponentTcRelation) 
+						comp.delete();
+				}
+				signoff.delete();
+				work_task.refresh();
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
+		}
+	}
+
+///
+
+Возникают ситуации когда  необходимо удалить подписанта из  списка в  задаче подписания.
+
+Ручками  достаточно просто через зависимости POM находим Signoff удаляем у него  обе ссылки (Fnd0EPMSignoff) на  select_signoff и perform-signoff, затем удаляем самого подписанта, чтоб не болтался в  системе.
+
+На  ITK сделать не проблема.
+
+Хотелось бы  автоматизировать на  Толстом клиенте . А с Явой я   вообще не на ты.
+
+
+ 
+
+TCComponentTask task = (TCComponentTask) comp;
+   for(TCComponentSignoff signoffs : task.getValidSignoffs()) {
+   	AIFComponentContext[] pom = signoff.getPrimary();
+      for (AIFComponentContext compContext : pom) {
+          // И вот тут застрял
+
+      }
+   }
+}
+Не знаю что делать дальше
+
+getComponent( ) возвращает Таски, а  мне их  не надо .
+
+///
+
+Спасибо всем ответившим!
+
+Поделюсь тем что удалось узнать.
+Задавал этот же вопрос в сообществе Siemens Community.
+
+ 
+
+https://community.sw.siemens.com/s/question/0D54O00006ionNYSAY/is-it-possible-to-reassign-a-task-if-it-has-a-status-started
+
+ 
+
+И мне ответили что переназначить запущенную задачу можно, но сделать это может только пользователь, который назначен для этой задачи ответственным.
+
+///
+
+Ну да, но если есть права dba то можно сначала запросить права владения(переназначить на себя) и потом уже на кого нужно
+
+///
+
+разобралась 
+TCComponentManager s = this.session.getComponentManager();
+TCComponent group = s.getTCComponent("GUID");
+
+///
+
+
+В таблице PIMANRELATION:
+
+ 
+
+RRELATION_TYPEU - по идее uid IMAN_master_form_rev Relation
+
+RPRIMARY_OBJECTU и RSECONDARY_OBJECTU - одно из этого - ревизия(uid), другое - мастер-форма(uid)
+
+///
+
+Вот, что удалось раскопать:
+
+Из PImanrelation ссылаемся на Pform. А дальше от PForm либо ссылка на PItemRevisionMaster, либо на отдельную таблицу для своего кастомного класса хранения.А в какой таблице узнать тип мастер-формы? Чтобы знать, доставать данные из встроенной PItemRevisionMaster или из своего класса хранения?
+
+///
+
+select w.pobject_name from pworkspaceobject w
+          inner join pimanrelation rel
+            on w.puid = rel.rsecondary_objectu
+          inner join pimantype t
+            on rel.rrelation_typeu = t.puid and t.ptype_name='IMAN_master_form'
+          where rel.rprimary_objectu='VdRlznd$FOoqlC';
+
+///
+
+У меня задача - получить атрибуты мастер-формы. Не стандартного айтема, а кастомного. Со своим классом хранения. Через таблицу PIMANRELATION и ее поле RSECONDARY_OBJECTU я нахожу уид мастер-формы. Как теперь найти ее атрибуты?
+
+ 
+
+Данное поле (RSECONDARY_OBJECTU) ссылается на поле PUID таблицы PForm.
+
+Дальше таблица PForm ссылается на таблицу PItemRevisonMAster - если айтем обычный с поставки, не кастомный, а если кастомный, со своим классом хранения, то она уже ссылается на другую таблицу. И вот надо как-то отследить, какой тип формы и на какую таблицу ссылается.
+
+///
+
+похоже что pform.rdata_filec = ppom_class.pcpid
+ppom_class.ptname - имя таблицы класса хранения.
+
+///
+
+Я не нахожу. Есть только одна зацепка, само свойство у объекта - TypedReference, поэтому, как я понимаю, ему нужно сделать что-то вроде addRelated(String relation, TCComponent comp). То есть в свойство тупо кинуть какой-то TCComponent. И, по-моему, кидать нужно некое представление строки, то есть какой-то объект, полученный ПРИМЕРНО следующим способом
+
+ 
+
+getSession().getTypeComponent("какой-то тип"); - что по классике должно вернуть Type, у которого дергаем метод create() и вернувшийся объект кладём в выше упомянутый addRelated.
+
+///
+
+Проблему решил. Для создания и вставки строки в свойство подойдёт сервис :
+
+createRelateAndSubmitObjects2
+
+ 
+
+доступный в Core-2015-07-DataManagement, однако, моя версия ТС (11) плохо справляется с объектом строки, к примеру, его нельзя вставить в папку Home, но если брать это свойство у объекта через API, то в конечном итоге объект строки будет представлен в виде TCComponent со своим uid. Ещё наблюдал такие баги: из 6 добавленных строк во время тестирования, одна куда-то затерялась, так её и не нашёл. Другой баг был, во время открытия объекта строки в виде отдельной вьюхи. Это, кстати, один единственный способ, который я нашёл, посмотреть внутренности строки через стандартные вкладки ТС Общие и тд. Так вот, в то время, как я редактировал свойства и регулярно обновлял (F5, кстати объект заблокировать нельзя), свойства исчезли, а консоль бесконечно сыпала исключениями. После перезагрузки ТС, строки уже не было. Найти объект строки по его типу через Advanced/Business Search, так и не удалось (к редактору запросов ещё не прибегал). 
+
+ 
+
+Итог такой, что моя версия ТС плохо справляется со строкой, однако, кастомизировать его чтобы он должным образом всё отображал - возможно. Только для моих целей, куда проще создать обычный кастомный объект, где свойства его ревизии соответствовали бы столбцам таблицы, а родительский объект просто TypedReference.
+
+///
+
+здесь неопходимо редактирование/сохдание Preference параметров.
+
+Необходимы параметры вида YourItemRevisionType_DefaultChildProperties и YourItemRevisionType_pseudoFolder(правка->параметры).
+
+В главном окне параметров выбрать раздел настроек ревизии,выбрать нужный тип ItemRevision и добавить ваше отношение в список отображаемых отношений
+
+///
+
+Для добавления объекта:
+
+obj1.add(relation, obj2);
+
+obj1 - куда добавляем; relation - с каким отношением; obj2 - что добавляем.
+
+Для удаления объекта:
+
+obj1.remove(relation, obj2);
+
+obj1 - откуда удаляем; relation - с каким отношением; obj2 - что удаляем.
+
+obj1 надо lock, unlock.
+
+///
+
+Здравствуйте!
+
+ 
+
+Повторю все, что было отмечено выше, и еще немного добавлю.
+
+ 
+
+Для отправки почты внутри Teamcenter нужно установить preference Mail_internal_mail_activated = true.
+Для отправки почты из Teamcenter в ОС нужно
+1) установить preference Mail_OSMail_activated = true
+2) задать preference Mail_server_name=<почтовый_сервер>
+3) задать preference Mail_server_port=<порт> (по умолчанию 25)
+4) задать preference Mail_server_charset (2-4 уже отметили выше)
+5) Для пользователей, которые будут отправлять и получать внешнюю почту, необходимо заполнить поле e-mail в данных пользователя (если это поле не заполнено, то внешняя почта пользователю приходить не будет).
+
+Для проверки работы почты используйте утилиту tc_mail_smtp, например:
+tc_mail_smtp -to=<e-mail_address> -server=<mailserver_name> -subject="Test" -port=25
+Дополнительно можно задать адрес отправителя в параметре
+–user=e-mail_address
+
+ 
+
+Как я понимаю, обработчики в рабочих процессах и команда отправки конверта как раз и вызывают эту утилиту.
+
+ 
+
+Если tc_mail_smtp пишет, "Unable to send message to server", то нужно разбираться с подключением к почтовому серверу. Здесь важно то, что 1) сообщения отправляются не сервера Teamcenter на почтовый сервер, а с клиентской машины на почтовый сервер, 2) при этом сообщения идут по простому протоколу smtp без авторизации. Если, например, почтовый сервер не поддерживает сообщения от неавторизованных пользователей, то почта из Teamcenter работать не будет.
+
+///
+
+<preference name="Mail_server_name" type="String" array="false" disabled="false">
+
+			<preference_description>Name of the MailGateway Server. Can be set to a text server name or a numeric IP address.  Should be a machine running a sendmail daemon. Leaving it as "your mail server machine" may give you errors telling you to set this preference if you try to use Send.</preference_description>
+
+			<context name="Teamcenter">
+
+				<value>192.168.5.27</value>
+
+			</context>
+
+		</preference>
+
+///
+
+//получить ревизию из буфера обмена
+
+AIFClipboard clipboard = AIFPortal.getClipboard();
+Transferable content = clipboard.getContents(this);
+		 
+Vector aifComponent = null;
+if(content != null)
+{
+		try
+		{
+				
+			try 
+			{
+				aifComponent = (Vector)content.getTransferData(new DataFlavor(Vector.class,"AIF Vector"));
+			} 
+			catch (IOException e) 
+			{
+
+				e.printStackTrace();
+			}
+			if(aifComponent.elementAt(0) instanceof TCComponentItemRevision)
+			{
+				pasteRevision = (TCComponentItemRevision)aifCBComponent.elementAt(0);
+			}
+				
+			//............
+				
+		} 
+		catch (Exception e) 
+		{
+			e.printStackTrace();
+		} 
+			 
+}
+
+///
+
+private TCComponentItem createOperation(String itemName,String itemType) { //obejct_name itemType
+            try {
+                TCSession session = (TCSession)AIFUtility.getCurrentApplication().getSession();
+                TCComponentItemType typeComponent =(TCComponentItemType) session.getTypeComponent(itemType);
+                String itemId = typeComponent.getNewID();
+                TCComponentItem create = typeComponent.create(itemId, null, itemType, itemName, "", null);
+                TCComponentForm tcForm = Baseutils.gettcform (create); // Get the itemRevision form BASEUTILS.Gettcform packaged by yourself
+                tcForm.setProperty("y2_SerialNum", Itemid); // Set part attributes
+                SimpleDateFormat sdf =  session.asktcdateFormat (); // Formatting date
+                tcForm.setProperty("y2_CreateDate",sdf.format(new Date()));
+                tcForm.save();
+                
+                //save to folder
+                InterfaceAIFComponent targetComponent = AIFUtility.getTargetComponent();
+                TCComponentFolder folder = null;
+                if(targetComponent instanceof TCComponentFolder) {
+                    folder =(TCComponentFolder)targetComponent;
+                    folder.add("contents", create);
+                }else {
+                    TCComponentUser user = session.getUser();
+                    folder = user.getNewStuffFolder();
+                    folder.add("contents", create);
+                }return create;
+            } catch (TCException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+///
+
+use TC11Prod
+
+begin transaction -- you can use rollback in the end just for testing  or commit to writing the changes!
+
+
+update
+sr set pxyz4Property='Yes'
+from
+PXYZ4TESTREVISON  sr --use all capital letters
+inner join PIMANRELATION rel on rel.rprimary_objectu = sr.puid
+inner join PXYZ4RELATIONREL srel on srel.puid = rel.puid --use all capital letters for the Relation
+inner join PFORM fo on fo.puid = rel.rsecondary_objectu
+inner join PWORKSPACEOBJECT wo on wo.puid = fo.puid
+
+where
+sr.pxyz4Property is null and wo.pobject_type = 'XYZ4Form1' -- only revisions with empty property and this related form
+
+rollback -- reverses anything
+
+///
+
+Find all BusinessObjects in database which has certain property:
+
+SELECT cla.pname
+,attr.[pname]
+,[pinitial_value]
+,[pupper_bound]
+,[plower_bound]
+,[pdbname]
+,[rdefining_classu]
+,[rdefining_classc]
+,[plength]
+,[pnull_offset]
+,[pempty_offset]
+,[rreferenced_classu]
+,[rreferenced_classc]
+,[ptype]
+,[pptype]
+,[papid]
+,[pmax_string_length]
+,[pnumber_of_columns]
+,[phas_table]
+,[pnulls_allowed]
+,[punique]
+FROM [TCDatabaseName].[dbo].[PPOM_ATTRIBUTE] attr
+inner join [TCDatabaseName].[dbo].[PPOM_CLASS] cla on cla.puid = attr.rdefining_classu
+WHERE attr.pname ='xyz4Property'
+
+///
+
+select * from PPOM_USER
+shows all user in the database
+Info: pstatus 0=active, pstatus 1=deactive
+
+select * from PPOM_USER WHERE PPOM_USER.puser_id='infodba'
+shows only the user infodba
+UPDATE PPOM_USER set PPOM_USER.pstatus=0 WHERE PPOM_USER.puser_id='tom'
+activates one user (do not de/activate infodba via sql)
+
+UPDATE PPOM_USER set PPOM_USER.pstatus=1 WHERE NOT PPOM_USER.puser_id='infodba'
+deactivates all TC-Users except the infodba.
+select * from PPERSON
+shows all Persons with their data
+
+you can bulk update person data by using sql instead of the Rich Client.
+e.g. update the phone-number:
+UPDATE PPERSON set PPERSON.pPA10='+4x (0)12 345 678' WHERE PPERSON.puser_name='Tester Tom'
+
+///
+
+ALTER DATABASE tempdb
+MODIFY FILE (NAME=templog , FILENAME ='E:\TCLOG\templog.ldf', SIZE=2500);
+GO
+
+ALTER DATABASE tempdb
+MODIFY FILE (NAME=tempdev , FILENAME ='D:\TCDATA\tempdb.mdf', SIZE=5000);
+GO
+
+ALTER DATABASE tempdb
+MODIFY FILE (NAME=temp2 , FILENAME ='D:\TCDATA\tempdb_mssql_2.ndf', SIZE=5000);
+GO
+
+///
+
+Search by User-Session:
+
+select p.PUSER_NAME, p.PNODE_NAME, p.PPROCESS_ID
+FROM infodba.PPOM_SESSION p, infodba.POM_M_LOCK l
+WHERE l.PROCESS = p.PPROCESS_ID;
+
+Search by Object with a lock:
+
+SELECT wso.POBJECT_TYPE, wso.POBJECT_NAME
+FROM infodba.PWORKSPACEOBJECT wso, infodba.POM_M_LOCK l
+WHERE l.REF_UID = wso.PUID;
+
+///
+
+Go SQL Management Studio and select your Database
+(do this not in operation and make sure you have a proper backup)
+
+-- Search for site_puid
+select * from PPOM_IMC;
+
+Copy the puid of the old site you want to delete.
+
+
+-- then look for referene
+select * from POM_BACKPOINTER
+where to_uid='PasteYourUID_Here';
+
+
+All listet entries are objects in the dabase which are linked to the site.
+you can use this UID in Richclient to search for (Window-Show View-Other-Diagnostics-Print Object)
+If you sure you can delete all these references:
+
+-- delete all references 
+delete from POM_BACKPOINTER
+where to_uid='PasteYourUID_Here';
+
+Restart your RichClient and try to delete the Site in Organization.
+
+///
+
+Use at your own risk!
+
+-- shows volume informations
+select * from PIMANVOLUME
+
+-- update volume node_name
+UPDATE [PIMANVOLUME] SET [pnode_name] ='servernameNew'
+
+-- update volume physical path (old to new)
+UPDATE [PIMANVOLUME] SET [pwnt_path_name] = REPLACE([pwnt_path_name], 'E:\plm\TcVolumes\volume1', 'D:\plm\TcVolumes\volume1')
+
+///
+
+https://russianblogs.com/article/77731725978/
+
+///
+
+https://russianblogs.com/article/72841293798/
+
+///
+
+
+/ / Получить объект в соответствии с UID
+TCComponentManager manager = new TCComponentManager(session);
+TCComponent comp = manager.getTCComponent("A5clPTwi4m5qKD");
+System.out.println(comp.getProperty("object_name")); 
+    или
+
+TCComponent dataset = session.getComponentManager().getTCComponent(uid);
+
+///
+
+package util;
+
+import com.teamcenter.rac.kernel.TCComponentBOMLine;
+import com.teamcenter.rac.kernel.TCComponentBOMWindow;
+import com.teamcenter.rac.kernel.TCComponentBOMWindowType;
+import com.teamcenter.rac.kernel.TCComponentDataset;
+import com.teamcenter.rac.kernel.TCComponentDatasetType;
+import com.teamcenter.rac.kernel.TCComponentItem;
+import com.teamcenter.rac.kernel.TCComponentItemRevision;
+import com.teamcenter.rac.kernel.TCComponentItemType;
+import com.teamcenter.rac.kernel.TCComponentType;
+import com.teamcenter.rac.kernel.TCException;
+import com.teamcenter.rac.kernel.TCSession;
+
+public class ItemUtil {
+	/**
+	  * Функция @function: Bomline и Bomwindow @Input Параметры правил версии по умолчанию получаются через ItemRevision:
+	  * @param Revision
+	  * @Return Bomline, bomline.window (), чтобы получить Bomwindow @note: После использования Bomline, пожалуйста, закройте Bomwindow
+	 */
+	public static TCComponentBOMLine getBOMLine(TCComponentItemRevision revision, TCSession session) {
+		TCComponentBOMLine bomLine = null;
+		try {
+			TCComponentType tccomponentType = session.getTypeComponent("BOMWindow");
+			if (tccomponentType != null && tccomponentType instanceof TCComponentBOMWindowType) {
+				TCComponentBOMWindowType bomwindowType = (TCComponentBOMWindowType) tccomponentType;
+				TCComponentBOMWindow bomwindow = bomwindowType.create(null); // правила версии по умолчанию
+				if (bomwindow != null) {
+					bomLine = bomwindow.setWindowTopLine(null, revision, null, null);
+				} else {
+					System.out.println("bomwindow == null");
+				}
+			} else {
+				System.out.println(
+						"tccomponentType == null || (tccomponentType instanceof TCComponentBOMWindowType == false)");
+			}
+		} catch (TCException e) {
+			e.printStackTrace();
+		}
+		return bomLine;
+	}
+
+	/**
+	  * Функция @function: Найдите один элемент в соответствии с item_id и типами элементов (TC12 существует, чтобы позволить различным типам элемента иметь одинаковый item_id) @: @param
+	 *                                                                  itemId
+	  * Идентификатор элемента для запроса
+	  * @param itemtype, чтобы запросить тип Itemid
+	  * @param Session Client Talk @return output:
+	  * @Return Query Query
+	 */
+	public static TCComponentItem querySingleItem(String itemId, String itemType, TCSession session) {
+		try {
+			TCComponentType compType = session.getTypeComponent(itemType);
+			if (compType != null && compType instanceof TCComponentItemType) {
+				TCComponentItemType TCType = (TCComponentItemType) compType;
+				TCComponentItem[] items = TCType.findItems(itemId);
+				if (items != null && items.length > 0) {
+					for (int i = 0; i < items.length; i++) {
+						String type = items[i].getType();
+						if (type.equals(itemType)) {
+							return items[i];
+						}
+					}
+				} else {
+					System.out.println("items == null || items.length <= 0");
+				}
+			} else {
+				System.out.println("compType == null || (compType instanceof TCComponentItemType == false)");
+			}
+		} catch (TCException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	/**
+	  * Функция @function: создать набор данных @Input Параметр:
+	  * @param dttype тип набора данных
+	  * @param dtname Имя набора данных
+	  * @param dtdesc набор данных Описание
+	  * @param Session Client Session, вы можете удалить и использовать глобальные сеансы по мере необходимости
+	 */
+	public static TCComponentDataset createDataset(String dtType, String dtName, String dtDesc, TCSession session) {
+		TCComponentDataset dataset = null;
+		try {
+			TCComponentType tctype = session.getTypeComponent(dtType);
+			if (tctype != null && tctype instanceof TCComponentDatasetType) {
+				TCComponentDatasetType tcDtType = (TCComponentDatasetType) tctype;
+				dataset = tcDtType.create(dtName, dtDesc, dtType);
+			}
+		} catch (TCException e) {
+			e.printStackTrace();
+		}
+		return dataset;
+	}
+}
+
+///
+
+package util;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Date;
+
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+public class ExcelUtil {
+	/**
+	  * Функция @function: Создайте папку, которая не повторяет имя во временном каталоге операционной системы @return
+	  * @Return Вернитесь к пути созданной папки, конечный путь возвращения содержит разделитель каталога "\\"
+	 */
+	public static String createTempDir() {
+		String dir = "";
+		String tempDir = System.getProperty("java.io.tmpdir");
+		Date date = new Date();
+		long time = date.getTime();
+		if (tempDir.endsWith("\\")) {
+			dir = tempDir + time + "\\";
+		} else {
+			dir = tempDir + "\\" + time + "\\";
+		}
+		System.out.println("Окончательный DIR ==" + dir);
+		File file = new File(dir);
+		if (!file.exists()) {
+			boolean isOk = file.mkdirs();
+			if (isOk) {
+				System.out.println("Файл -каталог успешно создан!");
+			} else {
+				System.out.println("Файл -каталог не удался!");
+			}
+		} else {
+			System.out.println(dir + "Справочник существует!");
+		}
+		return dir;
+	}
+
+	/**
+	  * Функция @function: размещение листа, сгенерированный и записанный в физический файл @Input Параметр:
+	  * @param xwb Рабочий лист
+	  * @param filepath должен быть записан в физическом пути файла
+	 */
+	public static void writeWBToFile(XSSFWorkbook xwb, String filePath) {
+
+		try {
+
+			FileOutputStream fos = new FileOutputStream(filePath);
+
+			xwb.write(fos);
+
+			fos.close();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	  * Укажите указанную строку и укажите указанное значение на указанной странице листа
+	 * 
+	 * @param sheet
+	 * @param row
+	 * @param cell
+	 * @param value
+	 */
+	public static void setCellValue(XSSFSheet sheet, int row, int cell, String value) {
+
+		XSSFRow myRow = sheet.getRow(row);
+
+		if (myRow == null) {
+
+			myRow = sheet.createRow(row);
+		}
+
+		XSSFCell myCell = myRow.getCell(cell);
+
+		if (myCell == null) {
+
+			myCell = myRow.createCell(cell);
+		}
+
+		myCell.setCellType(XSSFCell.CELL_TYPE_STRING);
+		myCell.setCellValue(value);
+	}
+	
+	/**
+	  * Функция @function: Получите страницу листа, указанную Excel в соответствии с путем файла Excel и индексом страницы листа @ @Input Параметры:
+	  * @param feefferilepath excel palie
+	  * @param листовинтекс индексы, чтобы получить страницу листа
+	 */
+	public static XSSFSheet getExcelSheetFromFilePath(String excelFilePath, int sheetIndex) {
+
+		try {
+			File file = new File(excelFilePath);
+			FileInputStream fis = new FileInputStream(file);
+			XSSFWorkbook xwb = new XSSFWorkbook(fis);
+			XSSFSheet sheet = xwb.getSheetAt(sheetIndex);
+			fis.close();
+			return sheet;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+}
+
+///
+
+MyHandler.java
+package domain;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.eclipse.core.commands.AbstractHandler;
+import org.eclipse.core.commands.ExecutionEvent;
+import org.eclipse.core.commands.ExecutionException;
+
+import com.sun.mail.handlers.message_rfc822;
+import com.teamcenter.rac.aif.AbstractAIFUIApplication;
+import com.teamcenter.rac.aif.kernel.AIFComponentContext;
+import com.teamcenter.rac.aif.kernel.InterfaceAIFComponent;
+import com.teamcenter.rac.aifrcp.AIFUtility;
+import com.teamcenter.rac.kernel.TCComponentBOMLine;
+import com.teamcenter.rac.kernel.TCComponentDataset;
+import com.teamcenter.rac.kernel.TCComponentItem;
+import com.teamcenter.rac.kernel.TCComponentItemRevision;
+import com.teamcenter.rac.kernel.TCException;
+import com.teamcenter.rac.kernel.TCPreferenceService;
+import com.teamcenter.rac.kernel.TCSession;
+import com.teamcenter.rac.util.MessageBox;
+
+import bean.ItemInfo;
+import util.ExcelUtil;
+import util.ItemUtil;
+
+/**
+   * Согласно предпочтительным параметрам, настроенным на TC, получите информацию о дереве BOM на TC, распечатайте ее в отчете, создайте набор данных, поместите набор данных под элементом, где расположен верхний слой, и загрузите отчет к набору данных в набор данных
+ * 
+ * @author LIDESEN
+ *
+ */
+public class MyHandler extends AbstractHandler {
+	private static AbstractAIFUIApplication app = null;
+	private static TCSession session = null;
+	private static Logger logger = null;
+	List<ItemInfo> list = new ArrayList<ItemInfo>();
+
+	public Object execute(ExecutionEvent arg0) throws ExecutionException {
+		// Инициализировать журнал модуль
+		logger = getLogger();
+		// Инициализировать текущее применение TC
+		app = AIFUtility.getCurrentApplication();
+		// получить сеанс
+		session = (TCSession) app.getSession();
+		// Получить первую службу опции
+		TCPreferenceService preferenceService = session.getPreferenceService();
+
+		/**
+		  * Получите дерево Бом через выбор мыши
+		 */
+		/*
+		InterfaceAIFComponent com = app.getTargetComponent();
+		if (com != null) {
+			if (com instanceof TCComponentItemRevision) {
+				TCComponentItemRevision itemRevision = (TCComponentItemRevision) com;
+				 // Получить объект Bomeline через компонентную версию, которая также является нижним слоем дерева Бом
+				TCComponentBOMLine topBomLine = ItemUtil.getBOMLine(itemRevision, session);
+				 // Сохранить некоторые атрибуты, где верхняя часть линии находится и сохраняется через Javabean в коллекцию через Javabean
+				try {
+					list.add(new ItemInfo(itemRevision.getProperty("item_id"), itemRevision.getProperty("object_name"),
+							itemRevision.getProperty("object_desc"), topBomLine.getProperty("bl_sequance_no"),
+							topBomLine.getProperty("bl_uom")));
+					 // Получайте все объекты Bomline под деревом Bom
+					AIFComponentContext[] bomLines = topBomLine.getChildren();
+					for (int i = 0; i < bomLines.length; i++) {
+						InterfaceAIFComponent bomline = bomLines[i].getComponent();
+						if (bomline instanceof TCComponentBOMLine) {
+							TCComponentBOMLine bl = (TCComponentBOMLine) bomline;
+							 // Получить объект ревизии через Bomline
+							TCComponentItemRevision itemRevision2 = ((TCComponentBOMLine) bl).getItemRevision();
+							 // Сохраните некоторые атрибуты, где находится Bomline, а Bomline сохраняется через Javabean для коллекции через Javabean
+							list.add(new ItemInfo(itemRevision2.getProperty("item_id"),
+									itemRevision2.getProperty("object_name"), itemRevision2.getProperty("object_desc"),
+									bl.getProperty("bl_sequence_no"), bl.getProperty("bl_uom")));
+							 // рекурсивно пересекающее дерево Бом
+							recursion(bl);
+						}
+					}
+					 // Получить объект из эксплуатационного листа шаблона
+					String exclePath = "C:\\excel\\bomMessage.xlsx";
+					XSSFSheet sheet = ExcelUtil.getExcelSheetFromFilePath(exclePath, 0);
+					if (sheet != null) {
+						 // Распечатать данные списка в файл Excel. Внешний цикл - это объект строки, который получает измеренный шаблон;
+						 // Поскольку шаблон из эксплуатации начинается со второй строки, он должен начать с 1; если он перемещается до конца списка, List.Size () + 1.
+						for (int i = 1; i < list.size() + 1; i++) {
+							 // Индекс элемента SET начинается с 0, поэтому следующее.
+							ItemInfo itemInfo = list.get(i - 1);
+							 // Внутренняя циркуляция - получить объекты ячейки и установить значение ячейки
+							for (int j = 0; j < 6; j++) {
+								if (j == 0) {
+									 // серийный номер
+									ExcelUtil.setCellValue(sheet, i, j, i + "");
+								} else if (j == 1) {
+									// id
+									ExcelUtil.setCellValue(sheet, i, j, itemInfo.getItem_id());
+								} else if (j == 2) {
+									 // Имя
+									ExcelUtil.setCellValue(sheet, i, j, itemInfo.getObject_name());
+								} else if (j == 3) {
+									 									// описывать 
+									ExcelUtil.setCellValue(sheet, i, j, itemInfo.getObject_desc());
+								} else if (j == 4) {
+									ExcelUtil.setCellValue(sheet, i, j, itemInfo.getBl_sequance_no());
+								} else if (j == 5) {
+									ExcelUtil.setCellValue(sheet, i, j, itemInfo.getBl_uom());
+								}
+							}
+						}
+						 // Получить лист листа
+						XSSFWorkbook workbook = sheet.getWorkbook();
+						 // Получить системный путь временного каталога
+						String tempDir = ExcelUtil.createTempDir();
+						 // Создать путь экспорта файла Excel
+						 String exortPath = tempdir + itemRevision.getProperty ("object_name") + "Информация Table.xlsx";
+						 // Сохранить рабочий лист страницы листа Excel и сохранить его под локальным физическим путем
+						ExcelUtil.writeWBToFile(workbook, exortPath);
+						 // Создать набор данных под верхней линией Bomline
+						TCComponentDataset dataset = ItemUtil.createDataset("MSExcelX",
+								 itemRevision.getProperty ("Object_Name") + "Информационная таблица", "", session);
+						 // Добавить из эксплуатационного файла в набор данных
+						dataset.setFiles(new String[] { exortPath }, new String[] { "excel" });
+						 // Повесить набор данных в ItemRevision, где верхний линию Bomline расположен с нормативными отношениями
+						itemRevision.add("IMAN_specification", dataset);
+						 MessageBox.post («Поздравляю, отчет был успешным!», «Напоминание», MessageBox.Information);
+
+					} else {
+						 LoginFo («Страница листа пуста!»);
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+
+		} else {
+			 MessageBox.post («Пожалуйста, выберите версию Top Component Tree Tree!», «Ошибка», MessageBox.Error);
+		}
+		*/
+		
+		/**
+		  * Получите дерево BOM, сохранив идентификатор компонента, где верхний слой бомлин находится в предпочтительном варианте
+		 */
+		if (preferenceService != null) {
+			// Получить значение в премьере
+			String[] preValue = preferenceService.getStringValues("my_topBom_id");
+			if (preValue != null && preValue.length > 0) {
+				// Поскольку значение, которое я имею в предпочтительной конфигурации, является только одним элементом, напрямую берет значение
+				String itemId = preValue[0];
+				// Получить элемент объекта компонента через идентификатор компонента
+				TCComponentItem item = ItemUtil.querySingleItem(itemId, "Item", session);
+				if (item != null) {
+					try {
+						// Получить объект компонента через элемент объекта компонента ItemRevision
+						TCComponentItemRevision itemRevision = item.getLatestItemRevision();
+						// Получить объект Bomeline через компонентную версию, которая также является нижним слоем дерева Бом
+						TCComponentBOMLine topBomLine = ItemUtil.getBOMLine(itemRevision, session);
+						// Сохранить некоторые атрибуты, где верхняя часть линии находится и сохраняется через Javabean в коллекцию через Javabean
+						list.add(new ItemInfo(itemRevision.getProperty("item_id"),
+								itemRevision.getProperty("object_name"), itemRevision.getProperty("object_desc"),
+								topBomLine.getProperty("bl_sequance_no"), topBomLine.getProperty("bl_uom")));
+						// Получайте все объекты Bomline под деревом Bom
+						AIFComponentContext[] bomLines = topBomLine.getChildren();
+						for (int i = 0; i < bomLines.length; i++) {
+							InterfaceAIFComponent bomline = bomLines[i].getComponent();
+							if (bomline instanceof TCComponentBOMLine) {
+								TCComponentBOMLine bl = (TCComponentBOMLine) bomline;
+								// Получить объект ревизии через Bomline
+								TCComponentItemRevision itemRevision2 = ((TCComponentBOMLine) bl).getItemRevision();
+								// Сохраните некоторые атрибуты, где находится Bomline, а Bomline сохраняется через Javabean для коллекции через Javabean
+								list.add(new ItemInfo(itemRevision2.getProperty("item_id"),
+										itemRevision2.getProperty("object_name"),
+										itemRevision2.getProperty("object_desc"),
+										itemRevision2.getProperty("bl_sequance_no"),
+										itemRevision2.getProperty("bl_uom")));
+								// рекурсивно пересекающее дерево Бом
+								recursion(bl);
+							}
+						}
+						// Получить объект из эксплуатационного листа шаблона
+						String exclePath = "C:\\excel\\bomMessage.xlsx";
+						XSSFSheet sheet = ExcelUtil.getExcelSheetFromFilePath(exclePath, 0);
+						if (sheet != null) {
+							/*
+							  * Распечатайте данные списка в файл Excel. Внешний цикл - это объект строки, который получает измеренный шаблон;
+							 * Поскольку шаблон из эксплуатации начинается со второй строки, он должен начать с 1; если он перемещается до конца списка, list.size () + 1.
+							 */
+							for (int i = 1; i < list.size() + 1; i++) {
+								// Индекс элемента SET начинается с 0, поэтому следующее.
+								ItemInfo itemInfo = list.get(i - 1);
+								// Внутренняя циркуляция - получить объекты ячейки и установить значение ячейки
+								for (int j = 0; j < 6; j++) {
+									if (j == 0) {
+										// серийный номер
+										ExcelUtil.setCellValue(sheet, i, j, i + "");
+									} else if (j == 1) {
+										// id
+										ExcelUtil.setCellValue(sheet, i, j, itemInfo.getItem_id());
+									} else if (j == 2) {
+										// Имя
+										ExcelUtil.setCellValue(sheet, i, j, itemInfo.getObject_name());
+									} else if (j == 3) {
+										// описывать
+										ExcelUtil.setCellValue(sheet, i, j, itemInfo.getObject_desc());
+									} else if (j == 4) {
+										ExcelUtil.setCellValue(sheet, i, j, itemInfo.getBl_sequance_no());
+									} else if (j == 5) {
+										ExcelUtil.setCellValue(sheet, i, j, itemInfo.getBl_uom());
+									}
+								}
+							}
+							// Получить лист листа
+							XSSFWorkbook workbook = sheet.getWorkbook();
+							// Получить системный путь временного каталога
+							String tempDir = ExcelUtil.createTempDir();
+							// Создать путь экспорта файла Excel
+							String exortPath = tempDir + itemRevision.getProperty("object_name") + "Информационная таблица.xlsx";
+							// Сохранить рабочий лист страницы листа Excel и сохранить его под локальным физическим путем
+							ExcelUtil.writeWBToFile(workbook, exortPath);
+							// Создать набор данных под верхней линией Bomline
+							TCComponentDataset dataset = ItemUtil.createDataset("MSExcelX",
+									itemRevision.getProperty("object_name") + "Информационный лист", "", session);
+							// Добавить из эксплуатационного файла в набор данных
+							dataset.setFiles(new String[] { exortPath }, new String[] { "excel" });
+							// Повесить набор данных в ItemRevision, где верхний линию Bomline расположен с нормативными отношениями
+							itemRevision.add("IMAN_specification", dataset);
+							MessageBox.post(«Поздравляю, отчет успешен!», "намекать", MessageBox.INFORMATION);
+						} else {
+							loginfo("Страница листа пуста!");
+						}
+					} catch (TCException e) {
+						e.printStackTrace();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				} else {
+					loginfo("Объект получения компонента не удался!");
+				}
+			} else {
+				loginfo("Получите первые варианты не удалось!");
+			}
+		} else {
+			loginfo("Неспособность получить первую службу опции!");
+		}
+		return null;
+	}
+
+	// рекурсивно пересекание дерева Бом и добавление информации, связанной с Бом, в сборку
+	public void recursion(TCComponentBOMLine bomLine) throws Exception {
+		// Получайте все объекты Bomline под деревом Bom
+		AIFComponentContext[] bomLines = bomLine.getChildren();
+		for (int i = 0; i < bomLines.length; i++) {
+			InterfaceAIFComponent bomline = bomLines[i].getComponent();
+			if (bomline instanceof TCComponentBOMLine) {
+				TCComponentBOMLine bl = (TCComponentBOMLine) bomline;
+				// Получить объект ревизии через Bomline
+				TCComponentItemRevision itemRevision2 = ((TCComponentBOMLine) bl).getItemRevision();
+				// Сохраните некоторые атрибуты, где находится Bomline, а Bomline сохраняется через Javabean для коллекции через Javabean
+				ItemInfo itemInfo = new ItemInfo(itemRevision2.getProperty("item_id"),
+						itemRevision2.getProperty("object_name"), itemRevision2.getProperty("object_desc"),
+						itemRevision2.getProperty("bl_sequance_no"), itemRevision2.getProperty("bl_uom"));
+				list.add(itemInfo);
+				loginfo(itemInfo.toString());
+				// рекурсивно пересекающее дерево Бом
+				recursion(bl);
+			}
+		}
+	}
+
+	private void loginfo(String info) {
+		logger.info(info + "\r\n");
+	}
+
+	private Logger getLogger() {
+		if (logger != null) {
+			return logger;
+		}
+		Logger logger = Logger.getLogger("tang");
+		logger.setLevel(Level.ALL); // Записывать все уровни
+		try {
+			/ * Установить журналы записи файла */
+			FileHandler fileHandler = new FileHandler("C:\\lidesen.txt"); // Если файловый каталог не существует, он не будет создан автоматически, он будет создавать аномалии
+			fileHandler.setFormatter(new SimpleFormatter());
+			logger.addHandler(fileHandler);
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return logger;
+	}
+}
+
+///
+
+TCComponentForm form = (TCComponentForm) ItemRev.getRelatedComponent("IMAN_master_form_rev");
+
+///
+
+TCComponent tableRow = createTCComponent(session, HF8_DYSQBRevisionMasterTable.tableType, stringProperties, null, null);
+
+public static TCComponent createTCComponent(TCSession session, String componentType,
+		Map<String, String> stringProperties, Map<String, BigInteger> intProperties,
+		Map<String, TCComponent> tagProperties) {
+		try {
+			DataManagementService ds = DataManagementService.getService(session);
+
+			CreateIn in = new CreateIn();
+			in.clientId = componentType + System.currentTimeMillis();
+
+			CreateInput input = new CreateInput();
+			input.boName = componentType;
+			if (stringProperties != null)
+				input.stringProps = stringProperties;
+			if (intProperties != null)
+				input.intProps = intProperties;
+			if (tagProperties != null)
+				input.tagProps = tagProperties;
+			in.data = input;
+
+			CreateResponse resp = ds.createObjects(new CreateIn[] { in });
+			String error = handleServiceData(resp.serviceData);
+			if (error == null) {
+				return (TCComponent) resp.serviceData.getCreatedObject(0);
+			} else {
+				System.out.println(error);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+
+public static String handleServiceData(final ServiceData sData) {
+	int noPartErrors = sData.sizeOfPartialErrors();
+	if (noPartErrors > 0) {
+		String errorMessage = "";
+		for (int i = 0; i < noPartErrors; i++) {
+			ErrorStack errorStack = sData.getPartialError(i);
+			String[] messages = errorStack.getMessages();
+			for (int j = 0; messages != null && j < messages.length; j++) {
+				errorMessage = errorMessage + messages[j] + "\n";
+			}
+		}
+
+		if (errorMessage.length() > 0) {
+			return errorMessage;
+		}
+	}
+
+	return null;
+}
+
+///
+
+TCProperty property = itemRevMaster.getTCProperty("hf8_GCJL_REV_000");
+
+///
+
+// 得到Dataset的创建类
+TCComponentDatasetType datasetType = (TCComponentDatasetType) session.getTypeComponent("Dataset");
+// 准备相关参数 类型名称以及命名引用
+String datasetTypeName = "MSExcelX";
+String nameReference = "excel";
+// 获取放进数据集的文件的文件名ItemID+Item_name
+String name = itemRev.getItem().getProperty("item_id")+"-" + itemRev.getProperty("object_name");
+// 创建数据集
+TCComponentDataset dataset = datasetType.create(name, "", datasetTypeName);
+TCComponentDataset existDataset = (TCComponentDataset)itemRev.getRelatedComponent("IMAN_specification");
+// 锁定数据集
+dataset.lock();
+if(existDataset != null){
+	itemRev.remove("IMAN_specification", existDataset);
+	existDataset.delete();
+	}
+// 把本地文件存进数据集中，参数为文件的绝对路径和命名引用
+dataset.setFiles(new String[] { filePath }, new String[] { nameReference });
+dataset.save();
+// 将数据集挂在文件夹下，并解锁
+//itemRev.add("IMAN_specification", dataset);
+SaveUtils.getInstance().copyRelationByPass(itemRev.getSession().getUserService(),itemRev,dataset,"IMAN_specification");
+dataset.unlock();
+
+///
+
+TCComponent[] bomviewrevs = itemRevision.getRelatedComponents("structure_revisions");
+
+///
+
+TCComponent[] referenceListProperty = cmp.getReferenceListProperty("release_status_list");
+//或者
+List<String> currentStatusList = itemRevision.getPropertyDisplayableValues("release_status_list");
+
+///
+
+<menuContribution
+		locationURI="popup:org.eclipse.ui.popup.any?after=additions">
+		<command commandId="com.hfplm.report.AddLBJItemHandler">
+			<visibleWhen>
+				<and>
+					<iterate
+						ifEmpty="false">
+						<reference
+							definitionId="com.teamcenter.rac.ui.inMainPerspective">
+						</reference>
+						<adapt
+							type="com.teamcenter.rac.kernel.TCComponent"><and>
+							<test property="com.teamcenter.rac.kernel.TCComponent.typeClass" value="HF8_ECN2Revision"/>
+						</and>
+					</adapt>
+				</iterate>
+			</and>
+		</visibleWhen>
+	</command>
+</menuContribution>
+
+///
+
+String perspectiveId = "com.teamcenter.rac.pse.PSEPerspective";
+TCComponent component = session.stringToComponent("S8X1lTpTIbkW8B");
+Activator.getDefault().openPerspective(perspectiveId );
+Activator.getDefault().openComponents(perspectiveId, new InterfaceAIFComponent[]{component});
+
+///
+
+	TCComponentProcess t= (TCComponentProcess) session.stringToComponent(uid);
+​	TCComponentTask rootTask = t.getRootTask();
+​	TCComponent[] attachments = rootTask.getAttachments(TCAttachmentScope.LOCAL, TCAttachmentType.REFERENCE);
+
+///
+
+	1.常用的关系whereReferenced, IMAN_reference, IMAN_specification
+//2.获取关联的组件
+​	  TCComponent[] tccomps = tccomp.getRelatedComponents();
+//3.获取被引用的组件
+​	  AIFComponentContext[] tccomps3 = tccomp.whereReferenced();
+//4.获取在哪里使用（装配关系）
+​	  TCComponent[] tccomps2 = tccomp.whereUsed(TCComponent.WHERE_USED_ALL);
+
+///
+
+其他的一些操作。
+A.//把数据集以Specifications的关系挂在选中版本对象下
+	revision.add("IMAN_specification", dataset);
+B.//另存新建的数据集对象，并命名为temp_new_dataset
+	TCComponentDataset d2 = dataset.saveAs("temp_new_dataset");
+C.//挂在临时文件夹中
+	session.getUser().getNewStuffFolder().add("contents", d2);
+D.//将数据集中的文件导出到本地目录C:\Temp下
+	String outputDirectory = new String("C:\\Temp\\");
+	d2.getFiles(nameReference, outputDirectory);    *导出不要用到getFile（），不然导不出
+
+///
+
+  /* Get all component by relation name and type 
+  * @param primary
+  * @param relationName
+  * @param typeName
+  * @return
+  * @throws TCException */
+
+ public static TCComponent[] getComponents(TCComponent primary, String relationName, String typeName) {
+  List<TCComponent> list = new ArrayList<TCComponent>();
+  try {
+   AIFComponentContext[] notes = primary.getRelated(relationName);
+   if (notes != null && notes.length != 0) {
+    for (AIFComponentContext note : notes) {
+     if (typeName == null || typeName.isEmpty()) {
+      list.add((TCComponent) note.getComponent());
+     } else if (note.getComponent().getType().equalsIgnoreCase(typeName)) {
+      list.add((TCComponent) note.getComponent());
+     }
+    }
+   }
+  } catch (TCException e) {
+   e.printStackTrace();
+  }
+  return list.toArray(new TCComponent[0]);
+ }
+
+///
+
+11. /**
+  * Attaches file to dataset and that dataset is attached to the item.
+  *
+  * @param file
+  * @param strDatasetType
+  * @param namedRef
+  * @param relationName
+  * @param item
+  * @return
+  * @throws TCException
+  */
+ public static boolean attachDataset2Item(String file, String strDatasetType, String namedRef, String relationName, TCComponent item)
+ throws TCException
+ {
+  boolean isSuccess = false;
+  TCComponentDataset tcCompDataset = null;
+  TCComponent relatedComps[] = item.getRelatedComponents(relationName);
+
+  if(relatedComps != null && relatedComps.length > 0)
+  {
+   for(int count = 0; count < relatedComps.length; count++)
+   {
+    TCComponent imanDatasetComp = relatedComps[count];
+    if(imanDatasetComp == null || !(imanDatasetComp instanceof TCComponentDataset))
+     continue;
+
+    if(imanDatasetComp.getType().equals(strDatasetType))
+    {
+      String splitNames[] = imanDatasetComp.toString().split("_");        
+     if(splitNames.length > 3){
+      if(splitNames[4].equals(sFormat)){
+      tcCompDataset = (TCComponentDataset)imanDatasetComp;
+      break;
+      }
+     }
+    }          
+   }
+  } else
+  {
+   System.out.println("No dataset found");
+  }
+
+  try {
+   if(tcCompDataset != null)
+   {
+    tcCompDataset.refresh();
+    System.out.println("PDF dataset is available");
+    tcCompDataset.removeFiles(namedRef);
+    tcCompDataset.refresh();
+
+   }  
+   else
+   {    
+    tcCompDataset = createDataset(item.getTCSession(), strDatasetType, pdfFileName); //createDataset is a static method available above
+
+    if(tcCompDataset != null){
+     item.add(relationName, tcCompDataset);
+    }        
+    else
+     throw new TCException((new StringBuilder(String.valueOf(strDatasetType))).append(" Dataset missing for the item").toString());
+   }
+
+
+   tcCompDataset.setFiles(new String[] { file }, new String[] { namedRef });
+
+ AIFDesktop desktop;
+desktop = AIFUtility.getActiveDesktop();
+Registry reg;
+reg = Registry.getRegistry(this);
+
+   AbstractAIFCommand abstractaifcommand = (AbstractAIFCommand)reg.newInstanceFor("openCommand", new Object[] {desktop, tcCompDataset});
+
+   abstractaifcommand.executeModeless();
+
+  } catch (Exception e) {  
+   e.printStackTrace();
+  }  
+
+  isSuccess = true;
+  return isSuccess;
+ }
+-----------------------------------
+///
+
+13. /**
+  * Paste item into NewStuff Folder
+  * @param session
+  * @param item
+  * @return
+  * @throws Exception
+  */
+ public static TCComponentBOMLine pasteItem (TCSession session, TCComponent item) throws Exception {
+TCComponentUser user = session.getUser();
+System.out.println(" User = "+user);
+                       
+TCComponentFolder newstuffFolder = user.getNewStuffFolder();
+System.out.println(" NewStuff Folder  = "+newstuffFolder);
+                       
+String relation = newstuffFolder.getDefaultPasteRelation();
+
+// Add Business Object (TCComponet) in Newstuff folder
+newstuffFolder.add(relation, item);
+
+}
+
+///
+
+13. /**
+  * Paste item into NewStuff Folder
+  * @param session
+  * @param item
+  * @return
+  * @throws Exception
+  */
+ public static TCComponentBOMLine pasteItem (TCSession session, TCComponent item) throws Exception {
+TCComponentUser user = session.getUser();
+System.out.println(" User = "+user);
+                       
+TCComponentFolder newstuffFolder = user.getNewStuffFolder();
+System.out.println(" NewStuff Folder  = "+newstuffFolder);
+                       
+String relation = newstuffFolder.getDefaultPasteRelation();
+
+// Add Business Object (TCComponet) in Newstuff folder
+newstuffFolder.add(relation, item);
+
+}
+
+///
+
+6. /** Get variant list of bomline */
+
+    public static String[] getVariants(TCComponentBOMLine bLine) {
+        if (bLine == null)
+            return null;
+
+        TCComponentItemRevision rev;
+        VariantCondition varCond;
+        try {
+            rev = bLine.getItemRevision();
+            TCComponent bomLineCond = bLine.getReferenceProperty("bl_condition_tag");
+            ItemRevVariantData irvd = ItemRevVariantData.create(rev, bLine.window());
+
+            if (bomLineCond == null) {
+                varCond = VariantCondition.create(bLine.window());
+                if (irvd != null) {
+                    varCond.setVariantDataContext(irvd);
+                }
+            } else {
+                varCond = VariantCondition.create(bomLineCond, bLine.window(), irvd);
+            }
+
+            return varCond.asText();
+        } catch (TCException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+///
+
+7. /** Has status on component?  */
+
+    public static boolean hasStatus(TCComponent component, String status) {
+        try {
+            TCComponent[] revStatus = component.getTCProperty("release_status_list").getReferenceValueArray();
+
+            for (int i = 0; revStatus != null && i < revStatus.length; i++) {
+                String statusName = revStatus[i].getTCProperty("name").getPropertyValue().toString();
+                if (statusName.equalsIgnoreCase(status)) {
+                    return true;
+                }
+            }
+        } catch (TCException e) {
+        }
+        return false;
+    }
+
+///
+
+11. /** Return IMAN relation map<relation_name, relation_display_name>  */
+
+    public static Map<String, String> getRelationList(TCSession session) {
+        Map<String, String> relations = new HashMap<String, String>(0);
+        Map<String, List<String>> inputList = new HashMap<String, List<String>>(0);
+        List<String> exclusionList = new ArrayList<String>(0);
+        inputList.put("ImanRelation", exclusionList);
+        Map<String, List<DisplayTypeInfo>> dispTypes = TCUtilities.getDisplayableTypeNamesWithHierarchyInfo(session, inputList);
+        if (dispTypes != null && !dispTypes.isEmpty()) {
+            for (Map.Entry<String, List<DisplayTypeInfo>> entry : dispTypes.entrySet()) {
+                List<DisplayTypeInfo> typeInfos = entry.getValue();
+                if (typeInfos != null && !typeInfos.isEmpty()) {
+                    for (DisplayTypeInfo typeInfo : typeInfos) {
+                        relations.put(typeInfo.getTypeName(), typeInfo.getDisplayTypeName());
+                    }
+                }
+            }
+        }
+        return relations;
+    }
+
+///
+
+
+
