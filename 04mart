@@ -1,0 +1,2566 @@
+//
+public boolean isInWorkflow(String uid) throws Exception {
+ 
+		System.out.println("UID " + uid);
+		// load item
+		WorkspaceObject m = (WorkspaceObject) loadObject(uid);
+		
+		// load addtional data
+		loadData(m, "object_string");
+		
+		System.out.println(m.get_object_string());
+		
+		// find refrences
+		WhereReferencedResponse response = dataMgmtService.whereReferenced(new WorkspaceObject[] { m }, 1);
+		
+		// dump resposne 
+		printServiceData(response.serviceData);
+		
+		// check if item has some EPMTask References
+		for (int i = 0; i < response.serviceData.sizeOfPlainObjects(); i++) {
+			ModelObject mo = response.serviceData.getPlainObject(i);
+			
+			loadData(mo, "object_string");
+			System.out.println(mo.getPropertyDisplayableValue("object_string"));
+			
+			// check the task state
+			if (mo instanceof EPMTask) {
+				EPMTask task = (EPMTask) mo;
+				loadData(task, "task_result", "task_state");
+				System.out.println(task.get_object_string() + " " + task.get_task_result() + " " + task.get_task_state());
+				if(!"Completed".equalsIgnoreCase(task.get_task_result())) {
+					// item has at least one task reference with state != complete
+					return true;
+				}
+			}
+ 
+		}
+		
+		return false;
+	}
+
+
+I think you misread what I wrote.
+
+process_stage_list is populated for the objects that are targets of a workflow.
+
+
+You will still need refreshObjects even with this.
+//
+
+My code, tried but the result is null
+
+​
+
+com.teamcenter​.service.loose.core.DataManagementService;
+
+com.teamcenter.soa.client.model.ModelObject;
+
+​
+
+DataManagementService DMS = DataManagementService.getService(connection);
+
+DMS.getProperties(child, ​"bl_parent");
+
+ModelObject​ parent = child.getPropertyObject("bl_parent"). getModelObjectValue();
+
+​
+
+​Result is null, why?
+
+//
+
+public File getDataSetFileByType(ModelObject modelObject, String objctType) throws FileNotFoundException, NotLoadedException, InterruptedException, ServiceException {
+        String casheDir="D:\\temp\\";
+  
+        String a="http://localhost:4544";
+        String[] b=new String[]{"http://localhost:4544"};
+        Connection connection=TcLogin.getConnection();
+        DataManagementService dmService = DataManagementService.getService(connection);
+        FileManagementService fmService=FileManagementService.getService(connection);
+ 
+        FileManagementUtility fMSFileManagement = new FileManagementUtility(connection,null,null,b,casheDir);
+        
+        File file=null;
+        String[] attributes=new String[]{"ref_list"};
+        Dataset dataset=(Dataset) loadObjectProperty(modelObject,attributes,connection);
+        ModelObject[] files=dataset.get_ref_list();
+        
+        if(files.length>=1){
+            if(files.length!=0){
+                File[] files1=fMSFileManagement.getFiles(files).getFiles();
+ 
+                if(files1.length==1){
+                    file=files1[0];
+                }else {
+                    for(File file1 : files1){
+                        if(objctType.equals("Solid Edge Draft")){
+                            file=file1;
+                        }else {
+                            file=file1;
+                        }
+                    }
+                }
+            }
+        }
+ 
+        return file;
+    }
+
+Hello,
+
+ 
+
+Did you ever find a solution for this? I have the same problem - after downloading a file, if the Dataset is modified (Named Reference updated) the previous version of the Dataset (with the old Named Reference) is still found, and the old file downloaded.
+
+ 
+
+Inside RAC everything looks OK - the new file is available in the Dataset.
+
+ 
+
+Restarting the service that downloads the file makes the correct file be downloaded on the next attempt. Also, downloading the same file on another server gives the correct file. Seems like some kind of caching issue when downloading more than once on the same server.
+
+ 
+
+Kind regards,
+
+Jan Albin
+
+
+//
+
+I have a ModelObject, of Type TC_Project.
+
+I would like an Item/ItemRevision, in order to get the BOM.
+
+
+Other threads here suggest it is possible to cast from ModelObject to ItemRevision, for example https://bbs.industrysoftware.automation.siemens.com/vbulletin/showthread.php?t=49038&highlight=BOMLine
+
+
+However, this throws with a ClassCastException, "Project cannot be cast to ItemRevision."
+
+
+I tried an alternative approach;
+
+
+com.teamcenter.soa.client.model.Type t = object.getType();
+
+String uid = object.getUid();
+
+ItemRevision rev = new ItemRevision(t, uid);
+
+rev.copyProperties((ModelObjectImpl) object);
+
+
+
+all appears ok, except when I try to get the Bom;
+
+
+CreateBOMWindowsInfo[] bwi = new CreateBOMWindowsInfo;
+
+bwi = new CreateBOMWindowsInfo();
+
+bwi.itemRev = rev;
+
+bwi.item = rev.get_items_tag();
+
+
+
+throws with NotLoadedException, since the items_tag property is not loaded in the client model.
+
+I can't load the "items_tag" property, with
+
+
+sd = dmService.getProperties(new ItemRevision[] {rev}, new String[] {"items_tag"});
+
+
+
+as items_tag is not a property of ItemRevision.
+
+
+I realise I'm floundering here. The documentation leaves something to be desired. Any help would be much appreciated.
+
+//
+
+Hi Christian,
+
+The problem is that I don't have an ItemRevision. I have a ModelObject, and the Item / ItemRevision is what I'm trying, and failing to get.
+
+I'm attempting to recursively get the BOM for all projects for a given user.
+
+My code so far starts by getting all objects, which does include the projects that I want the BOM for.
+
+DataManagementService dmService = DataManagementService.getService(WHSession.getConnection());
+
+StructureManagementService smService = StructureManagementService.getService( WHSession.getConnection() );
+
+ModelManager modelMgr = WHSession.getConnection().getModelManager();
+
+Vector allObjects = modelMgr.getObjectsFromStore();
+
+for( ModelObject object : allObjects){
+
+if(object.getType().getClassName().equals("TC_Project")){
+
+
+.....somehow get an ItemRevision from the ModelObject......
+
+CreateBOMWindowsInfo[] bwi = new CreateBOMWindowsInfo;
+
+bwi = new CreateBOMWindowsInfo();
+
+bwi.itemRev = rev;
+
+bwi.item = rev.get_items_tag();
+
+CreateBOMWindowsResponse bwr = smService.createBOMWindows(bwi);
+
+CreateBOMWindowsInfo info = new CreateBOMWindowsInfo();
+
+info.itemRev = rev;
+
+info.item = rev.get_items_tag();
+
+CreateBOMWindowsResponse resp = smService.createBOMWindows(new CreateBOMWindowsInfo[] { info });
+
+CreateBOMWindowsOutput[] bwo = resp.output;
+
+BOMWindow bw = bwo.bomWindow;
+
+BOMLine topLine = bwo.bomLine;
+
+Once I have the top BOMLine, I'll be away. But there's a bit missing in the middle. Perhaps I'm completely on the wrong track, I don't know. How would I use loadObject to help me?
+
+Thanks,
+
+Jackie
+
+//
+
+SOA does not automatically pull all available attributes from tcae (thats why you get the "not loaded" exception). So you need to pull the attribute manually using GetProperties() from core._2006_03.DataManagement.
+
+
+c# Code snippet shows it
+
+
+
+using Core = Teamcenter.Services.Strong.Core;
+
+public static void LoadProperties(ModelObject[] objs, string[] attributes)
+
+{
+
+Core.DataManagementService dmService = Core.DataManagementService.getService(Session.getConnection());
+
+ServiceData sd = dmService.GetProperties(objs, attributes);
+
+log.DebugFormat("loaded {2} properties for {0} of {1} objects", sd.sizeOfPlainObjects(), objs.Length, attributes.Length);
+
+}
+
+
+
+I tried to come up with a "automatic pull", i.e. if you try to access a "not loaded" attribute the "loading" is done automatically and you do not have to worry in your code if the attribute is loaded or not. Unfortunately I haven' found a method to do this (someone else having a bright idea here?). I think you would need to change the implementation of ModelObject for this.
+
+
+HTH
+
+
+Christian
+
+//
+
+	/*!
+	 * \brief Get a Volume ModelObject
+	 * \param[in]  iConnection TC Connection object
+	 * \param[in]  iVolume Name of the volume
+	 * \return volume object
+	 */
+	public static ModelObject Get_Volume(Connection iConnection, String iVolume) throws Exception
+	{
+		Map<String, String> searchCriteria = Map.of( "volume_name", iVolume);
+		SearchInput2 searchInput = new SearchInput2();
+		searchInput.providerName = "Fnd0BaseProvider";
+		searchInput.searchCriteria = searchCriteria;
+		searchInput.startIndex = 0;
+		searchInput.maxToReturn = 1;
+		searchInput.maxToLoad = 1;
+		searchInput.searchFilterFieldSortType = "Alphabetical";
+		searchInput.internalPropertyName = "volume_name";
+		
+		FinderService finderService = FinderService.getService(iConnection);
+		SearchResponse2 response = finderService.performSearch(searchInput);
+ 
+		if (response.serviceData.sizeOfPartialErrors() > 0)
+		{
+			String ErrorMsg = "";
+			for (int i = 0; i < response.serviceData.sizeOfPartialErrors(); i++)
+			{
+				ErrorStack errorStack = response.serviceData.getPartialError(i);
+				String[] messages = errorStack.getMessages();
+				for (String msg : messages)
+				{ ErrorMsg = ErrorMsg + msg + "\n"; }
+			}
+			throw new Exception(ErrorMsg);
+		}
+ 
+		if (response.searchResults.length != 1)
+		{ throw new Exception("Get_Volume: " + iVolume + " not found. " + response.searchResults.length); }
+	
+		return response.searchResults[0];
+
+//
+
+/*!
+ * \brief Get a Volume ModelObject
+ * \param[in]  iConnection TC Connection object
+ * \param[in]  iVolume Name of the volume
+ * \return UID of the volume object
+ */
+public static String Get_Volume(Connection iConnection, String iVolume) throws Exception
+{
+    BusinessObjectQueryInput input = new BusinessObjectQueryInput();
+    BusinessObjectQueryClause clause = new BusinessObjectQueryClause();
+ 
+    clause.mathOperator = "=";
+    clause.logicOperator = "";
+    clause.propName = "volume_name";
+    clause.propValue = iVolume;
+ 
+    input.clientId = "TC_Integration";
+    input.maxNumToReturn = 0;
+    input.typeName = "ImanVolume";
+    input.clauses = new BusinessObjectQueryClause[] { clause };
+ 
+    SavedQueryService queryService = SavedQueryService.getService(iConnection);
+ 
+    SavedQueriesResponse response = queryService.executeBusinessObjectQueries(new BusinessObjectQueryInput[] { input });
+    ManageServiceData(response.serviceData);
+ 
+ 
+    if (response.arrayOfResults.length != 1)
+    { throw new Exception("Volume: " + iVolume + " not found. " + response.arrayOfResults.length); }
+ 
+    QueryResults result = response.arrayOfResults[0];
+    if (result.objectUIDS.length != 1)
+    { throw new Exception("Volume: " + iVolume + " not found. " + result.objectUIDS.length); }
+ 
+    return result.objectUIDS[0];
+}
+
+//
+
+using System;
+using System.Linq;
+using Teamcenter.Services.Strong.Core;
+using Teamcenter.Services.Strong.Core._2008_06.DataManagement;
+using Teamcenter.Soa.Client.Model;
+using Teamcenter.Soa.Client.Model.Strong;
+using Session = Teamcenter.ClientX.Session;
+ 
+public static void Main(string[] args)
+{
+    var serverHost = "http://SecretServerName:80/tc";
+    Session session = new Session(serverHost);
+    var user = session.login();
+    FileManagement fm = new FileManagement();
+    DataManagementService dmService = DataManagementService.getService(Session.getConnection());
+    Folder home = user.Home_folder;
+    ModelObject[] objects = { home };
+    String[] attributes = { "contents" };
+    dmService.GetProperties(objects, attributes);
+    WorkspaceObject[] contents = home.Contents;
+    var documents = contents.Where(predicate: item => item is PDF);
+    var document = documents.First();
+ 
+   // Now that I have a document, I want to download it.
+    
+    AttrInfo[] attrInfos = new AttrInfo[1];
+    AttrInfo attrInfo = new AttrInfo();
+ 
+    attrInfo.Name = "item_uid";
+    attrInfo.Value = document.Uid;
+    attrInfos[0] = attrInfo;
+ 
+    ItemInfo itemInfo = new ItemInfo();
+    itemInfo.ClientId = "Does_This_Client_ID_Matter";
+    itemInfo.UseIdFirst = false;
+    itemInfo.Uid = document.Uid;
+ 
+ 
+ 
+    GetItemAndRelatedObjectsInfo getItemAndRelatedObjectsInfo = new GetItemAndRelatedObjectsInfo()
+    {
+        ItemInfo = itemInfo
+    };
+ 
+    var getItemAndRelatedObjectsInfos = new[] { getItemAndRelatedObjectsInfo };
+ 
+    // Getting an error here on the next line:
+    // An error occurred in DOM parsing:
+    // The server returned an internal server error
+    // This is most likely the result of a programming error."
+    // A RuntimeException will be thrown.");
+    var results = dmService.GetItemAndRelatedObjects(getItemAndRelatedObjectsInfos);
+    
+    session.logout();
+}
+
+//
+
+Teamcenter.Services.Strong.Core.DataManagementService dmService = Teamcenter.Services.Strong.Core.DataManagementService.getService(Teamcenter.ClientX.Session.getConnection());
+
+ 
+
+//// Populate Fields in Item Revision
+
+ 
+
+        // Check out
+
+        Teamcenter.Services.Strong.Core.ReservationService resService = Teamcenter.Services.Strong.Core.ReservationService.getService(SomeGlobals.connection);
+
+        Teamcenter.Soa.Client.Model.ModelObject[] itemRevisions = new Teamcenter.Soa.Client.Model.ModelObject[1];
+
+        itemRevisions[0] = createdItem.ItemRev;
+
+        Teamcenter.Soa.Client.Model.ServiceData checkout_service = resService.Checkout(itemRevisions, "Properties_Populate", "");
+
+ 
+
+        // Populate Properties         
+
+ 
+
+        System.Collections.Hashtable item_rev_props = new System.Collections.Hashtable();
+
+        item_rev_props["mce2_MCE_Search_Prop"] = "Hello_World";
+
+ 
+
+        Teamcenter.Soa.Client.Model.ServiceData populate_service = dmService.SetProperties(itemRevisions, item_rev_props);
+
+ 
+
+        // Check in
+
+        System.Windows.Forms.MessageBox.Show("Start Checkin");
+
+        resService.Checkin(itemRevisions);
+
+        ////
+
+ 
+
+ 
+
+Any help would be much appreciated.
+
+//
+
+public static void GetChildren(ItemRevision Rev, out ModelObject[] children)
+        {
+            Core.SessionService sessionService = Core.SessionService.getService(gConnection);
+            Cad.StructureManagementService SMService = Cad.StructureManagementService.getService(gConnection);
+ 
+            // Load policies
+            ObjectPropertyPolicy policy = new ObjectPropertyPolicy();
+            policy.AddType("BOMLine", new String[] { "bl_child_lines", "bl_item_object_type" });
+            sessionService.SetObjectPropertyPolicy(policy);
+ 
+            // Open BOMWindow
+            CreateBOMWindowsInfo[] createBOMWindowsInfo = new CreateBOMWindowsInfo[1];
+            createBOMWindowsInfo[0] = new CreateBOMWindowsInfo() { ItemRev = Rev };
+            CreateBOMWindowsResponse createBOMWindowsResponse = SMService.CreateBOMWindows(createBOMWindowsInfo);
+            BOMLine TopBom = createBOMWindowsResponse.Output[0].BomLine;
+ 
+            // Check type of the Top
+            string TopBomType = TopBom.Bl_item_object_type; // <== return ItemRevision
+ 
+            // Get Children
+            children = TopBom.Bl_child_lines;
+            foreach (ModelObject child in children)
+            {
+                BOMLine bomLine = child as BOMLine;
+                string BomType = bomLine.Bl_item_object_type; // <== return: The bl_item_object_type property is not loaded in the client model.
+            }
+        }
+
+**
+ObjectPropertyPolicy policy = new ObjectPropertyPolicy();
+PolicyType BOMLineType = new PolicyType("BOMLine");
+BOMLineType.SetModifier(PolicyProperty.WITH_PROPERTIES, true);
+BOMLineType.AddProperties("bl_all_child_lines, bl_rev_item_id, bl_rev_item_revision_id, bl_item_object_type, bl_rev_object_desc, bl_level_starting_0, bl_item_uom_tag, bl_sequence_no, bl_quantity, PositionNo");
+policy.AddType(BOMLineType);
+**
+//
+
+ private void setObjectPolicy()
+    {
+        SessionService session = SessionService.getService(Teamcenter.ClientX.Session.getConnection());
+        ObjectPropertyPolicy policy = new ObjectPropertyPolicy();
+ 
+        PolicyType datasetType = new PolicyType("Dataset");
+        PolicyProperty property = new PolicyProperty("dataset_type");
+        PolicyProperty property2 = new PolicyProperty("object_type");
+        property.SetModifier(PolicyProperty.WITH_PROPERTIES, true);
+ 
+        datasetType.AddProperty(property);
+        datasetType.AddProperty(property2);
+ 
+        policy.AddType(datasetType);
+        policy.AddType("DataseType", new string[] { "dataset", "type_name", "object_name" });
+        policy.AddType("ItemRevision", new string[] { "object_string", "object_name", "item_id", "item_revision_id", "revision_list" });
+        policy.AddType("Item", new string[] { "object_type", "object_name", "items_tag.item_id" });
+        policy.AddType("IMAN_specification", new string[] { "type_string", "primary_object", "secondary_object" });
+        policy.AddType("BOMLine", new string[] { "bl_line_name", "is_packed" });
+        policy.AddType("BOMWindow", new string[] { "is_packed_by_default" });
+        policy.AddType("ImanFile", new string[] { "volume_tag", "file_name", "object_string" });
+        //policy.AddType("ImanVolume", new string[] { "wnt_path_name", "object_string" });
+ 
+        PolicyType VolumeType = new PolicyType("ImanVolume");
+        PolicyProperty property_V = new PolicyProperty("wnt_path_name");
+        PolicyProperty property2_V = new PolicyProperty("object_string");
+        property_V.SetModifier(PolicyProperty.WITH_PROPERTIES, true);
+ 
+        VolumeType.AddProperty(property_V);
+        VolumeType.AddProperty(property2_V);
+ 
+        policy.AddType(VolumeType);
+        //policy.AddType("ImanVolume", new string[] { "wnt_path_name", "object_string" });
+ 
+        session.SetObjectPropertyPolicy(policy);
+    }
+ 
+    public DataManagement(DataManagementService dmService)
+    {
+        //
+        // TODO: Agregar aquí la lógica del constructor
+        //
+ 
+        this.dmService = dmService;
+        dmService = DataManagementService.getService(Teamcenter.ClientX.Session.getConnection());
+        smService = StructureManagementService.getService(Teamcenter.ClientX.Session.getConnection());
+        queryService = SavedQueryService.getService(Teamcenter.ClientX.Session.getConnection());
+ 
+        setObjectPolicy();      
+    }
+ 
+public string get_Planos_PDF(string itemId, string Revision)
+    {
+        List<string> query_list = new List<string>();
+        string last_revision = "";
+        ImanQuery query = null;
+ 
+        try
+        {
+            GetSavedQueriesResponse savedQueries = queryService.GetSavedQueries();
+            if (savedQueries.Queries.Length == 0)
+            {
+                Console.WriteLine("There are no saved queries in the system.");
+                return null;
+            }
+ 
+            for (int i = 0; i < savedQueries.Queries.Length; i++)
+            {
+                query_list.Add(savedQueries.Queries[i].Name);
+ 
+                if (savedQueries.Queries[i].Name.Equals("_Ficheros_VV4_Planos_PDF"))
+                {
+                    query = savedQueries.Queries[i].Query;
+                    break;
+                }
+            }
+        }
+        catch (ServiceException e)
+        {
+            Console.WriteLine("GetSavedQueries service request failed.");
+            Console.WriteLine(e.Message);
+            return null;
+        }
+ 
+        if (query == null)
+        {
+            Console.WriteLine("There is not an '_Ficheros_VV4_Planos_PDF' query.");
+            return null;
+        }
+ 
+        try
+        {
+            QueryInput[] savedQueryInput = new QueryInput[1];
+            savedQueryInput[0] = new QueryInput();
+            savedQueryInput[0].Query = query;
+            savedQueryInput[0].Entries = new String[2];
+            savedQueryInput[0].Values = new String[2];
+            savedQueryInput[0].Entries[0] = "ID";
+            savedQueryInput[0].Values[0] = itemId;
+            savedQueryInput[0].Entries[1] = "Revision";
+            savedQueryInput[0].Values[1] = Revision;
+            savedQueryInput[0].MaxNumToReturn = 25;
+ 
+            SavedQueriesResponse savedQueryResult = queryService.ExecuteSavedQueries(savedQueryInput);
+            QueryResults found = savedQueryResult.ArrayOfResults[0];
+ 
+            int length = found.ObjectUIDS.Length;
+ 
+            String[] uids = new String[length];
+            for (int ii = 0; ii < length; ii++)
+            {
+                uids[ii] = found.ObjectUIDS[ii];
+            }
+            ServiceData sd = dmService.LoadObjects(uids);
+            ModelObject[] foundObjs = new ModelObject[sd.sizeOfPlainObjects()];
+            for (int k = 0; k < sd.sizeOfPlainObjects(); k++)
+            {
+                foundObjs[k] = sd.GetPlainObject(k);
+            }
+ 
+            ImanFile pdf_file = (ImanFile)foundObjs[0];
+            string pdf_name = pdf_file.File_name;
+            string pdf_object = pdf_file.Object_string;
+ 
+            ImanVolume volumen = pdf_file.Volume_tag;
+            string vol_object_string = volumen.Object_string;
+            string volumen_wnt_path = volumen.Wnt_path_name;
+           
+ 
+            return "Found " + foundObjs.Length + " PDF";
+          
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("ExecuteSavedQuery service request failed.");
+            Console.WriteLine(e.Message);
+        }
+ 
+        return last_revision;
+    }
+
+//
+
+FMS, FCC, and FSC in Teamcenter
+
+-File Management System (FMS)
+
+-File Client Cache (FCC)
+
+-File Server Cache (FSC)
+
+-Teamcenter Client Communication System (TCCS)
+
+
+Currently I have this (coding in C#):
+
+FileManagementUtility fmu = new FileManagementUtility(Session.getConnection()); 
+fmu.GetFileToLocation(modelObject, "C:/Users/jtth/Desktop/TestFolder/", null, null);
+
+
+But this doesn't return anything, and no file is downloaded.
+
+
+Based on what I've found, and the link I provided, another approach I found would be to use an FMS ticket and pass it to GetFile() to download my file locally. This might be the way to go as passing the modelObject to GetFileToLocation() isn't working.
+
+
+I have added the following to the Environment variable PATH (in both User and System):
+
+%FMS_HOME%\lib and %FMS_HOME%
+
+
+I've googled "how to create an FMS ticket" and checked on these forums, but I have yet to find anything substantial.
+
+So, how do I create an FMS ticket?
+
+
+EDIT: Thank you for answering these previous questions:
+
+If I need more properties then what are defaulty enabled, (i.e. IMAN properties), how do I enable properties in C#?
+
+//
+
+FileManagementService fms = FileManagementService.getService(Teamcenter.ClientX.Session.getConnection());
+DataManagementService dms = DataManagementService.getService(Teamcenter.ClientX.Session.getConnection());
+ 
+ImanFile[] aIMANFiles = new ImanFile[1];
+aIMANFiles[0] = new ImanFile(stl.SoaType, stl.Uid);
+ 
+Teamcenter.Services.Strong.Core._2006_03.FileManagement.FileTicketsResponse getFileResp = fms.GetFileReadTickets(aIMANFiles);
+ 
+string[] tickets = new string[getFileResp.Tickets.Count];
+string[] paths = new string[getFileResp.Tickets.Count];
+int a = 0;
+ 
+foreach (System.Collections.DictionaryEntry pair in getFileResp.Tickets)
+{
+    tickets[a] = (String)pair.Value;
+ 
+    paths[a] = ((ImanFile)pair.Key).Original_file_name;
+    a++;
+}
+ 
+ 
+ 
+//if (aPrgDialog.isRunning() == true)
+//{
+//    aPrgDialog.addPos();
+//    aPrgDialog.setText(String.Format(m_pUtilities.GetMessage("R277"), Convert.ToString(paths.Length)));
+//    aPrgDialog.pumpMessage();
+ 
+    string[] uids;
+    int[] ifails;
+    string checkoutFolder = "C:/Users/jtth/Desktop/TestFolder/";
+ 
+    Teamcenter.FMS.FCCProxy.ClientCache.NetFileCacheProxy fmsfileCacheProxy = new Teamcenter.FMS.FCCProxy.ClientCache.NetFileCacheProxy();
+    fmsfileCacheProxy.RegisterTickets(tickets, out uids, out ifails);
+ 
+ 
+ 
+    if (ifails.Length > 0) { throw new Exception("Errors Registering file tickets"); }
+ 
+    fmsfileCacheProxy.DownloadFilesToLocation("Default", uids, null, paths, checkoutFolder, paths, out ifails);
+//}
+Would that returning this:
+
+Exception thrown: 'System.BadImageFormatException' in SOATests.exe
+Could not load file or assembly 'FCCNetClientProxy64, Version=9.1.0.0, Culture=neutral, PublicKeyToken=0074cebd077fc3ec' or one of its dependencies. 
+An attempt was made to load a program with an incorrect format.
+Be concurrent with needing to install a local FCC/TCCS?
+
+
+Note: The original code for what I am trying to implement there is from Export-file-stored-in-Teamcenter-using-SOA-library-in-C#
+
+string destFilePath = "C:\\Users\\jtth\\Desktop\\TestFolder\\";
+string[] Uids = new String[1];
+Uids[0] = stl.Ref_list[0].Uid;
+ServiceData sd = TCUAConnection.dataManagementService.LoadObjects(Uids);
+ImanFile imanf = (ImanFile)sd.GetPlainObject(0);
+ 
+string fmsTicket = "";
+ImanFile[] ImanFiles = new ImanFile[1];
+ImanFiles[0] = imanf;
+FileTicketsResponse resp = TCUAConnection.fileManagementService.GetFileReadTickets(ImanFiles);
+ 
+foreach (System.Collections.DictionaryEntry pair in resp.Tickets)
+{
+    fmsTicket = pair.Value.ToString();
+}
+ 
+TCUAConnection.fileManagementUtility.GetTransientFile(fmsTicket, destFilePath);
+
+//
+
+SessionService session = SessionService.getService(AppXSession.getConnection());
+ObjectPropertyPolicy policy = new ObjectPropertyPolicy();
+PolicyType datasetType = new PolicyType("Dataset");
+PolicyProperty property = new PolicyProperty("ref_list");
+datasetType.addProperty(property);
+policy.addType(datasetType);
+policy.addType("ImanFile", new String[]{ "original_file_name" });
+session.setObjectPropertyPolicy(policy);
+or load the properties directly:
+
+dmService = DataManagementService.getService(AppXSession.getConnection());
+String[] dsProperties = new String[] { "ref_list" };
+dmService.getProperties( new ModelObject[] { dataset }, dsProperties );
+
+//
+
+https://www.quora.com/What-is-FMS-FCC-and-FSC-in-Teamcenter
+
+//
+
+Using SOA, how do we get file size of the UGMASTER under an Item Revision?
+Hello,
+
+I just thought of using this forum to get some help related to extracting file size of a UGMASTER under an Item revision.
+
+Infact i raised a ticket in GTAC, India. Not much help i received from GTAC.
+
+
+Let me explain my use case:
+
+I have an item revision which has a UGMASTER, UGPART, files underneath it. Now, using the below code i was able to get model Object of each type above and then trying to check the file size of the UGMaster uploaded under the item revision.
+
+Teamcenter.Services.Strong.Core._2006_03.FileManagement.FileTicketsResponse getFileResp = fms.GetFileReadTickets(aIMANFiles); This line returns NULL
+
+
+DataManagementService dmService = DataManagementService.getService(Session.getConnection());
+
+for (int i = 0; i < objects.Length; i++)
+
+
+{
+if(!(objects[i] is WorkspaceObject ))
+
+
+continue;
+bool bIsItemRevCode1 = false;
+
+
+ExpandGRMRelationsPref2 relationPref = new ExpandGRMRelationsPref2();
+
+RelationAndTypesFilter typeFilter1 = new RelationAndTypesFilter();
+
+relationPref.ExpItemRev = false;
+
+typeFilter1.OtherSideObjectTypes = new String[] { "UGMASTER", "UGPART"};
+
+relationPref.Info = new RelationAndTypesFilter[] { typeFilter1 };
+
+ExpandGRMRelationsResponse2 response2 = dmService.ExpandGRMRelationsForPrimary(new ModelObject[] { curmodlobj }, relationPref);
+
+int subojs_size2 = response2.ServiceData.sizeOfPlainObjects();
+
+String filesize;
+for (int kk = 0; kk < subojs_size2; kk++)
+
+
+{
+
+ModelObject sub_child = response2.ServiceData.GetPlainObject(kk);
+
+String strobjecttype = sub_child.GetPropertyDisplayableValue("object_type");
+if (strobjecttype == "UGMASTER")
+
+
+{
+
+FileManagementService fms = FileManagementService.getService(Session.getConnection());
+
+Teamcenter.Soa.Client.Model.Strong.ImanFile[] aIMANFiles = new Teamcenter.Soa.Client.Model.Strong.ImanFile[1];
+
+aIMANFiles[0] = new Teamcenter.Soa.Client.Model.Strong.ImanFile(curmodlobj.SoaType, curmodlobj.Uid);
+Teamcenter.Services.Strong.Core._2006_03.FileManagement.FileTicketsResponse getFileResp = fms.GetFileReadTickets(aIMANFiles); // This returns NULL
+
+
+string[] tickets = new string[getFileResp.Tickets.Count];
+
+string[] paths = new string[getFileResp.Tickets.Count];
+
+int a = 0;
+
+foreach (System.Collections.DictionaryEntry pair in getFileResp.Tickets)
+
+{
+
+tickets[a] = (String)pair.Value;
+paths[a] = ((Teamcenter.Soa.Client.Model.Strong.ImanFile)pair.Key).Original_file_name;
+
+
+a++;
+
+}
+
+//expandGRMRelationsForPrimary(dmService, subChildren, "ImanFile");
+
+filesize = sub_child.GetProperty("file_size").DisplayableValue;
+
+}
+}
+
+//
+
+Dataset Export Error(FMS Error)
+Hi,
+
+
+I need to export dataset teamcenter to my local machine path.I tried in File ManagementUtility
+
+
+i get list of IMAN files.
+
+
+if (!(modelArray2[i1] instanceof Dataset)) continue;
+
+
+try
+
+{
+
+dmService.getProperties(modelArray2,new String[]{"relative_directory_path","original_file_name","file_name","ref_list","object_name","IMAN_based_on","default_values"});
+
+Dataset ds=(Dataset)modelArray2[i1];
+
+String s = ds.get_object_name();
+
+ModelObject[] list = ds.get_ref_list();
+
+
+dmService.getProperties(list,new String[]{"name","mime_type","relative_directory_path","original_file_name","file_name","ref_list","object_name","file_ext","default_values"});
+
+for(int j=0;j<list.length-1;j++){
+
+ImanFile mo=(ImanFile)list[j];
+
+String path = mo.get_original_file_name();
+
+FileManagementUtility fileUtility=new FileManagementUtility(connection);
+
+GetFileResponse fileResp =fileUtility.getFiles(new ModelObject[]{mo});
+
+File[] files = fileResp.getFiles();
+
+for(File file : files)
+
+{
+
+String name =System.getenv("HOMEDRIVE") + System.getenv("HOMEPATH")
+
++"\Desktop\" + path;
+
+
+try
+
+{
+
+File dest = new File(name);
+
+
+if(!dest.isFile())
+
+
+dest.createNewFile();
+
+
+FileReader reader = new FileReader(file);
+
+FileWriter writer = new FileWriter(dest);
+
+char[] array = new char[1024];
+
+
+for(int more = reader.read(array); more > -1; more = reader.read(array))
+
+writer.write(array);
+
+
+reader.close();
+
+writer.flush();
+
+writer.close();
+
+}
+
+catch (IOException e)
+
+{
+
+e.printStackTrace();
+
+
+}
+
+
+}
+
+}
+
+
+When i use this i got an error.
+
+//
+
+Hi,
+
+
+upload file means "Add a named reference to a dataset". So you need a dataset as input and you need the name of the namedreference as well as the filename.
+
+
+I use the following code to upload (Session.FMU() is Teamcenter.Soa.Client.FileManagementUtility(connection) )
+
+
+
+Teamcenter.Services.Loose.Core._2006_03.FileManagement.GetDatasetWriteTicketsInputData[] input = new[]
+            {
+                new Teamcenter.Services.Loose.Core._2006_03.FileManagement.GetDatasetWriteTicketsInputData()
+                {
+                    CreateNewVersion=false,
+                    Dataset=dataset,
+                    DatasetFileInfos = new Teamcenter.Services.Loose.Core._2006_03.FileManagement.DatasetFileInfo [] 
+                    {
+                        new Teamcenter.Services.Loose.Core._2006_03.FileManagement.DatasetFileInfo()
+                        {
+                            AllowReplace=allowReplace,
+                            ClientId="",
+                            FileName=filename,
+                            IsText=true,
+                            NamedReferencedName=reference
+                        }
+                    }
+                }
+ 
+            };
+            ServiceData sdata = Session.FMU().PutFiles(input, Utilities.FMSProgressCB, null);
+
+
+
+
+BR
+
+
+Christian
+
+//
+
+JAVA Sample Code to get & set the table row property in Teamcenter RAC
+Symptom
+How to get & set the table row property in Teamcenter RAC?
+
+
+ 
+
+
+In ITK we can use AOM_ask_table_rows to get the table row. What is the similar way to get the values in RAC.
+
+
+Hardware/Software Configuration
+Platform: all
+OS: n/a
+OS Version: n/a
+Product: TEAMCENTER
+Application: RAC_FRAMEWORK
+Version: V11.4.0
+Function: STYLE_SHEET
+Solution
+Please refer the below Sample RAC JAVA Code designed to iterate over a table object.
+
+
+ 
+
+
+Sample Code of "RAC functional calls" for Reading and Manipulating data (add/remove row) from a TablePropery (get & set the table row property in Teamcenter):
+
+
+ 
+
+
+ 
+
+
+package gtac.plugin1.code;
+
+
+ 
+
+
+import java.io.FileWriter;
+
+
+import java.io.IOException;
+
+
+ 
+
+
+import com.teamcenter.rac.aif.AIFDesktop;
+
+
+import com.teamcenter.rac.kernel.ServiceData;
+
+
+import com.teamcenter.rac.kernel.TCComponent;
+
+
+import com.teamcenter.rac.kernel.TCSession;
+
+
+import com.teamcenter.services.rac.core.DataManagementService;
+
+
+import com.teamcenter.services.rac.core.SessionService;
+
+
+import com.teamcenter.soa.client.model.ModelObject;
+
+
+import com.teamcenter.soa.common.ObjectPropertyPolicy;
+
+
+import com.teamcenter.soa.common.PolicyProperty;
+
+
+import com.teamcenter.soa.common.PolicyType;
+
+
+import com.teamcenter.soa.exceptions.NotLoadedException;
+
+
+ 
+
+
+public class MyTable
+
+
+{
+
+
+            private String tableUID = "gcRNEHEZ4Zi2AB";
+
+
+            
+
+
+            private TCSession tcSession;
+
+
+            private DataManagementService dmService;
+
+
+            private ModelObject table;
+
+
+ 
+
+
+ 
+
+
+            public MyTable()
+
+
+            {
+
+
+                        tcSession = (TCSession)AIFDesktop.getActiveDesktop().getCurrentApplication().getSession();
+
+
+                        dmService = DataManagementService.getService(tcSession);
+
+
+                        
+
+
+                        setObjectPolicy();
+
+
+            }
+
+
+ 
+
+
+            public boolean loadTable()
+
+
+            {
+
+
+                        ServiceData sData = dmService.loadObjects(new String[]{ tableUID });
+
+
+ 
+
+
+                        if(sData.sizeOfPlainObjects() > 0)
+
+
+                        {
+
+
+                                    TCComponent mObj = sData.getPlainObject(0);
+
+
+ 
+
+
+                                    if(mObj.getType().equals("Table"))
+
+
+                                    {
+
+
+                                                table = (ModelObject)mObj;
+
+
+ 
+
+
+                                                return true;
+
+
+                                    }
+
+
+                        }
+
+
+ 
+
+
+                        return false;
+
+
+            } 
+
+
+            
+
+
+            public void showTableData()
+
+
+            {
+
+
+                        try
+
+
+                        {
+
+
+                                    FileWriter file = new FileWriter("c:/temp/table.txt", false); // overwrite
+
+
+                                    ModelObject tableDef = table.getPropertyObject("definition").getModelObjectValue();
+
+
+                                    
+
+
+                                    int rows = tableDef.getPropertyObject("rows").getIntValue();
+
+
+                                    int cols = tableDef.getPropertyObject("cols").getIntValue();
+
+
+                                    ModelObject[] colLabels = tableDef.getPropertyObject("colLabels").getModelObjectArrayValue();
+
+
+                                    ModelObject[] rowLabels = tableDef.getPropertyObject("rowLabels").getModelObjectArrayValue();
+
+
+                                    ModelObject[] cells = table.getPropertyObject("cells").getModelObjectArrayValue();
+
+
+                                    
+
+
+                                    for(ModelObject label : colLabels)
+
+
+                                                file.write("\t" + label.getPropertyObject("label").getStringValue());
+
+
+                                    
+
+
+                                    file.write("\n");
+
+
+                                    
+
+
+                                    for(int i = 0; i < rows; i++)
+
+
+                                    {
+
+
+                                                file.write(rowLabels[i].getPropertyObject("label").getStringValue());
+
+
+                                                
+
+
+                                                for(int ii = 0; ii < cols; ii++)
+
+
+                                                {
+
+
+                                                            file.write("\t" + cells[(cols * i) + ii].getPropertyObject("value").getStringValue());
+
+
+                                                }
+
+
+                                                
+
+
+                                                file.write("\n");
+
+
+                                    }
+
+
+                                    
+
+
+                                    file.close();
+
+
+                        }
+
+
+                        catch(NotLoadedException | IOException e)
+
+
+                        {
+
+
+                                    e.printStackTrace();
+
+
+                        }
+
+
+            }
+
+
+            
+
+
+            protected void setObjectPolicy()
+
+
+            {
+
+
+                        SessionService session = SessionService.getService(tcSession);
+
+
+                        ObjectPropertyPolicy policy = new ObjectPropertyPolicy();
+
+
+ 
+
+
+                        PolicyType tableType = new PolicyType("Table", new String[]{ "cells", "definition" }, new String[]{ PolicyProperty.WITH_PROPERTIES});
+
+
+                   PolicyType tableDefType = new PolicyType("TableDefinition" , new String[]{ "rowLabels", "colLabels", "rows", "cols" }, new String[]{ PolicyProperty.WITH_PROPERTIES});
+
+
+                        policy.addType("TableLabel", new String[]{ "label" });
+
+
+                        policy.addType("TableCellString", new String[]{ "value" });
+
+
+                        policy.addType(tableType);
+
+
+                        policy.addType(tableDefType);
+
+
+ 
+
+
+                        session.setObjectPropertyPolicy(policy);
+
+
+            }
+
+
+}
+
+
+//
+
+Sample SOA Java SOAP : Load ReleaseStatus values
+Note: 
+
+GTAC provides programming examples for illustration only, and assumes that you are familiar 
+with the programming language being demonstrated and the tools used to create and debug procedures. 
+GTAC support professionals can help explain the functionality of a particular procedure, but we 
+will not modify these examples to provide added functionality or construct procedures to meet your specific needs.
+
+
+
+/* This example was tested with the java HelloTcSoap example provided in the soa_client.zip file.
+It assumes you have the HelloTcSoap example working correctly. 
+
+This example will demonstrate how to load the Fnd0ReleaseStatus object and iterate over its values.
+ 
+Add the following XML code to the HelloTcSoap Build.xml file (after other codegenwsdlfilename nodes) 
+to auto-generate the needed java stub classes.
+-----------------------------------------------------------------------------------------------
+ 
+      <codegenwsdlfilename="${soa.home}/wsdls/Core0806SessionService.wsdl"
+               output="${axis.out}"serverSide="false"unpackClasses="true"/>
+      <codegenwsdlfilename="${soa.home}/wsdls/Core0709DataManagementService.wsdl"
+             output="${axis.out}"serverSide="false"unpackClasses="true"/>     
+      <codegenwsdlfilename="${soa.home}/wsdls/Query0806SavedQueryService.wsdl"
+                    output="${axis.out}"serverSide="false"unpackClasses="true"/>
+      <codegenwsdlfilename="${soa.home}/wsdls/Query1004SavedQueryService.wsdl"
+                    output="${axis.out}"serverSide="false"unpackClasses="true"/>
+      <codegenwsdlfilename="${soa.home}/wsdls/Core1305LOVService.wsdl"
+                    output="${axis.out}"serverSide="false"unpackClasses="true"/>
+                    
+ 
+The java code uses the following PLMXML QueryBuilder definition to search for ListOfValues. 
+You will need to import it using the RAC so the query definition is available for the java code:
+ 
+XML Query definition for "__ListOfValues". Save as .xml file and use QueryBuilder to import.
+--------------------------------------------------------------------------------------------
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GENERATED BY: PLM XML SDK 7.0.3.296 -->
+<plmxml_bus:PLMXMLBusinessTypesxmlns="http://www.plmxml.org/Schemas/PLMXMLSchema"
+xmlns:plmxml_bus="http://www.plmxml.org/Schemas/PLMXMLBusinessSchema"
+schemaVersion="6" language="en-us" date="2015-10-23" languages="en-usfr-fr de-de it-it es-es pt-br" time="11:49:39" author="Teamcenter V10000.1.0.42_20150727.00 -gtac@IMC--2023576316(-2023576316)">
+<plmxml_bus:SavedQueryDef id="id1" nameRef="#id2" descriptionTextRef="#id3" name="__ListOfValues" queryFlag="0" queryClass="ListOfValues">
+<Description>List LOVs</Description>
+<ApplicationRef version="AzZZC6WE4Zi2AB" application="Teamcenter" label="AzZZC6WE4Zi2AB"></ApplicationRef>
+<plmxml_bus:QueryClause id="id4" stringValue="SELECTqid FROM ListOfValues WHERE &quot;lov_name&quot; = &quot;${lov_name = }&quot; AND &quot;lov_type&quot; = &quot;${lov_type = }&quot; ORDER BY lov_name ASCENDING USERENTRY lov_name"></plmxml_bus:QueryClause></plmxml_bus:SavedQueryDef>
+<plmxml_bus:Text id="id2" primary="en-us"></plmxml_bus:Text>
+<plmxml_bus:Text id="id3" primary="en-us"></plmxml_bus:Text></plmxml_bus:PLMXMLBusinessTypes>
+ 
+ 
+Add the following code the the Hello.java to call/use the custom java LovService:
+---------------------------------------------------------------------------------
+ 
+    LovService lov = new LovService();
+       
+    lov.listLOV("Fnd0ReleaseStatus","ListOfValuesStringExtentStatus");
+
+    
+Add the following class to package com.teamcenter.hellosoap.
+------------------------------------------------------------ */
+ 
+package com.teamcenter.hellosoap;
+ 
+import java.math.BigInteger;
+import java.rmi.RemoteException;
+ 
+import com.teamcenter.schemas.core._2007_09.datamanagement.LoadObjectsInput;
+import com.teamcenter.schemas.core._2008_06.session.SetObjectPropertyPolicyInput;
+import com.teamcenter.schemas.core._2013_05.lov.GetInitialLOVValuesInput;
+import com.teamcenter.schemas.core._2013_05.lov.InitialLovData;
+import com.teamcenter.schemas.core._2013_05.lov.LOVSearchResults;
+import com.teamcenter.schemas.core._2013_05.lov.LOVValueRow;
+import com.teamcenter.schemas.core._2013_05.lov.LovFilterData;
+import com.teamcenter.schemas.core._2013_05.lov.PropertyValues;
+import com.teamcenter.schemas.query._2006_03.savedquery.GetSavedQueriesInput;
+import com.teamcenter.schemas.query._2006_03.savedquery.GetSavedQueriesResponse;
+import com.teamcenter.schemas.query._2006_03.savedquery.SavedQueryObject;
+import com.teamcenter.schemas.query._2007_09.savedquery.SavedQueriesResponse;
+import com.teamcenter.schemas.query._2008_06.savedquery.ExecuteSavedQueriesInput;
+import com.teamcenter.schemas.query._2008_06.savedquery.QueryInput;
+import com.teamcenter.schemas.query._2010_04.savedquery.FindSavedQueriesCriteriaInput;
+import com.teamcenter.schemas.query._2010_04.savedquery.FindSavedQueriesInput;
+import com.teamcenter.schemas.query._2010_04.savedquery.FindSavedQueriesResponse;
+import com.teamcenter.schemas.soa._2006_03.base.ErrorStack;
+import com.teamcenter.schemas.soa._2006_03.base.ErrorValue;
+import com.teamcenter.schemas.soa._2006_03.base.ModelObject;
+import com.teamcenter.schemas.soa._2006_03.base.ObjectPropertyPolicy_type0;
+import com.teamcenter.schemas.soa._2006_03.base.PolicyProperty;
+import com.teamcenter.schemas.soa._2006_03.base.PolicyType;
+import com.teamcenter.schemas.soa._2006_03.base.Property;
+import com.teamcenter.schemas.soa._2006_03.base.PropertyValue;
+import com.teamcenter.schemas.soa._2006_03.base.ServiceData;
+import com.teamcenter.services.core._2007_09.Core0709DataManagementService;
+import com.teamcenter.services.core._2008_06.Core0806SessionService;
+import com.teamcenter.services.core._2013_05.Core1305LOVService;
+import com.teamcenter.services.core._2013_05.InternalServerFaultFault;
+import com.teamcenter.services.core._2013_05.InvalidUserFaultFault;
+import com.teamcenter.services.query._2006_03.Query0603SavedQueryService;
+import com.teamcenter.services.query._2008_06.Query0806SavedQueryService;
+import com.teamcenter.services.query._2010_04.Query1004SavedQueryService;
+import com.teamcenter.services.query._2010_04.ServiceFaultFault;
+ 
+ 
+public class LovService
+{
+      privatefinal StringsavedQuery ="__ListOfValues";
+      
+      private Core0709DataManagementServicedm0709Service;
+      private Core1305LOVServicelov1305Service;
+      private Query0603SavedQueryServiceqry0603Service;
+      private Query0806SavedQueryServiceqry0806Service;
+      private Query1004SavedQueryServiceqry1004Service;
+      private ModelObjectdynamicLOV;
+      private ModelObjectquery;
+ 
+      public LovService()
+       {     
+             dm0709Service = (Core0709DataManagementService)Session.createServiceStub(Core0709DataManagementService.class);
+             lov1305Service = (Core1305LOVService)Session.createServiceStub(Core1305LOVService.class);
+             qry0603Service = (Query0603SavedQueryService)Session.createServiceStub(Query0603SavedQueryService.class);
+             qry0806Service = (Query0806SavedQueryService)Session.createServiceStub(Query0806SavedQueryService.class);
+             qry1004Service = (Query1004SavedQueryService)Session.createServiceStub(Query1004SavedQueryService.class);
+             
+              setObjectPolicy();
+       }
+      
+      publicvoid listLOV(final String name, final String type)
+       {
+             if(setSavedQuery2())
+              {
+                    try
+                     {
+                           ExecuteSavedQueriesInput input =new ExecuteSavedQueriesInput();
+                           QueryInput qryInput =new QueryInput();
+                           String ID ="ID:" + qryInput.hashCode();
+                          
+                           qryInput.setClientId(ID);
+                           qryInput.setRequestId(ID);
+                           qryInput.setMaxNumToReturn(BigInteger.valueOf(0));
+                           qryInput.setQuery(query);
+                           qryInput.setResultsType(BigInteger.valueOf(0));
+                           qryInput.setEntries(new String[]{ "lov_name","lov_type" });                                                                                                        
+                           qryInput.setValues(new String[]{ name, type });
+                    
+                           input.setInput(new QueryInput[]{ qryInput });
+ 
+                           SavedQueriesResponse qryResp =qry0806Service.executeSavedQueries(input);
+                          
+                          if(!ServiceDataError(qryResp.getServiceData()))
+                           {
+                                 if(qryResp.getArrayOfResults().length == 1)
+                                  {
+                                         LoadObjectsInput objInput =new LoadObjectsInput();
+                                        
+                                         objInput.setUids(qryResp.getArrayOfResults()[0].getObjectUIDS());
+ 
+                                         ServiceData sData =dm0709Service.loadObjects(objInput);
+                                        
+                                        if(!ServiceDataError(sData))
+                                         {
+                                                ClientDataModel.addObjects(sData);
+                                                ModelObject[] objs = ClientDataModel.getObjects(sData.getPlainObjs());
+                                               
+                                               for(ModelObject obj : objs)
+                                                {
+                                                       printListOfValues(obj);
+                                                }
+                                         }
+                                  }
+                           }     
+                     }
+                    catch (RemoteException e1)
+                     {
+                          // TODO Auto-generated catch block
+                           e1.printStackTrace();
+                     }
+                    catch (com.teamcenter.services.query._2008_06.InternalServerFaultFault e1)
+                     {
+                          // TODO Auto-generated catch block
+                           e1.printStackTrace();
+                     }
+                    catch (com.teamcenter.services.query._2008_06.InvalidUserFaultFault e1)
+                     {
+                          // TODO Auto-generated catch block
+                           e1.printStackTrace();
+                     }
+                    catch (com.teamcenter.services.core._2007_09.InternalServerFaultFault e)
+                     {
+                          // TODO Auto-generated catch block
+                           e.printStackTrace();
+                     }
+                    catch (com.teamcenter.services.core._2007_09.InvalidUserFaultFault e)
+                     {
+                          // TODO Auto-generated catch block
+                           e.printStackTrace();
+                     }
+              }
+       }
+      
+      protectedboolean setSavedQuery2()
+       {
+             try
+              {     
+                     FindSavedQueriesInput input =new FindSavedQueriesInput();
+                     FindSavedQueriesCriteriaInput criteria =new FindSavedQueriesCriteriaInput();
+                    
+                     criteria.setQueryNames(new String[]{ savedQuery });
+                     criteria.setQueryType(BigInteger.valueOf(0));
+                     input.setInputCriteria(new FindSavedQueriesCriteriaInput[]{ criteria });
+                    
+                     FindSavedQueriesResponse resp =qry1004Service.findSavedQueries(input);
+                    
+                    if(!ServiceDataError(resp.getServiceData()))
+                     {
+                          if(resp.getSavedQueries().length == 1)
+                           {
+                                 query = resp.getSavedQueries()[0];
+                                 returntrue;
+                           }
+                     }
+              }
+             catch (RemoteException e)
+              {
+                    // TODO Auto-generated catch block
+                     e.printStackTrace();
+              }
+             catch (com.teamcenter.services.query._2010_04.InternalServerFaultFault e)
+              {
+                    // TODO Auto-generated catch block
+                     e.printStackTrace();
+              }
+             catch (ServiceFaultFault e)
+              {
+                    // TODO Auto-generated catch block
+                     e.printStackTrace();
+              }
+             catch (com.teamcenter.services.query._2010_04.InvalidUserFaultFault e)
+              {
+                    // TODO Auto-generated catch block
+                     e.printStackTrace();
+              }            
+            
+             return false;
+       }
+ 
+      protectedvoid printListOfValues(final ModelObject mObj)
+       {
+              Property[] properties = mObj.getProperties();
+             
+             if(properties !=null)
+              {
+                    for(Property prop : properties)
+                     {
+                           System.out.println("Property Name: " + prop.getName());
+                           System.out.println("UI value: " + prop.getUiValue());
+                           System.out.println("Values:");
+                          
+                          for(PropertyValue value : prop.getValues())
+                           {
+                                  System.out.println("\t" + value.getValue());
+                           }
+                          
+                           System.out.println();
+                     }
+              }
+       }
+      
+      protectedboolean ServiceDataError(final ServiceData data)
+       {
+             if (data.isPartialErrorsSpecified())
+              {
+                    for(ErrorStack error : data.getPartialErrors())
+                     {
+                          for (ErrorValue value : error.getErrorValues())
+                                  System.out.println(value.getMessage());
+                     }
+ 
+                    returntrue;
+              }
+ 
+             return false;
+       }
+      
+      protectedvoid setObjectPolicy()
+       {
+             try
+              {
+                     Core0806SessionService session = (Core0806SessionService)Session.createServiceStub(Core0806SessionService.class);
+                     SetObjectPropertyPolicyInput input =new SetObjectPropertyPolicyInput();
+                     ObjectPropertyPolicy_type0 policy =new ObjectPropertyPolicy_type0();
+                     PolicyType ptype;
+                     PolicyProperty property;
+ 
+                     ptype =new PolicyType();
+                     ptype.setName("ListOfValues");
+                     property =new PolicyProperty();
+                     property.setName("lov_name");
+                     ptype.addProperties(property);
+                     property =new PolicyProperty();
+                     property.setName("lov_values");
+                     ptype.addProperties(property);
+                     policy.addTypes(ptype);
+                    
+                     input.setObjectPropertyPolicy(policy);
+                     session.setObjectPropertyPolicy(input);
+              }
+             catch (RemoteException e)
+              {
+                     e.printStackTrace();
+              }
+             catch (com.teamcenter.services.core._2008_06.InternalServerFaultFault e)
+              {
+                     e.printStackTrace();
+              }
+             catch (com.teamcenter.services.core._2008_06.InvalidUserFaultFault e)
+              {
+                     e.printStackTrace();
+              }
+       }
+}
+
+//
+
+Correctly use FileManagementUtility.getFileToLocation
+Symptom
+---------------
+How do I use the FileManagementUtility.getFileToLocation(...)?
+Hardware/Software Configuration
+Family    : TEAMCENTER
+Application : SOA_FRAMEWORK
+Function    : JAVA_CLIENT
+Subfunction : ALL
+Release     : V8.3.1
+Solution
+The following java code should be a good example on how to use this function.
+
+The SOA HelloTeamcenter example can be used to test this code. The supplied 
+class would be called as follows:
+
+	FileDownload fd = new FileDownload();
+		
+	if(fd.loadObject())
+		fd.DownloadNamedReference();
+
+/************************* FileDownload.java *************************/
+package com.teamcenter.hello;
+
+import java.io.File;
+
+import com.teamcenter.clientx.Session;
+import com.teamcenter.fms.clientcache.proxy.IFileCacheProxyCB;
+import com.teamcenter.services.strong.core.DataManagementService;
+import com.teamcenter.services.strong.core.SessionService;
+import com.teamcenter.soa.client.FileManagementUtility;
+import com.teamcenter.soa.client.GetFileResponse;
+import com.teamcenter.soa.client.model.ModelObject;
+import com.teamcenter.soa.client.model.ServiceData;
+import com.teamcenter.soa.client.model.strong.Dataset;
+import com.teamcenter.soa.client.model.strong.ImanFile;
+import com.teamcenter.soa.common.ObjectPropertyPolicy;
+import com.teamcenter.soa.common.PolicyProperty;
+import com.teamcenter.soa.common.PolicyType;
+import com.teamcenter.soa.exceptions.NotLoadedException;
+
+public class FileDownload
+{
+	private DataManagementService dmService;
+	private FileManagementUtility fileUtility;
+	
+	private Dataset dataset; 
+	
+	private static final String datasetUID = "QzP9X0Ij4IElDC";
+	
+	public class FileCacheProxyCB implements IFileCacheProxyCB
+	{
+		@Override
+		public boolean ReportProgress(String ticket, Object obj, long
+size1, long 
+size2)
+		{
+			System.out.println("Ticket: " + ticket + ", Object: " +
+obj.toString() + ", Size 1: " + size1 + ", Size 2: " + size2);
+
+			return true;
+		}
+	}
+
+	public FileDownload()
+	{
+		dmService =
+DataManagementService.getService(Session.getConnection());
+		fileUtility = new
+FileManagementUtility(Session.getConnection());
+		
+		setObjectPolicy();
+	}
+	
+	boolean loadObject()
+	{
+		ServiceData sData = dmService.loadObjects(new String[]{
+datasetUID });
+
+		if(sData.sizeOfPlainObjects() > 0)
+		{
+			ModelObject mObj = sData.getPlainObject(0);
+
+			if(mObj instanceof Dataset)
+			{
+				dataset = (Dataset) mObj;
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	void DownloadNamedReference()
+	{
+		try
+		{
+			ModelObject[] objs = dataset.get_ref_list();
+			
+			for(ModelObject obj : objs)
+			{
+				if(obj instanceof ImanFile)
+				{
+					String fileName =
+((ImanFile)obj).get_original_file_name();
+					GetFileResponse fileResp =
+fileUtility.getFileToLocation(obj, 
+"c:/temp/SOA/" + fileName, new FileCacheProxyCB(), new String("My Custom 
+Object"));
+					
+					for(File file : fileResp.getFiles())
+					{
+						System.out.println("Name: " +
+file.getName() + ", " + file.length());
+					}
+				}
+			}	
+		}
+		catch(NotLoadedException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	protected void setObjectPolicy()
+	{
+		SessionService session =
+SessionService.getService(Session.getConnection());
+		ObjectPropertyPolicy policy = new ObjectPropertyPolicy();
+
+		PolicyType datasetType = new PolicyType("Dataset");
+		PolicyProperty property = new PolicyProperty("ref_list");
+		property.setModifier(PolicyProperty.WITH_PROPERTIES, true);
+		datasetType.addProperty(property);
+		
+		policy.addType(datasetType);
+		policy.addType("ImanFile", new String[]{ "original_file_name"
+});
+		
+		session.setObjectPropertyPolicy(policy);
+	}
+}
+
+//
+
+How to delete a dataset using SOA.
+Symptom
+---------------
+When I attempt to delete a dataset with,
+
+DataManagementService.deleteObjects(...)
+
+I get a similar error as follows:
+
+Code: 51008	Severity: 1	Referenced by  (RevisionAnchor) 
+Code: 51008	Severity: 1	Referenced by Part1/A;1-Part 1 (ItemRevision)
+Code: 51007	Severity: 1	Failed on Object Part1/A (Dataset)
+Code: 515110	Severity: 3	Instance referenced
+Code: 9043	Severity: 2	Unable to delete dataset Part1/A
+
+Why do I get this error and how do I overcome it?
+Hardware/Software Configuration
+Family: TEAMCENTER
+Application: CUSTOMIZATION
+Function: 
+Subfunction: 
+Release: V2007.1.7
+Solution
+A 'Dataset' can have a relation with multiple objects, such as an 
+ItemRevision. Before you can delete a Dataset you must first delete the 
+relations the Dataset has with other objects. The following code queries all 
+'IMAN_specification' relations a Dataset has with an ItemRevision and then 
+deletes these relations and finally, deletes the Dataset.
+
+This code assumes you know how to get the Dataset and load the 
+DataManagementService object.
+
+
+
+public void deleteDataset()
+{		
+	ExpandGRMRelationsPref relationPref = new ExpandGRMRelationsPref();
+	RelationAndTypesFilter2 typeFiler = new RelationAndTypesFilter2();
+	
+	relationPref.expItemRev = false;
+	typeFiler.objectTypeNames = new String[]{ "ItemRevision" };
+	typeFiler.relationName = "IMAN_specification";
+	
+	relationPref.info = new RelationAndTypesFilter2[]{ typeFiler };
+	
+	ExpandGRMRelationsResponse relationResp = 
+dmService.expandGRMRelationsForSecondary(new ModelObject[]{ dataSet }, 
+relationPref);
+	
+	if(!ServiceDataError(relationResp.serviceData))
+	{
+		for(ExpandGRMRelationsOutput grmRelations :
+relationResp.output)
+		{
+			for(ExpandGRMRelationsData grmReationData :
+grmRelations.otherSideObjData)
+			{
+				Relationship[] relationships = new 
+Relationship[grmReationData.otherSideObjects.length];
+				
+				for(int ii = 0; ii <
+grmReationData.otherSideObjects.length; ii++)
+				{
+					Relationship relationship = new
+Relationship();
+					relationship.primaryObject =
+grmReationData.otherSideObjects[ii];
+					relationship.secondaryObject = dataSet;
+					relationship.relationType =
+grmReationData.relationName;
+					relationships[ii] = relationship;
+				}
+				
+			       
+ServiceDataError(dmService.deleteRelations(relationships));
+			}
+		}
+		
+		ServiceDataError(dmService.deleteObjects(new ModelObject[]{
+dataSet }));
+	}
+}
+
+
+protected boolean ServiceDataError(final ServiceData data)
+{
+	if(data.sizeOfPartialErrors() > 0)
+	{
+		for(int i = 0; i < data.sizeOfPartialErrors(); i++)
+		{
+			for(String msg : data.getPartialError(i).getMessages())
+				System.out.println(msg);
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+Other relations a Dataset might have with other business objects can be found 
+by using the BMIDE and reviewing the "GRM Rule" tab of the Dataset business 
+object.
+
+//
+
+How to use DataManagementService.GetItemFromId
+Symptom
+---------------
+What is the correct way to use DataManagementService.GetItemFromId?
+Hardware/Software Configuration
+Family: TEAMCENTER
+Application: SOA_FRAMEWORK
+Function: JAVA_CLIENT
+Subfunction: ALL
+Release: V8.3I.0.3
+Solution
+Note, GetItemFromId is Deprecated and should be replaced by 
+Core::DataManagement::getItemAndRelatedObjects
+
+The following code will show how to correctly get an Item, ItemRevision and a 
+Dataset associated with the ItemRevision.
+
+The HelloTeamcenter example can be used to call this code.
+
+Create an Item and add a Dataset the Item's ItemRevision of type "Text".
+
+Update code, idInfo.itemId = "000048"; to reflect the new Item's ID.
+
+Call the code as follows:
+
+	DataManagement2 dm = new DataManagement2(user);
+		
+	dm.getItemByID();
+
+
+
+/************************* Datamanagement2.java *****************************/
+package com.teamcenter.hello;
+
+import java.util.HashMap;
+
+import com.teamcenter.clientx.Session;
+import com.teamcenter.services.strong.core.DataManagementService;
+import com.teamcenter.services.strong.core.SessionService;
+import 
+com.teamcenter.services.strong.core._2007_01.DataManagement.GetItemFromIdInfo;
+import 
+com.teamcenter.services.strong.core._2007_01.DataManagement.GetItemFromIdItemOu
+tput;
+import 
+com.teamcenter.services.strong.core._2007_01.DataManagement.GetItemFromIdItemRe
+vOutput;
+import 
+com.teamcenter.services.strong.core._2007_01.DataManagement.GetItemFromIdPref;
+import 
+com.teamcenter.services.strong.core._2007_01.DataManagement.GetItemFromIdRespon
+se;
+import 
+com.teamcenter.services.strong.core._2007_01.DataManagement.RelationFilter;
+import 
+com.teamcenter.services.strong.core._2007_06.DataManagement.RelationAndTypesFil
+ter;
+import 
+com.teamcenter.services.strong.core._2007_06.DataManagement.WhereReferencedByRe
+lationNameInfo;
+import 
+com.teamcenter.services.strong.core._2007_06.DataManagement.WhereReferencedByRe
+lationNameOutput;
+import 
+com.teamcenter.services.strong.core._2007_06.DataManagement.WhereReferencedByRe
+lationNameOutputInfo;
+import 
+com.teamcenter.services.strong.core._2007_06.DataManagement.WhereReferencedByRe
+lationNameResponse;
+import com.teamcenter.services.strong.core._2008_06.DataManagement.BVROutput;
+import com.teamcenter.services.strong.core._2008_06.DataManagement.DatasetInfo;
+import 
+com.teamcenter.services.strong.core._2008_06.DataManagement.DatasetOutput;
+import 
+com.teamcenter.services.strong.core._2008_06.DataManagement.GetItemAndRelatedOb
+jectsInfo;
+import 
+com.teamcenter.services.strong.core._2008_06.DataManagement.GetItemAndRelatedOb
+jectsItemOutput;
+import 
+com.teamcenter.services.strong.core._2008_06.DataManagement.GetItemAndRelatedOb
+jectsResponse;
+import com.teamcenter.services.strong.core._2008_06.DataManagement.ItemInfo;
+import com.teamcenter.services.strong.core._2008_06.DataManagement.NROutput;
+import 
+com.teamcenter.services.strong.core._2008_06.DataManagement.NamedReferenceList;
+import com.teamcenter.services.strong.core._2008_06.DataManagement.RevInfo;
+import 
+com.teamcenter.services.strong.core._2008_06.DataManagement.RevisionOutput;
+import 
+com.teamcenter.services.strong.core._2009_10.DataManagement.GetItemFromAttribut
+eInfo;
+import 
+com.teamcenter.services.strong.core._2009_10.DataManagement.GetItemFromAttribut
+eResponse;
+import com.teamcenter.soa.client.model.ModelObject;
+import com.teamcenter.soa.client.model.ServiceData;
+import com.teamcenter.soa.client.model.strong.Dataset;
+import com.teamcenter.soa.client.model.strong.Folder;
+import com.teamcenter.soa.client.model.strong.Item;
+import com.teamcenter.soa.client.model.strong.ItemRevision;
+import com.teamcenter.soa.client.model.strong.Schedule;
+import com.teamcenter.soa.client.model.strong.User;
+import com.teamcenter.soa.common.ObjectPropertyPolicy;
+import com.teamcenter.soa.common.PolicyProperty;
+import com.teamcenter.soa.common.PolicyType;
+import com.teamcenter.soa.exceptions.NotLoadedException;
+
+public class DataManagement2
+{
+	private DataManagementService dmService;
+	private Folder homeFolder;
+
+	private ItemRevision itemRev;
+	private Dataset dataSet;
+
+	public DataManagement2(User user)
+	{
+	       dmService = 
+DataManagementService.getService(Session.getConnection());
+
+	       try
+	       {
+		       homeFolder = user.get_home_folder();
+	       }
+	       catch(NotLoadedException e)
+	       {
+		       e.printStackTrace();
+	       }
+
+	       setObjectPolicy();
+	}
+
+	public void getItemByID()
+	{
+	       GetItemFromIdInfo idInfo = new GetItemFromIdInfo();
+	       GetItemFromIdPref idPref = new GetItemFromIdPref();
+	       RelationFilter filter = new RelationFilter();
+	       
+	       idInfo.itemId = "000048";
+	       idInfo.revIds = new String[] { "A" };
+
+	       filter.objectTypeNames = new String[]{ "Text" };
+	       filter.relationTypeName = "IMAN_Specification";
+	       
+	       idPref.prefs = new RelationFilter[] { filter };
+	       
+	       
+	       GetItemFromIdResponse idResp = dmService.getItemFromId(new 
+GetItemFromIdInfo[]{ idInfo }, 0, idPref);
+	       
+	       if(!ServiceDataError(idResp.serviceData))
+	       {
+		       for(GetItemFromIdItemOutput out : idResp.output)
+		       {
+			       try
+			       {
+				      System.out.println("Item name: " + 
+out.item.get_object_name());
+				      
+				      for(GetItemFromIdItemRevOutput revOut : 
+out.itemRevOutput)
+				      {
+					      System.out.println("ItemRevision 
+name: " + revOut.itemRevision.get_object_name());
+					      
+					      for(Dataset dataset : 
+revOut.datasets)
+					      {
+						     
+System.out.println("Dataset Type name: " + 
+dataset.get_dataset_type().get_datasettype_name());
+					      }
+				      }
+			       }
+			       catch(NotLoadedException e)
+			       {
+				      e.printStackTrace();
+			       }
+		       }
+	       }
+	}
+
+	protected boolean ServiceDataError(final ServiceData data)
+	{
+	       if(data.sizeOfPartialErrors() > 0)
+	       {
+		       for(int i = 0; i < data.sizeOfPartialErrors(); i++)
+		       {
+			       for(String msg : 
+data.getPartialError(i).getMessages())
+				      System.out.println(msg);
+		       }
+
+		       return true;
+	       }
+
+	       return false;
+	}
+
+	protected void setObjectPolicy()
+	{
+	       SessionService session = SessionService.getService(Session
+			       .getConnection());
+	       ObjectPropertyPolicy policy = new ObjectPropertyPolicy();
+
+	       PolicyType datasetType = new PolicyType("Dataset");
+	       PolicyProperty property = new PolicyProperty("dataset_type");
+	       property.setModifier(PolicyProperty.WITH_PROPERTIES, true);
+	       datasetType.addProperty(property);
+
+	       policy.addType(datasetType);
+	       policy.addType("DatasetType", new String[]{ "datasettype_name" 
+});
+	       policy.addType("ItemRevision", new String[]{ "object_string", 
+"object_name"  });
+	       policy.addType("Item", new String[]{ "object_type", 
+"object_name" });
+
+	       session.setObjectPropertyPolicy(policy);
+	}
+}
+
+//
+
+Cannot load a form as a NamedRef to a Dataset through SOA.
+Symptom
+---------------
+How do I add a Form as a NamedReference to a Dateset using SOA?
+Hardware/Software Configuration
+Family    : TEAMCENTER
+Application : SOA_FRAMEWORK
+Function    : JAVA_CLIENT
+Subfunction : ALL
+Release     : V8.1.0.5
+Solution
+The following java example should demonstrate on how to create/update(add) a 
+Form NameReference to a Dataset. The code will create a new NameReference when
+the Dataset is cretated then update the Dataset by creating a second new 
+NamedReference.
+
+
+	CreateOrUpdateParts parts = new CreateOrUpdateParts(user);
+	
+	if(parts.createPart())
+	{
+		parts.createFormNameReference();
+	}
+
+
+/**************** CreatePartOrUpdateParts.java *****************/
+package com.teamcenter.hello;
+
+import com.teamcenter.clientx.Session;
+
+
+import com.teamcenter.services.strong.cad.DataManagementService;
+import 
+com.teamcenter.services.strong.cad._2007_12.DataManagement.CreateOrUpdatePartsP
+ref;
+import 
+com.teamcenter.services.strong.cad._2008_06.DataManagement.CreateOrUpdatePartsR
+esponse;
+import com.teamcenter.services.strong.cad._2008_06.DataManagement.ItemInfo;
+import com.teamcenter.services.strong.cad._2008_06.DataManagement.ItemRevInfo;
+import com.teamcenter.services.strong.cad._2008_06.DataManagement.DatasetInfo;
+import com.teamcenter.services.strong.cad._2008_06.DataManagement.PartInfo;
+import 
+com.teamcenter.services.strong.cad._2008_06.DataManagement.NamedReferenceObject
+Info;
+import 
+com.teamcenter.services.strong.cad._2008_06.DataManagement.AttributeInfo;
+import com.teamcenter.soa.client.model.ModelObject;
+import com.teamcenter.soa.client.model.strong.Dataset;
+import com.teamcenter.soa.client.model.strong.Folder;
+import com.teamcenter.soa.client.model.strong.Item;
+import com.teamcenter.soa.client.model.strong.ItemRevision;
+import com.teamcenter.soa.client.model.strong.User;
+import com.teamcenter.soa.exceptions.NotLoadedException;
+
+public class CreateOrUpdateParts
+{
+	DataManagementService cadDMService;
+	
+	Item item = null;
+	ItemRevision itemRev = null;
+	Dataset dataset = null;
+
+	Folder homeFolder = null;
+	
+	public CreateOrUpdateParts(User user)
+	{
+		cadDMService =
+DataManagementService.getService(Session.getConnection());
+		
+		try
+		{
+			homeFolder = user.get_home_folder();
+		}
+		catch(NotLoadedException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	boolean createPart()
+	{
+		PartInfo[] partInput = new PartInfo[] { new PartInfo() };
+		CreateOrUpdatePartsPref pref = new CreateOrUpdatePartsPref();
+		
+		partInput[0].clientId = "PartInfo";
+		
+		partInput[0].itemInput = new ItemInfo();
+		partInput[0].itemInput.item = null;
+		partInput[0].itemInput.itemId = null;
+		partInput[0].itemInput.itemType = "Part";
+		partInput[0].itemInput.name = null;
+		partInput[0].itemInput.folder = homeFolder;
+
+		partInput[0].itemRevInput = new ItemRevInfo();
+		partInput[0].itemRevInput.itemRevision = null;
+		partInput[0].itemRevInput.revId = null;
+		
+		partInput[0].datasetInput = new DatasetInfo[] { new
+DatasetInfo() };
+		partInput[0].datasetInput[0].clientId = "Dataset";
+		partInput[0].datasetInput[0].dataset = null;
+		partInput[0].datasetInput[0].itemRevRelationName =
+"IMAN_reference";
+		partInput[0].datasetInput[0].type = "UGPART";
+		partInput[0].datasetInput[0].namedReferenceObjectInfos = new 
+NamedReferenceObjectInfo[] { new NamedReferenceObjectInfo() };
+	       
+partInput[0].datasetInput[0].namedReferenceObjectInfos[0].clientId = 
+"NamedReference";
+	       
+partInput[0].datasetInput[0].namedReferenceObjectInfos[0].namedReferenceName =
+"UGPART-ATTRIBUTES";
+	       
+partInput[0].datasetInput[0].namedReferenceObjectInfos[0].namedReferenceType =
+"AE_ASSOCIATION";
+	       
+partInput[0].datasetInput[0].namedReferenceObjectInfos[0].typeName = 
+"UGPartAttributesForm";
+	       
+partInput[0].datasetInput[0].namedReferenceObjectInfos[0].object = null;
+	       
+partInput[0].datasetInput[0].namedReferenceObjectInfos[0].attrNameValuePairs =
+new AttributeInfo[] { new AttributeInfo() };
+	       
+partInput[0].datasetInput[0].namedReferenceObjectInfos[0].attrNameValuePairs[0]
+.name = "object_name";
+	       
+partInput[0].datasetInput[0].namedReferenceObjectInfos[0].attrNameValuePairs[0]
+.values = new String[]{ "myForm1" };
+
+		
+		CreateOrUpdatePartsResponse resp = 
+cadDMService.createOrUpdateParts(partInput, pref);
+		
+		if(resp.output.length > 0)
+		{
+			item = resp.output[0].item;
+			itemRev = resp.output[0].itemRev;
+			
+			if(resp.output[0].datasetOutput.length > 0)
+			{
+				dataset =
+resp.output[0].datasetOutput[0].dataset;
+				
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	void createFormNameReference()
+	{
+		PartInfo[] partInput = new PartInfo[] { new PartInfo() };
+		CreateOrUpdatePartsPref pref = new CreateOrUpdatePartsPref();
+		
+		partInput[0].clientId = "PartInfo";
+		
+		partInput[0].itemInput = new ItemInfo();
+		partInput[0].itemInput.item = item;
+		
+		partInput[0].itemRevInput = new ItemRevInfo();
+		partInput[0].itemRevInput.itemRevision = itemRev;
+				
+		partInput[0].datasetInput = new DatasetInfo[] { new
+DatasetInfo() };
+		partInput[0].datasetInput[0].clientId = "Dataset";
+		partInput[0].datasetInput[0].dataset = dataset;
+		partInput[0].datasetInput[0].itemRevRelationName =
+"IMAN_reference";
+		partInput[0].datasetInput[0].namedReferenceObjectInfos = new 
+NamedReferenceObjectInfo[] { new NamedReferenceObjectInfo() };
+	       
+partInput[0].datasetInput[0].namedReferenceObjectInfos[0].clientId = 
+"NamedReference";
+	       
+partInput[0].datasetInput[0].namedReferenceObjectInfos[0].namedReferenceName =
+"UGPART-ATTRIBUTES";
+	       
+partInput[0].datasetInput[0].namedReferenceObjectInfos[0].namedReferenceType =
+"AE_ASSOCIATION";
+	       
+partInput[0].datasetInput[0].namedReferenceObjectInfos[0].typeName = 
+"UGPartAttributesForm";
+	       
+partInput[0].datasetInput[0].namedReferenceObjectInfos[0].object = null;
+	       
+partInput[0].datasetInput[0].namedReferenceObjectInfos[0].attrNameValuePairs =
+new AttributeInfo[] { new AttributeInfo() };
+	       
+partInput[0].datasetInput[0].namedReferenceObjectInfos[0].attrNameValuePairs[0]
+.name = "object_name";
+	       
+partInput[0].datasetInput[0].namedReferenceObjectInfos[0].attrNameValuePairs[0]
+.values = new String[]{ "myForm2" };
+		
+		CreateOrUpdatePartsResponse resp = 
+cadDMService.createOrUpdateParts(partInput, pref);
+	}
+}
+Document Information
+Document ID:001-6404497
+Date:Sep-20-2010
+Product:Teamcenter
+Submitted by:Patrick Hoonhout
+IR Number:6404497
+Platform:INTEL
+OS:WINDOW
+OS Version:XP32_SP2
+Product Version:V8.1.0.5
+ 
+//
+
+Symptom
+How do I create a business object in RAC java code plugin?
+
+
+Hardware/Software Configuration
+Platform: INTEL
+OS: windows
+OS Version: 10_1903
+Product: TEAMCENTER
+Application: SOA_FRAMEWORK
+Version: V10.1.0
+Function: RAC_CLIENT
+Solution
+The following plugin code should help in creating business objects. 
+
+
+package gtac.plugin1.code;
+
+
+import com.teamcenter.rac.aif.AIFDesktop; 
+import com.teamcenter.rac.kernel.ServiceData; 
+import com.teamcenter.rac.kernel.TCComponent; 
+import com.teamcenter.rac.kernel.TCComponentForm; 
+import com.teamcenter.rac.kernel.TCComponentItem; 
+import com.teamcenter.rac.kernel.TCComponentItemRevision; 
+import com.teamcenter.rac.kernel.TCSession; 
+import com.teamcenter.schemas.soa._2006_03.exceptions.ServiceException; 
+import com.teamcenter.services.rac.core.DataManagementService; 
+import com.teamcenter.services.rac.core._2008_06.DataManagement.CreateIn; 
+import com.teamcenter.services.rac.core._2008_06.DataManagement.CreateInput; 
+import com.teamcenter.services.rac.core._2008_06.DataManagement.CreateOut; 
+import com.teamcenter.services.rac.core._2008_06.DataManagement.CreateResponse;
+
+
+public class CreateObject 
+{ 
+ private TCSession tcSession; 
+ 
+ private DataManagementService dmService;
+
+
+ private TCComponentItem item; 
+ private TCComponentItemRevision itemRev; 
+ private TCComponentForm form; 
+ 
+ public CreateObject() 
+ { 
+ tcSession = (TCSession)AIFDesktop.getActiveDesktop().getCurrentApplication().getSession(); 
+ dmService = DataManagementService.getService(tcSession); 
+ } 
+ 
+ public void createItem() 
+ { 
+ CreateIn itemDef = new CreateIn(); 
+ CreateInput itemRevisionDef = new CreateInput();
+
+
+ itemDef.data.boName = "Item"; 
+ itemDef.data.stringProps.put("item_id", "Item (item_id)"); 
+ itemDef.data.stringProps.put("object_name", "Item (object_name)"); 
+ itemDef.data.stringProps.put("object_desc", "Item (object_desc)");
+
+
+ itemRevisionDef.boName = "ItemRevision"; 
+ itemRevisionDef.stringProps.put("object_desc", "ItemRevision (object_desc)"); 
+ itemRevisionDef.stringProps.put("object_name", "ItemRevision (object_name)");
+
+
+ itemDef.data.compoundCreateInput.put("revision", new CreateInput[]{ itemRevisionDef });
+
+
+ try 
+ { 
+ CreateResponse createObjResponse = dmService.createObjects(new CreateIn[]{ itemDef });
+
+
+ if(!ServiceDataError(createObjResponse.serviceData)) 
+ { 
+ for(CreateOut out : createObjResponse.output) 
+ { 
+ for(TCComponent obj : out.objects) 
+ { 
+ if(obj instanceof TCComponentItem) 
+ item = (TCComponentItem) obj; 
+ else if(obj instanceof TCComponentItemRevision) 
+ itemRev = (TCComponentItemRevision) obj; 
+ else if(obj instanceof TCComponentForm) 
+ form = (TCComponentForm) obj; 
+ } 
+ } 
+ } 
+ } 
+ catch (ServiceException e) 
+ { 
+ e.printStackTrace(); 
+ } 
+ } 
+ 
+ protected boolean ServiceDataError(final ServiceData data) 
+ { 
+ if (data.sizeOfPartialErrors() > 0) 
+ { 
+ for (int i = 0; i < data.sizeOfPartialErrors(); i++) 
+ { 
+ for (String msg : data.getPartialError(i).getMessages()) 
+ System.out.println(msg); 
+ } 
+ return true; 
+ } 
+ return false; 
+ } 
+}
+
+//
+
+TCSession session = (TCSession) AIFUtility.getDefaultSession();
+TCComponentQueryType tccomponentquerytype = (TCComponentQueryType) session .getTypeComponent("ImanQuery");
+/ / Получить запрос в соответствии с именем
+TCComponentQuery query = (TCComponentQuery) tccomponentquerytype.find(queryName);
+// Передача для выполнения запроса
+TCComponent[] tccs = query.execute(parameters, values);
+
+//
+
+RCP:
+                
+
+/ / Получить объект в соответствии с UID
+TCComponentManager manager = new TCComponentManager(session);
+TCComponent comp = manager.getTCComponent("A5clPTwi4m5qKD");
+System.out.println(comp.getProperty("object_name")); 
+    или
+
+TCComponent dataset = session.getComponentManager().getTCComponent(uid);
+    Получить UID,Каждый TCComponent имеет метод Getuid
+
+     dataset.getUid()
+
+SOA:
+      
+
+/**
+* Получить ModelObject в соответствии с UID
+* @param session
+* @param uid
+* @return
+*/
+public static ModelObject getModelObjectByUid(String uid)
+{
+    DataManagementService dmService = DataManagementService.getService(TcSession.getConnection());
+    ModelObject modelObj = null;
+    ServiceData loadResp = dmService.loadObjects(new String[] { uid });
+    modelObj = loadResp.getPlainObject(0);
+    dmService.refreshObjects(new ModelObject[]{modelObj});
+    return modelObj;
+}
+       //ModelObjectПолучить UID
+
+        tempdataset.getUid()
+
+ITK:
+           ITK__convert_uid_to_tag (const char* uid,tag_t * aTag);
+
+           ITK__convert_tag_to_uid(tag_t aTag,char ** uid);
+
+//
+
+https://russianblogs.com/article/88154103958/
+
+//
+
+// com.teamcenter.rac.cme.activity.editresource.EditResourceDialog
+ 
+
+EditResourceDialog eg = new EditResourceDialog(aifUIApplication, aifDesktop, line);
+ eg.setVisible(true);
+
+ 
+
+Изменено 19 апреля 2018 пользователем Wise_Owl
+
+//
+
+https://teamcenter-open-gate.blogspot.com/2016/12/teamcenter-rich-client-customization.html
+
+//
+
+https://plmwala.wordpress.com/
+
+//
+
+
+
+
