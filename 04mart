@@ -2561,6 +2561,24 @@ https://plmwala.wordpress.com/
 
 //
 
+применяемость ставится на статус,а не на ревизию как свойство
+
+   TCComponentEffectivityType eff_type = (TCComponentEffectivityType)session.getTypeComponent("Effectivity");
+
+   TCComponentEffectivity effectivity = eff_type.createFromUnits(status,end_item,unit_range);
+                                   
+
+здесь status - собственно статус,
+
+TCComponent related[] = revision.getRelatedComponents("release_statuses");
+
+ 
+
+end_item - конечное изделие если есть
+
+unit_range - строка применяемость (1-UP напр)
+
+//
 
 
 
